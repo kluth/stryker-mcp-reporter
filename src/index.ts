@@ -18,13 +18,13 @@ export const strykerPlugins = [
 function mcpReporterFactory(logger: Logger): McpReporter {
   // 1. Core Domain (als lokaler Singleton für diesen Lauf)
   const reportStream = new ReportStream();
-  
+
   // 2. Application Core (Use Case)
   const publishUseCase = new PublishReportUseCase(reportStream);
-  
+
   // 3. Infrastructure (Outbound)
-  const serverAdapter = new McpServerAdapter(reportStream, 3000);
-  
+  const serverAdapter = new McpServerAdapter(logger, reportStream, 3000);
+
   // 4. Infrastructure (Inbound / Reporter)
   return new McpReporter(logger, publishUseCase, serverAdapter);
 }

@@ -16,6 +16,7 @@ describe("McpServerAdapter", () => {
   let adapter: McpServerAdapter;
 
   beforeEach(() => {
+    // 1. Isolierter Infrastruktur-Mock
     mockLogger = {
       info: vi.fn(),
       error: vi.fn(),
@@ -25,9 +26,10 @@ describe("McpServerAdapter", () => {
       fatal: vi.fn(),
     } as unknown as Logger;
 
+    // 2. Isolierte Domänen-Abhängigkeit
     stream = new ReportStream();
 
-    // WICHTIG: Die Reihenfolge ist identisch zur Klasse
+    // 3. Zentrale Instanziierung: Logger -> Stream -> Port
     adapter = new McpServerAdapter(mockLogger, stream, 0);
   });
 
@@ -55,6 +57,7 @@ describe("McpServerAdapter", () => {
     const blocker = net.createServer();
     await new Promise<void>((resolve) => blocker.listen(3001, resolve));
 
+    // Signatur: Logger -> Stream -> Port
     const conflictingAdapter = new McpServerAdapter(mockLogger, stream, 3001);
 
     const result = await conflictingAdapter.start();

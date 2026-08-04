@@ -19,7 +19,7 @@ export class McpServerAdapter {
   private httpServer: HttpServer | null = null;
   private readonly mcpServer: Server;
 
-  // WICHTIG: Die Reihenfolge muss Logger -> Stream -> Port sein
+  // Strikte Signatur: Logger -> Stream -> Port
   constructor(
     private readonly logger: Logger,
     private readonly reportStream: ReportStream,
@@ -55,7 +55,7 @@ export class McpServerAdapter {
     });
 
     return new Promise((resolve) => {
-      this.httpServer = app.listen(this.port);
+      this.httpServer = app.listen({ port: this.port });
 
       this.httpServer.once("listening", () => {
         this.logConnectionInstructions();
