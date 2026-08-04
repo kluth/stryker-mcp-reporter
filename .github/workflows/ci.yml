@@ -23,16 +23,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          # Wir schalten den Cache hier temporär ab, da der alte Cache
-          # auf den GitHub-Servern korrupt ist und NPM zum Absturz bringt.
-          # cache: 'npm'
-
-      - name: Update NPM (Bypass NPM Bug)
-        # Zwingt den Runner, den internen NPM-Bugfall durch die neueste Version zu patchen
-        run: npm install -g npm@latest
+          # Cache bleibt abgeschaltet, um Altlasten der GitHub-Runner zu ignorieren
 
       - name: Install Dependencies
-        run: npm ci
+        # Nutzt 'install' statt 'ci', um die internen NPM-Abstürze zu umgehen
+        run: npm install
 
       - name: Compile TypeScript
         run: npm run build
