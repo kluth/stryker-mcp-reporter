@@ -97,10 +97,11 @@ async function runE2eTest() {
   await sendJsonRpc("resources/read", { uri: "stryker://status" });
   console.log("✅ resources/read stryker://status gesendet.");
 
-  // 6. MCP Resource Reading (stryker://report/summary)
+  // 6. MCP Resource Reading (stryker://report/summary & stryker://report/survived)
   console.log("\n--- TEST: resources/read (stryker://report/summary) ---");
   await sendJsonRpc("resources/read", { uri: "stryker://report/summary" });
-  console.log("✅ resources/read stryker://report/summary gesendet.");
+  await sendJsonRpc("resources/read", { uri: "stryker://report/survived" });
+  console.log("✅ resources/read stryker://report/summary & survived gesendet.");
 
   // 7. MCP Tools Listing
   console.log("\n--- TEST: tools/list ---");

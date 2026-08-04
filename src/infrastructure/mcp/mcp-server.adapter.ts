@@ -16,6 +16,7 @@ import type { Logger } from "@stryker-mutator/api/logging";
 import type { ReportStream } from "../../core/domain/report-stream.js";
 import type { ExecutionStatusStream } from "../../core/domain/execution-status.js";
 import type { RunMutationTestsUseCase } from "../../core/application/run-mutation-tests.use-case.js";
+import type { RunTargetedMutationTestsUseCase } from "../../core/application/run-targeted-mutation-tests.use-case.js";
 import type { GetSurvivedMutantsUseCase } from "../../core/application/get-survived-mutants.use-case.js";
 import type { GetMutationSummaryUseCase } from "../../core/application/get-mutation-summary.use-case.js";
 import { type Result, ok, err } from "../../core/domain/result.js";
@@ -31,6 +32,7 @@ export class McpServerAdapter {
     private readonly reportStream: ReportStream,
     private readonly statusStream: ExecutionStatusStream,
     private readonly runUseCase: RunMutationTestsUseCase,
+    private readonly runTargetedUseCase: RunTargetedMutationTestsUseCase,
     private readonly getSurvivedUseCase: GetSurvivedMutantsUseCase,
     private readonly getSummaryUseCase: GetMutationSummaryUseCase,
     private readonly port: number = 3000,
@@ -129,6 +131,12 @@ export class McpServerAdapter {
           description: "Kompakte Zusammenfassung der Mutations-Metriken (Score, Killed, Survived).",
         },
         {
+          uri: "stryker://report/survived",
+          name: "Survived Mutants List",
+          mimeType: "application/json",
+          description: "Liste aller überlebenden Mutanten inkl. Pfad, Zeile, Mutator und Ersetzung.",
+        },
+        {
           uri: "stryker://status",
           name: "Stryker Execution Status",
           mimeType: "application/json",
@@ -165,6 +173,23 @@ export class McpServerAdapter {
               uri,
               mimeType: "application/json",
               text: summaryText,
+            },
+          ],
+        };
+      }
+
+      if (uri === "stryker://report/survived") {
+        const survivedResult = this.getSurvivedUseCase.execute();
+        const text = survivedResult.isOk
+          ? JSON.stringify(survivedResult.value, null, 2)
+          : JSON.stringify({ error: survivedResult.error.message });
+
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text,
             },
           ],
         };
@@ -212,6 +237,19 @@ export class McpServerAdapter {
               configFile: {
                 type: "string",
                 description: "Pfad zur Stryker Konfigurationsdatei.",
+              },
+            },
+          },
+        },
+        {
+          name: "run_targeted_mutation_tests",
+          description: "Erkennt in Git geänderte TypeScript-Dateien und führt Mutationstests gezielt nur für diese aus.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              baseBranch: {
+                type: "string",
+                description: "Optionaler Ziel-Branch für Git-Diff (z.B. 'main' oder 'master'). Standard: Uncommitted Changes.",
               },
             },
           },
@@ -267,6 +305,35 @@ export class McpServerAdapter {
             {
               type: "text",
               text: `Mutationstests erfolgreich beendet.\nMutationsscore: ${summary?.mutationScore ?? "N/A"}%\nÜberlebte Mutanten: ${summary?.survived ?? "N/A"}\nKilled: ${summary?.killed ?? "N/A"}`,
+            },
+          ],
+        };
+      }
+
+      if (name === "run_targeted_mutation_tests") {
+        const baseBranch = (args as { baseBranch?: string })?.baseBranch;
+        const runResult = await this.runTargetedUseCase.execute(baseBranch);
+
+        if (!runResult.isOk) {
+          return {
+            isError: true,
+            content: [
+              {
+                type: "text",
+                text: `Fehler beim Ausführen zielgerichteter Mutationstests: ${runResult.error.message}`,
+              },
+            ],
+          };
+        }
+
+        const summaryResult = this.getSummaryUseCase.execute();
+        const summary = summaryResult.isOk ? summaryResult.value : null;
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Zielgerichtete Mutationstests erfolgreich beendet.\nMutationsscore: ${summary?.mutationScore ?? "N/A"}%\nÜberlebte Mutanten: ${summary?.survived ?? "N/A"}\nKilled: ${summary?.killed ?? "N/A"}`,
             },
           ],
         };
