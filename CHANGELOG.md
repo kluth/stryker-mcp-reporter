@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.1.0...v1.2.0) (2026-08-04)
+
+
+### Features
+
+* **mcp:** add targeted mutation testing tool and survived report resource ([f2b7e47](https://github.com/kluth/stryker-mcp-reporter/commit/f2b7e47075b2985436bba42d04a75f70f4c7e1dd))
+
 # [1.1.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.0.2...v1.1.0) (2026-08-04)
 
 
