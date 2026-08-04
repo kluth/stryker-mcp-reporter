@@ -15,6 +15,7 @@
     "prebuild": "rimraf dist",
     "build": "tsc",
     "test": "vitest run",
+    "test:e2e": "node e2e-test.js",
     "test:mutation": "stryker run"
   },
   "engines": {
