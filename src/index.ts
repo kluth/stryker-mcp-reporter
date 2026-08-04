@@ -1,33 +1,85 @@
 // src/index.ts
-import { declareFactoryPlugin, PluginKind, commonTokens } from '@stryker-mutator/api/plugin';
-import type { Logger } from '@stryker-mutator/api/logging';
+import { declareFactoryPlugin, PluginKind, commonTokens } from "@stryker-mutator/api/plugin";
+import type { Logger } from "@stryker-mutator/api/logging";
 
-import { McpReporter } from './infrastructure/stryker/mcp-reporter.js';
-import { PublishReportUseCase } from './core/application/publish-report.use-case.js';
-import { McpServerAdapter } from './infrastructure/mcp/mcp-server.adapter.js';
-import { ReportStream } from './core/domain/report-stream.js';
+import { McpReporter } from "./infrastructure/stryker/mcp-reporter.js";
+import { PublishReportUseCase } from "./core/application/publish-report.use-case.js";
+import { RunMutationTestsUseCase } from "./core/application/run-mutation-tests.use-case.js";
+import { GetSurvivedMutantsUseCase } from "./core/application/get-survived-mutants.use-case.js";
+import { GetMutationSummaryUseCase } from "./core/application/get-mutation-summary.use-case.js";
+import { McpServerAdapter } from "./infrastructure/mcp/mcp-server.adapter.js";
+import { StrykerCliRunnerAdapter } from "./infrastructure/stryker/stryker-cli-runner.adapter.js";
+import { ReportStream } from "./core/domain/report-stream.js";
+import { ExecutionStatusStream } from "./core/domain/execution-status.js";
+import type { Result } from "./core/domain/result.js";
 
 export const strykerPlugins = [
-  declareFactoryPlugin(PluginKind.Reporter, 'mcp', mcpReporterFactory),
+  declareFactoryPlugin(PluginKind.Reporter, "mcp", mcpReporterFactory),
 ];
 
 /**
- * Die Composition Root (Factory) unseres Plugins.
- * Hier definieren wir den Dependency-Graphen für Stryker.
+ * Erstellt die komplette Objektgraphen-Instanz für den MCP-Server.
+ */
+export function createMcpServerAdapter(logger: Logger, port: number = 3000): McpServerAdapter {
+  const reportStream = new ReportStream();
+  const statusStream = new ExecutionStatusStream();
+
+  const strykerRunner = new StrykerCliRunnerAdapter(logger);
+  const runUseCase = new RunMutationTestsUseCase(reportStream, statusStream, strykerRunner);
+  const getSurvivedUseCase = new GetSurvivedMutantsUseCase(reportStream);
+  const getSummaryUseCase = new GetMutationSummaryUseCase(reportStream);
+
+  return new McpServerAdapter(
+    logger,
+    reportStream,
+    statusStream,
+    runUseCase,
+    getSurvivedUseCase,
+    getSummaryUseCase,
+    port,
+  );
+}
+
+/**
+ * Die Composition Root (Factory) unseres Plugins für Stryker.
  */
 function mcpReporterFactory(logger: Logger): McpReporter {
-  // 1. Core Domain (als lokaler Singleton für diesen Lauf)
   const reportStream = new ReportStream();
+  const statusStream = new ExecutionStatusStream();
 
-  // 2. Application Core (Use Case)
   const publishUseCase = new PublishReportUseCase(reportStream);
+  const strykerRunner = new StrykerCliRunnerAdapter(logger);
+  const runUseCase = new RunMutationTestsUseCase(reportStream, statusStream, strykerRunner);
+  const getSurvivedUseCase = new GetSurvivedMutantsUseCase(reportStream);
+  const getSummaryUseCase = new GetMutationSummaryUseCase(reportStream);
 
-  // 3. Infrastructure (Outbound)
-  const serverAdapter = new McpServerAdapter(logger, reportStream, 3000);
+  const serverAdapter = new McpServerAdapter(
+    logger,
+    reportStream,
+    statusStream,
+    runUseCase,
+    getSurvivedUseCase,
+    getSummaryUseCase,
+    3000,
+  );
 
-  // 4. Infrastructure (Inbound / Reporter)
   return new McpReporter(logger, publishUseCase, serverAdapter);
 }
 
-// Typen-Fix: Wir definieren ein mutables Tuple, um das readonly-Problem zu umgehen
-mcpReporterFactory.inject = [commonTokens.logger] as ['logger'];
+mcpReporterFactory.inject = [commonTokens.logger] as ["logger"];
+
+/**
+ * Startet den MCP-Server im Standalone-Modus (z.B. für CLI / npx).
+ */
+export async function startStandaloneServer(
+  logger: Logger,
+  adapter?: McpServerAdapter,
+): Promise<Result<void, Error>> {
+  const server = adapter || createMcpServerAdapter(logger, 3000);
+  return server.start();
+}
+
+export * from "./core/domain/mutation-report.js";
+export * from "./core/domain/execution-status.js";
+export * from "./core/domain/stryker-runner.port.js";
+export * from "./core/domain/result.js";

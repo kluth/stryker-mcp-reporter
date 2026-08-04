@@ -27,7 +27,10 @@ export class PublishReportUseCase {
    */
   private mapToDomain(rawReport: MutationTestResult): MutationReport {
     return {
-      files: rawReport.files || {},
+      schemaVersion: rawReport.schemaVersion,
+      thresholds: rawReport.thresholds,
+      projectRoot: rawReport.projectRoot,
+      files: (rawReport.files || {}) as MutationReport["files"],
     };
   }
 }

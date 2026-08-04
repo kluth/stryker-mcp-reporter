@@ -7,29 +7,45 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import {
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
+  ListToolsRequestSchema,
+  CallToolRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Logger } from "@stryker-mutator/api/logging";
 import type { ReportStream } from "../../core/domain/report-stream.js";
+import type { ExecutionStatusStream } from "../../core/domain/execution-status.js";
+import type { RunMutationTestsUseCase } from "../../core/application/run-mutation-tests.use-case.js";
+import type { GetSurvivedMutantsUseCase } from "../../core/application/get-survived-mutants.use-case.js";
+import type { GetMutationSummaryUseCase } from "../../core/application/get-mutation-summary.use-case.js";
 import { type Result, ok, err } from "../../core/domain/result.js";
 
-// Extrahiert für absolute Testbarkeit der Konstanten
 export const SERVER_INFO = { name: "stryker-mcp-server", version: "1.0.0" };
 
 export class McpServerAdapter {
   private httpServer: HttpServer | null = null;
   private readonly mcpServer: Server;
 
-  // Strikte Signatur: Logger -> Stream -> Port
   constructor(
     private readonly logger: Logger,
     private readonly reportStream: ReportStream,
+    private readonly statusStream: ExecutionStatusStream,
+    private readonly runUseCase: RunMutationTestsUseCase,
+    private readonly getSurvivedUseCase: GetSurvivedMutantsUseCase,
+    private readonly getSummaryUseCase: GetMutationSummaryUseCase,
     private readonly port: number = 3000,
   ) {
-    this.mcpServer = new Server(
-      SERVER_INFO,
-      { capabilities: { resources: {} } },
-    );
+    this.mcpServer = new Server(SERVER_INFO, {
+      capabilities: {
+        resources: {},
+        tools: {},
+        prompts: {},
+      },
+    });
+
     this.registerResourceHandlers();
+    this.registerToolHandlers();
+    this.registerPromptHandlers();
   }
 
   public get activePort(): number {
@@ -39,6 +55,7 @@ export class McpServerAdapter {
 
   public async start(): Promise<Result<void, Error>> {
     const app = express();
+    app.use(express.json());
     let transport: SSEServerTransport | undefined;
 
     app.get("/mcp/sse", async (_req, res) => {
@@ -48,14 +65,14 @@ export class McpServerAdapter {
 
     app.post("/mcp/messages", async (req, res) => {
       if (transport) {
-        await transport.handlePostMessage(req, res);
+        await transport.handlePostMessage(req, res, req.body);
       } else {
         res.status(400).send("SSE connection not established");
       }
     });
 
     return new Promise((resolve) => {
-      this.httpServer = app.listen({ port: this.port });
+      this.httpServer = app.listen(this.port);
 
       this.httpServer.once("listening", () => {
         this.logConnectionInstructions();
@@ -69,11 +86,11 @@ export class McpServerAdapter {
   }
 
   private logConnectionInstructions(): void {
-    const sseUrl = `http://127.0.0.1:${this.port}/mcp/sse`;
+    const sseUrl = `http://127.0.0.1:${this.activePort}/mcp/sse`;
 
-    this.logger.info('🚀 Stryker MCP Server läuft!');
+    this.logger.info("🚀 Stryker MCP Server läuft!");
     this.logger.info(`🔗 SSE URL: ${sseUrl}`);
-    this.logger.info('💡 Um KI-Agenten (wie Cline, Cursor oder Roo Code) zu verbinden, nutze dieses Snippet:');
+    this.logger.info("💡 Um KI-Agenten (wie Cline, Cursor oder Roo Code) zu verbinden, nutze dieses Snippet:");
     this.logger.info(`
 {
   "mcpServers": {
@@ -83,7 +100,7 @@ export class McpServerAdapter {
   }
 }
 `);
-    this.logger.info('🛑 Drücke Strg+C, um den Server zu beenden.');
+    this.logger.info("🛑 Drücke Strg+C, um den Server zu beenden.");
   }
 
   public stop(): Promise<void> {
@@ -103,28 +120,256 @@ export class McpServerAdapter {
           uri: "stryker://report/latest",
           name: "Latest Mutation Testing Report",
           mimeType: "application/json",
-          description: "Der vollständige Stryker Mutation Testing Report.",
+          description: "Der vollständige Stryker Mutation Testing Report im JSON-Format.",
+        },
+        {
+          uri: "stryker://report/summary",
+          name: "Mutation Testing Summary Metrics",
+          mimeType: "application/json",
+          description: "Kompakte Zusammenfassung der Mutations-Metriken (Score, Killed, Survived).",
+        },
+        {
+          uri: "stryker://status",
+          name: "Stryker Execution Status",
+          mimeType: "application/json",
+          description: "Aktueller Ausführungsstatus von Stryker (idle, running, completed, failed).",
         },
       ],
     }));
 
-    this.mcpServer.setRequestHandler(
-      ReadResourceRequestSchema,
-      async (request) => {
-        if (request.params.uri === "stryker://report/latest") {
-          const report = this.reportStream.current();
+    this.mcpServer.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+      const uri = request.params.uri;
+
+      if (uri === "stryker://report/latest") {
+        const report = this.reportStream.current();
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(report ?? { files: {} }),
+            },
+          ],
+        };
+      }
+
+      if (uri === "stryker://report/summary") {
+        const summaryResult = this.getSummaryUseCase.execute();
+        const summaryText = summaryResult.isOk
+          ? JSON.stringify(summaryResult.value)
+          : JSON.stringify({ error: summaryResult.error.message });
+
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: summaryText,
+            },
+          ],
+        };
+      }
+
+      if (uri === "stryker://status") {
+        const status = this.statusStream.current();
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(status),
+            },
+          ],
+        };
+      }
+
+      throw new Error("Ressource nicht gefunden");
+    });
+  }
+
+  private registerToolHandlers(): void {
+    this.mcpServer.setRequestHandler(ListToolsRequestSchema, async () => ({
+      tools: [
+        {
+          name: "run_mutation_tests",
+          description: "Führt Stryker Mutationstests für das Projekt oder spezifische Dateien aus.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              mutate: {
+                type: "array",
+                items: { type: "string" },
+                description: "Array von Datei-Globs für Mutationen (z.B. ['src/calculator.ts']).",
+              },
+              concurrency: {
+                type: "number",
+                description: "Anzahl paralleler Test-Runner-Prozesse.",
+              },
+              testRunner: {
+                type: "string",
+                description: "Name des Test-Runners (z.B. 'vitest').",
+              },
+              configFile: {
+                type: "string",
+                description: "Pfad zur Stryker Konfigurationsdatei.",
+              },
+            },
+          },
+        },
+        {
+          name: "get_mutation_score",
+          description: "Ruft den aktuellen Mutationsscore und eine detaillierte Zusammenfassung ab.",
+          inputSchema: {
+            type: "object",
+            properties: {},
+          },
+        },
+        {
+          name: "get_survived_mutants",
+          description: "Liefert alle überlebenden Mutanten inkl. Dateipfad, Zeile, Mutator-Typ und Ersetzungscode.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              filePath: {
+                type: "string",
+                description: "Optionaler Dateipfad-Filter (z.B. 'src/calculator.ts').",
+              },
+            },
+          },
+        },
+      ],
+    }));
+
+    this.mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      if (name === "run_mutation_tests") {
+        const options = args as { mutate?: string[]; concurrency?: number; testRunner?: string; configFile?: string };
+        const runResult = await this.runUseCase.execute(options);
+
+        if (!runResult.isOk) {
           return {
-            contents: [
+            isError: true,
+            content: [
               {
-                uri: request.params.uri,
-                mimeType: "application/json",
-                text: JSON.stringify(report ?? { files: {} }),
+                type: "text",
+                text: `Fehler beim Ausführen von Mutationstests: ${runResult.error.message}`,
               },
             ],
           };
         }
-        throw new Error("Ressource nicht gefunden");
-      },
-    );
+
+        const summaryResult = this.getSummaryUseCase.execute();
+        const summary = summaryResult.isOk ? summaryResult.value : null;
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Mutationstests erfolgreich beendet.\nMutationsscore: ${summary?.mutationScore ?? "N/A"}%\nÜberlebte Mutanten: ${summary?.survived ?? "N/A"}\nKilled: ${summary?.killed ?? "N/A"}`,
+            },
+          ],
+        };
+      }
+
+      if (name === "get_mutation_score") {
+        const summaryResult = this.getSummaryUseCase.execute();
+        if (!summaryResult.isOk) {
+          return {
+            isError: true,
+            content: [{ type: "text", text: summaryResult.error.message }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(summaryResult.value, null, 2),
+            },
+          ],
+        };
+      }
+
+      if (name === "get_survived_mutants") {
+        const filePath = (args as { filePath?: string })?.filePath;
+        const survivedResult = this.getSurvivedUseCase.execute(filePath);
+        if (!survivedResult.isOk) {
+          return {
+            isError: true,
+            content: [{ type: "text", text: survivedResult.error.message }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(survivedResult.value, null, 2),
+            },
+          ],
+        };
+      }
+
+      throw new Error(`Tool '${name}' nicht gefunden.`);
+    });
+  }
+
+  private registerPromptHandlers(): void {
+    this.mcpServer.setRequestHandler(ListPromptsRequestSchema, async () => ({
+      prompts: [
+        {
+          name: "analyze_survived_mutants",
+          description: "Erzeugt eine detaillierte KI-Anweisung zur Analyse überlebender Mutanten und zur Erstellung fehlender Unit Tests.",
+          arguments: [
+            {
+              name: "filePath",
+              description: "Optionaler Dateipfad zur Eingrenzung der Analyse.",
+              required: false,
+            },
+          ],
+        },
+      ],
+    }));
+
+    this.mcpServer.setRequestHandler(GetPromptRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      if (name === "analyze_survived_mutants") {
+        const filePath = args?.filePath;
+        const survivedResult = this.getSurvivedUseCase.execute(filePath);
+        const survived = survivedResult.isOk ? survivedResult.value : [];
+        const summaryResult = this.getSummaryUseCase.execute();
+        const summary = summaryResult.isOk ? summaryResult.value : null;
+
+        const promptText = `Du bist ein Experte für Mutation Testing und TDD.
+Hier ist die Analyse der überlebenden Mutanten für das Projekt:
+
+Gesamter Mutationsscore: ${summary?.mutationScore ?? "N/A"}%
+Überlebte Mutanten: ${survived.length}
+
+Details der überlebenden Mutanten:
+${JSON.stringify(survived, null, 2)}
+
+Bitte führe Folgendes aus:
+1. Analysiere jeden überlebenden Mutanten und erkläre, warum der bestehende Testsuite-Code diesen Mutanten nicht getötet hat.
+2. Schreibe präzise Unit Tests in Vitest/Jest, die jeden dieser überlebenden Mutanten gezielt eliminieren.
+3. Stelle sicher, dass die neuen Tests nach TDD-Prinzipien verfasst sind und keine Nebeneffekte haben.`;
+
+        return {
+          messages: [
+            {
+              role: "user",
+              content: {
+                type: "text",
+                text: promptText,
+              },
+            },
+          ],
+        };
+      }
+
+      throw new Error(`Prompt '${name}' nicht gefunden.`);
+    });
   }
 }
