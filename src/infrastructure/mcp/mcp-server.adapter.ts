@@ -8,6 +8,7 @@ import {
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import type { Logger } from "@stryker-mutator/api/logging";
 import type { ReportStream } from "../../core/domain/report-stream.js";
 import { type Result, ok, err } from "../../core/domain/result.js";
 
@@ -18,7 +19,9 @@ export class McpServerAdapter {
   private httpServer: HttpServer | null = null;
   private readonly mcpServer: Server;
 
+  // WICHTIG: Die Reihenfolge muss Logger -> Stream -> Port sein
   constructor(
+    private readonly logger: Logger,
     private readonly reportStream: ReportStream,
     private readonly port: number = 3000,
   ) {
@@ -55,6 +58,7 @@ export class McpServerAdapter {
       this.httpServer = app.listen(this.port);
 
       this.httpServer.once("listening", () => {
+        this.logConnectionInstructions();
         resolve(ok(undefined));
       });
 
@@ -62,6 +66,24 @@ export class McpServerAdapter {
         resolve(err(error));
       });
     });
+  }
+
+  private logConnectionInstructions(): void {
+    const sseUrl = `http://127.0.0.1:${this.port}/mcp/sse`;
+
+    this.logger.info('🚀 Stryker MCP Server läuft!');
+    this.logger.info(`🔗 SSE URL: ${sseUrl}`);
+    this.logger.info('💡 Um KI-Agenten (wie Cline, Cursor oder Roo Code) zu verbinden, nutze dieses Snippet:');
+    this.logger.info(`
+{
+  "mcpServers": {
+    "stryker-mutation-testing": {
+      "url": "${sseUrl}"
+    }
+  }
+}
+`);
+    this.logger.info('🛑 Drücke Strg+C, um den Server zu beenden.');
   }
 
   public stop(): Promise<void> {

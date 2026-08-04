@@ -8,14 +8,27 @@ import {
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import type { Logger } from "@stryker-mutator/api/logging";
 
 describe("McpServerAdapter", () => {
+  let mockLogger: Logger;
   let stream: ReportStream;
   let adapter: McpServerAdapter;
 
   beforeEach(() => {
+    mockLogger = {
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
+      trace: vi.fn(),
+      fatal: vi.fn(),
+    } as unknown as Logger;
+
     stream = new ReportStream();
-    adapter = new McpServerAdapter(stream, 0);
+
+    // WICHTIG: Die Reihenfolge ist identisch zur Klasse
+    adapter = new McpServerAdapter(mockLogger, stream, 0);
   });
 
   afterEach(async () => {
@@ -41,7 +54,8 @@ describe("McpServerAdapter", () => {
   it("sollte ein err-Result zurückgeben, wenn der Port bereits belegt ist", async () => {
     const blocker = net.createServer();
     await new Promise<void>((resolve) => blocker.listen(3001, resolve));
-    const conflictingAdapter = new McpServerAdapter(stream, 3001);
+
+    const conflictingAdapter = new McpServerAdapter(mockLogger, stream, 3001);
 
     const result = await conflictingAdapter.start();
 
@@ -55,14 +69,12 @@ describe("McpServerAdapter", () => {
     await adapter.start();
     const port = adapter.activePort;
 
-    // Act 1: POST ohne offene SSE-Verbindung (Fehlerfall abdecken)
     const earlyMsgRes = await fetch(`http://127.0.0.1:${port}/mcp/messages`, {
       method: "POST",
     });
     expect(earlyMsgRes.status).toBe(400);
     expect(await earlyMsgRes.text()).toBe("SSE connection not established");
 
-    // Act 2: Reguläre SSE Verbindung aufbauen (Stream öffnen)
     const abortController = new AbortController();
     const sseRes = await fetch(`http://127.0.0.1:${port}/mcp/sse`, {
       signal: abortController.signal,
@@ -74,7 +86,6 @@ describe("McpServerAdapter", () => {
     const { value } = await reader!.read();
     expect(new TextDecoder().decode(value)).toContain("/mcp/messages");
 
-    // Act 3: POST MIT offener SSE-Verbindung (if-transport Erfolgsfall abdecken)
     const validMsgRes = await fetch(`http://127.0.0.1:${port}/mcp/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -90,14 +101,15 @@ describe("McpServerAdapter", () => {
       Server.prototype,
       "setRequestHandler",
     );
-    new McpServerAdapter(stream, 0);
+
+    new McpServerAdapter(mockLogger, stream, 0);
 
     const listCall = setRequestHandlerSpy.mock.calls.find(
-      (c) => c[0] === ListResourcesRequestSchema,
+      (c: unknown[]) => c[0] === ListResourcesRequestSchema,
     );
-    const listHandler = listCall![1];
+    const listHandler = listCall![1] as Function;
 
-    const listResult = await listHandler({} as any, {} as any);
+    const listResult = await listHandler({}, {});
     expect(listResult.resources[0].uri).toBe("stryker://report/latest");
     expect(listResult.resources[0].name).toBe("Latest Mutation Testing Report");
     expect(listResult.resources[0].description).toBe(
@@ -106,39 +118,40 @@ describe("McpServerAdapter", () => {
     expect(listResult.resources[0].mimeType).toBe("application/json");
 
     const readCall = setRequestHandlerSpy.mock.calls.find(
-      (c) => c[0] === ReadResourceRequestSchema,
+      (c: unknown[]) => c[0] === ReadResourceRequestSchema,
     );
-    const readHandler = readCall![1];
+    const readHandler = readCall![1] as Function;
 
     const validRequest = { params: { uri: "stryker://report/latest" } };
-    const emptyResult = await readHandler(validRequest as any, {} as any);
+    const emptyResult = await readHandler(validRequest, {});
     expect(emptyResult.contents[0].text).toBe(JSON.stringify({ files: {} }));
     expect(emptyResult.contents[0].mimeType).toBe("application/json");
 
     const invalidRequest = { params: { uri: "stryker://invalid" } };
-    await expect(readHandler(invalidRequest as any, {} as any)).rejects.toThrow(
+    await expect(readHandler(invalidRequest, {})).rejects.toThrow(
       "Ressource nicht gefunden",
     );
   });
-  it('schließt den aktiven HTTP-Server während des Shutdowns', async () => {
-      // Arrange
-      // 1. Mocks für die erwarteten Konstruktor-Parameter erstellen.
-      // (Passe die Typen entsprechend deiner echten Interfaces an, z.B. Logger oder Config)
-      const mockLogger = { info: vi.fn(), error: vi.fn(), warn: vi.fn() } as any;
-      const mockOptions = { port: 3000 } as any; // Beispiel für einen zweiten Parameter
 
-      // 2. Adapter mit den injizierten Abhängigkeiten instanziieren
-      const adapter = new McpServerAdapter(mockLogger, mockOptions);
+  it("schließt den aktiven HTTP-Server während des Shutdowns", async () => {
+    await adapter.start();
+    const closeSpy = vi.spyOn(adapter["httpServer"] as any, "close");
 
-      await adapter.start();
+    await adapter.stop();
 
-      // Wir setzen einen Spy auf die close-Methode der internen Server-Instanz.
-      const closeSpy = vi.spyOn(adapter['httpServer'], 'close');
+    expect(closeSpy).toHaveBeenCalledOnce();
+  });
 
-      // Act
-      await adapter.stop();
+  it("protokolliert die Verbindungsdaten nach dem erfolgreichen Start", async () => {
+    const result = await adapter.start();
 
-      // Assert
-      expect(closeSpy).toHaveBeenCalledOnce();
-    });
+    expect(result.isOk).toBe(true);
+
+    const expectedUrl = `http://127.0.0.1:${adapter.activePort}/mcp/sse`;
+
+    expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining("🚀 Stryker MCP Server läuft!"));
+    expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining(expectedUrl));
+    expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining('"stryker-mutation-testing"'));
+    expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining("Strg+C"));
+  });
 });
