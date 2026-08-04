@@ -38,7 +38,7 @@ export class McpServerAdapter {
     const app = express();
     let transport: SSEServerTransport | undefined;
 
-    app.get("/mcp/sse", async (req, res) => {
+    app.get("/mcp/sse", async (_req, res) => {
       transport = new SSEServerTransport("/mcp/messages", res);
       await this.mcpServer.connect(transport);
     });
