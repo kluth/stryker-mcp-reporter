@@ -23,11 +23,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          # Cache bleibt abgeschaltet, um Altlasten der GitHub-Runner zu ignorieren
 
-      - name: Install Dependencies
-        # Nutzt 'install' statt 'ci', um die internen NPM-Abstürze zu umgehen
-        run: npm install
+      - name: Install Dependencies (Tabula Rasa)
+        # 1. Löscht die potenziell kaputte Lock-Datei aus dem Checkout
+        # 2. Leert den internen NPM-Cache rigoros
+        # 3. Führt einen sauberen Install direkt aus der package.json aus
+        run: |
+          rm -f package-lock.json
+          npm cache clean --force
+          npm install --no-audit --no-fund
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
 
       - name: Compile TypeScript
         run: npm run build
