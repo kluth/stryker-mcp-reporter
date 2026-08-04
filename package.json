@@ -1,0 +1,52 @@
+{
+  "name": "stryker-mcp-reporter",
+  "version": "1.0.0",
+  "description": "Ein Stryker Reporter Plugin, das Mutation Testing Ergebnisse über das Model Context Protocol (MCP) bereitstellt.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.spec.*",
+    "!dist/**/*.map"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:mutation": "stryker run",
+    "prepublishOnly": "npm run test && npm run test:mutation && npm run build"
+  },
+  "peerDependencies": {
+    "@stryker-mutator/api": "^8.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "express": "^4.21.0",
+    "mutation-testing-report-schema": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "stryker",
+    "stryker-plugin",
+    "stryker-reporter",
+    "mcp",
+    "model-context-protocol",
+    "mutation-testing"
+  ],
+  "author": "Matthias Kluth",
+  "license": "MIT"
+}
