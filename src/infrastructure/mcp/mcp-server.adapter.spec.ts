@@ -120,4 +120,25 @@ describe("McpServerAdapter", () => {
       "Ressource nicht gefunden",
     );
   });
+  it('schließt den aktiven HTTP-Server während des Shutdowns', async () => {
+      // Arrange
+      // 1. Mocks für die erwarteten Konstruktor-Parameter erstellen.
+      // (Passe die Typen entsprechend deiner echten Interfaces an, z.B. Logger oder Config)
+      const mockLogger = { info: vi.fn(), error: vi.fn(), warn: vi.fn() } as any;
+      const mockOptions = { port: 3000 } as any; // Beispiel für einen zweiten Parameter
+
+      // 2. Adapter mit den injizierten Abhängigkeiten instanziieren
+      const adapter = new McpServerAdapter(mockLogger, mockOptions);
+
+      await adapter.start();
+
+      // Wir setzen einen Spy auf die close-Methode der internen Server-Instanz.
+      const closeSpy = vi.spyOn(adapter['httpServer'], 'close');
+
+      // Act
+      await adapter.stop();
+
+      // Assert
+      expect(closeSpy).toHaveBeenCalledOnce();
+    });
 });
