@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.2.0...v1.3.0) (2026-08-04)
+
+
+### Features
+
+* **domain:** add vector-ready MutationInsight entity and educational data model ([2c9ac09](https://github.com/kluth/stryker-mcp-reporter/commit/2c9ac0906302599ba159ab7a38b15956885804ec))
+
 # [1.2.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.1.0...v1.2.0) (2026-08-04)
 
 
