@@ -1,3 +1,11 @@
+## [1.0.1](https://github.com/kluth/stryker-mcp-reporter/compare/v1.0.0...v1.0.1) (2026-08-04)
+
+
+### Bug Fixes
+
+* **packages:** config fixes ([7b1498a](https://github.com/kluth/stryker-mcp-reporter/commit/7b1498a15c51427252354ab290cec88b513913e6))
+* **typescript:** source code fixed ([6181869](https://github.com/kluth/stryker-mcp-reporter/commit/6181869b5954c498c6e08da938e335865065986b))
+
 # 1.0.0 (2026-08-04)
 
 
