@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "test:mutation": "stryker run",
+    "test:mutation": "npx stryker run",
     "prepublishOnly": "npm run test && npm run test:mutation && npm run build"
   },
   "peerDependencies": {
