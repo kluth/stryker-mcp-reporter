@@ -9,7 +9,7 @@ const config = {
   },
   testRunnerNodeArgs: ["--experimental-vm-modules"],
   coverageAnalysis: "perTest",
-  plugins: ["@stryker-mutator/vitest-runner"],
+  plugins: ["@stryker-mutator/vitest-runner", "stryker-mcp-reporter"],
   buildCommand: "npm run build",
   ignorePatterns: ["**/*.js"],
 };
