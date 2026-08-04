@@ -1,3 +1,16 @@
+# [1.1.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.0.2...v1.1.0) (2026-08-04)
+
+
+### Bug Fixes
+
+* **testing:** update testing ([bb537a3](https://github.com/kluth/stryker-mcp-reporter/commit/bb537a386f8ea10059aebc2c36cce47047307e56))
+* **tests:** test code issues solved ([08eb42b](https://github.com/kluth/stryker-mcp-reporter/commit/08eb42b3b118d044ced263cb6a07eaaf6acdf098))
+
+
+### Features
+
+* **mcp:** add interactive tools, resources, prompts and standalone server ([6f49375](https://github.com/kluth/stryker-mcp-reporter/commit/6f49375938e0e27642c543f35d2aa3db865ca9e6))
+
 ## [1.0.2](https://github.com/kluth/stryker-mcp-reporter/compare/v1.0.1...v1.0.2) (2026-08-04)
 
 
