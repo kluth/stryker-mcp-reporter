@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/kluth/stryker-mcp-reporter/compare/v1.0.1...v1.0.2) (2026-08-04)
+
+
+### Bug Fixes
+
+* **packages:** install deps fixed ([d6c20b2](https://github.com/kluth/stryker-mcp-reporter/commit/d6c20b214f037d87e6a0e6866e5ce9b89c761b6d))
+
 ## [1.0.1](https://github.com/kluth/stryker-mcp-reporter/compare/v1.0.0...v1.0.1) (2026-08-04)
 
 
