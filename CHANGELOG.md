@@ -1,3 +1,11 @@
+# [1.8.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.7.2...v1.8.0) (2026-08-05)
+
+
+### Features
+
+* **announcements:** add automated Git log changelog extractor and Hashnode v2/v1 dual publishing fallback ([c54bb0c](https://github.com/kluth/stryker-mcp-reporter/commit/c54bb0c99101b900d0680c7bbf1453edd9b29605))
+* **ci:** add automated GitHub Discussions GraphQL mutation publishing and remove Reddit generation ([683300c](https://github.com/kluth/stryker-mcp-reporter/commit/683300c6d22666848337733ad4e0879468db19a2))
+
 ## [1.7.2](https://github.com/kluth/stryker-mcp-reporter/compare/v1.7.1...v1.7.2) (2026-08-05)
 
 
