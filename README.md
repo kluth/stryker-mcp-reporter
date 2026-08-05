@@ -42,17 +42,40 @@ Stryker mutiert deinen Quellcode (z. B. verwandelt es `>` in `>=`, löscht Rück
 ### 💻 3. Standalone MCP Control Server & Real-Time Protocol Verification (`npm run test:e2e`)
 ![Terminal MCP Server](real_terminal_mcp_server.png)
 
+### 🤖 4. Live KI-Mutanten Auto-Remediation (`suggest_mutant_fixes`)
+![AI Mutant Auto Remediation](real_step1_suggest_fixes.png)
+*Analysiert überlebende Mutanten im Code-Kontext und erzeugt präzise TypeScript-Assertions (`expect(result).toBe(...)`) sowie konkrete Randwert-Test-Snippets für KI-Pair-Programmer.*
+
+### 🔮 5. Gezielte Mutanten-Risikoprognose (`predict_mutation_impact`)
+![Mutation Impact Risk Predictor](real_step2_impact_predict.png)
+*Analysiert geänderte Quelldateien aus `git diff` in unter einer Sekunde und klassifiziert das Risiko überlebender Mutanten (`HIGH`, `MEDIUM`, `LOW`) für optimale Test-Priorisierung.*
+
+### 📈 6. Historische Score Trend Analytics (`stryker://analytics/trends`)
+![Mutation Score Trend Analytics](real_step3_trend_analytics.png)
+*Verfolgt den historischen Verlauf von Mutation-Scores über mehrere Testläufe hinweg, berechnet Score-Deltas (+5.7% Steigerung) und visualisiert die Trend-Richtung.*
+
+### 🛡️ 7. 48-Stunden Anti-Spam Rate Limiter Engine
+![48h Anti Spam Rate Limiter](real_step4_antispam_limit.png)
+*Verhindert Spam bei schnellen Release-Zyklen. Sofern innerhalb von 48 Stunden ein neues Release veröffentlicht wird, fängt die Engine doppelte Social-Media-Posts automatisch ab.*
+
+### 🖼️ 8. Multi-Platform Release Announcement Dashboard (`preview.html`)
+![Release Announcement Dashboard Preview](real_step5_announcement_dash.png)
+*Interaktives HTML-Dashboard (`dist/announcements/preview.html`) zur visuellen Vorschau aller automatischen Veröffentlichungen (GitHub Discussions, DEV.to, Telegram, Discord).*
+
 ---
 
 ## 🌟 Hauptmerkmale
 
 * ⚡ **Interaktives Mutation Testing**: KI-Agenten können Mutationstests gezielt per MCP-Tool-Call anstoßen, beobachten und auswerten.
+* 🤖 **AI Mutant Auto-Remediation**: `suggest_mutant_fixes` generiert maßgeschneiderte Unit-Test Assertions für überlebte Mutanten.
+* 🔮 **Git-Diff Risikoprognose**: `predict_mutation_impact` prognostiziert in < 1s das Mutationsrisiko geänderter Quellcodedateien.
 * 🎯 **Targeted Git-Diff Executions**: Mit `run_targeted_mutation_tests` werden nur die in Git geänderten TypeScript-Dateien getestet – **spart bis zu 90% Laufzeit!**
+* 📈 **Score Trend Tracking**: Greife über `stryker://analytics/trends` auf den historischen Score-Verlauf und Score-Deltas zu.
+* 🛡️ **48-Stunden Anti-Spam Engine**: Schützt Entwickler-Kanäle automatisch vor Spam bei frequentierten Release-Zyklen.
+* ✈️ **Multi-Plattform Release Broadcasting**: Veröffentlicht Releases automatisch auf GitHub Discussions, DEV.to, Telegram & Discord (mit `preview.html` Vorschau).
 * 📦 **Live MCP Resources**: Greife über URIs wie `stryker://report/survived` oder `stryker://status` direkt auf Testdaten zu.
-* 🤖 **Agentic Testgenerierung**: Der `analyze_survived_mutants`-Prompt leitet KI-Agenten an, überlebende Mutanten nach TDD-Prinzipien mit exakten Vitest/Jest-Tests zu eliminieren.
 * 📌 **Persistente Desktop Overlays**: Endgültige Testergebnisse (Completion/Error) bleiben auf dem Bildschirm fixiert, bis sie aktiv vom Entwickler weggeklickt werden.
 * 🔊 **Dezenter Mutant Hunter Cyber-Sound**: Beinhaltet einen frei nutzbaren, synthetisierten Cyber-Chime (`assets/sounds/mutant_hunter.wav`), der das Ende der Mutantenjagd ankündigt.
-* 🧠 **Vector DB & RAG-Ready Insights**: Bündelt Testergebnisse in hochstrukturierte `MutationInsightEntity`-Objekte für automatisierte Entwickler-Fortbildungen und Skill-Gap-Analysen.
 
 ---
 
@@ -299,6 +322,7 @@ Starte den MCP Server vorher im Hintergrund via `npx stryker-mcp-server --sse` u
 | `stryker://report/latest` | `application/json` | Der vollständige Stryker Mutation Testing Report im JSON-Format. |
 | `stryker://report/summary` | `application/json` | Kompakte Zusammenfassung der Mutations-Metriken (Score, Killed, Survived). |
 | `stryker://report/survived` | `application/json` | Liste aller überlebenden Mutanten inkl. Pfad, Zeile, Mutator & Ersetzung. |
+| `stryker://analytics/trends` | `application/json` | Historische Trendanalyse der Mutationsscore-Entwicklung und Score-Deltas. |
 | `stryker://status` | `application/json` | Aktueller Ausführungsstatus von Stryker (`idle`, `running`, `completed`, `failed`). |
 
 ### 🛠️ Tools (Interaktive Steuerung)
@@ -306,9 +330,12 @@ Starte den MCP Server vorher im Hintergrund via `npx stryker-mcp-server --sse` u
 | Tool Name | Parameter | Beschreibung |
 | :--- | :--- | :--- |
 | `run_mutation_tests` | `mutate`, `concurrency`, `testRunner`, `configFile` | Startet einen vollständigen oder spezifischen Mutationstest-Lauf. |
-| `run_targeted_mutation_tests` | `baseBranch` | Erkennt in Git geänderte TypeScript-Dateien (`git diff`) und testet gezielt nur diese. |
+| `run_targeted_mutation_tests` | `commitSha`, `revision`, `fromRevision`, `toRevision` | Erkennt in Git geänderte TypeScript-Dateien (`git diff`) und testet gezielt nur diese. |
+| `suggest_mutant_fixes` | `filePath` | Generiert KI-gestützte Behebungsratschläge, konkrete Code-Assertions & Boundary-Tests für überlebte Mutanten. |
+| `predict_mutation_impact` | `changedFiles` | Analysiert geänderte Quelldateien und prognostiziert in < 1s das Risiko überlebender Mutanten (`HIGH`, `MEDIUM`, `LOW`). |
 | `get_mutation_score` | - | Ruft den aktuellen Mutationsscore und die Gesamtzusammenfassung ab. |
 | `get_survived_mutants` | `filePath` | Liefert alle überlebenden Mutanten inkl. Dateipfad, Zeile, Mutator-Typ & Ersetzungscode. |
+| `configure_desktop_notifications` | `enabled`, `persistentOverlay`, `sound` | Konfiguriert die nativen Desktop-Benachrichtigungen (Aktivieren, Ton, Persistenter Overlay Status). |
 
 ### 💡 Prompts (KI-gestützte Testgenerierung)
 
