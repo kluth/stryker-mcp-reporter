@@ -1,3 +1,10 @@
+## [1.7.2](https://github.com/kluth/stryker-mcp-reporter/compare/v1.7.1...v1.7.2) (2026-08-05)
+
+
+### Bug Fixes
+
+* **announcements:** add DEV.to canonical_url collision retry fallback and safe Hashnode HTML response handling ([069fd09](https://github.com/kluth/stryker-mcp-reporter/commit/069fd09b0a8935d0a1554914fdf4257b502fa8d8))
+
 ## [1.7.1](https://github.com/kluth/stryker-mcp-reporter/compare/v1.7.0...v1.7.1) (2026-08-05)
 
 
