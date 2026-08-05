@@ -114,8 +114,8 @@ export function mapMutatorCategory(mutatorName: string): MutatorCategory {
   if (name.includes("equality") || name.includes("logical") || name.includes("boolean")) return "Equality & Logic";
   if (name.includes("conditional") || name.includes("if") || name.includes("switch")) return "Control Flow & Conditionals";
   if (name.includes("string") || name.includes("literal")) return "String & Literals";
-  if (name.includes("block") || name.includes("statement")) return "Block & Structure";
   if (name.includes("exception") || name.includes("throw") || name.includes("catch")) return "Exception & Error Handling";
+  if (name.includes("block") || name.includes("statement")) return "Block & Structure";
   if (name.includes("array") || name.includes("collection")) return "Array & Collection";
   if (name.includes("async") || name.includes("promise") || name.includes("await")) return "Async & Promises";
   return "Unknown Category";

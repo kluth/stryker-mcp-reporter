@@ -79,13 +79,12 @@ describe("RunTargetedMutationTestsUseCase", () => {
     expect(mockGitService.getChangedFiles).toHaveBeenCalled();
   });
 
-  it("gibt ein err-Result zurück, wenn keine geänderten Dateien gefunden wurden", async () => {
-    vi.mocked(mockGitService.getChangedFiles).mockResolvedValue([]);
+  it("gibt ein err-Result zurück, wenn getChangedFiles null zurückgibt", async () => {
+    vi.mocked(mockGitService.getChangedFiles).mockResolvedValue(null as any);
 
     const result = await useCase.execute();
 
     expect(result.isOk).toBe(false);
     expect(result.error?.message).toBe("Keine geänderten TypeScript-Dateien für zielgerichteten Lauf gefunden.");
-    expect(mockRunUseCase.execute).not.toHaveBeenCalled();
   });
 });

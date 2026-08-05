@@ -183,7 +183,48 @@ describe("McpServerAdapter", () => {
     const readCall = setRequestHandlerSpy.mock.calls.find((c) => c[0] === ReadResourceRequestSchema);
     const readHandler = readCall![1] as Function;
 
+    // Resource: stryker://report/latest
+    const readLatestResult = await readHandler({ params: { uri: "stryker://report/latest" } }, {});
+    expect(readLatestResult.contents[0].text).toContain("files");
+
+    // Resource: stryker://status
+    const readStatusResult = await readHandler({ params: { uri: "stryker://status" } }, {});
+    expect(readStatusResult.contents[0].text).toContain('"state":"idle"');
+
+    // Resource: stryker://report/summary (vor Publish -> Error)
+    const readSummaryBeforeResult = await readHandler({ params: { uri: "stryker://report/summary" } }, {});
+    expect(readSummaryBeforeResult.contents[0].text).toContain("Kein Mutation-Testing-Report verfügbar");
+
+    // Resource: stryker://report/survived (vor Publish -> Error)
+    const readSurvivedBeforeResult = await readHandler({ params: { uri: "stryker://report/survived" } }, {});
+    expect(readSurvivedBeforeResult.contents[0].text).toContain("Kein Mutation-Testing-Report verfügbar");
+
+    // Resource: unbekannte URI
+    await expect(readHandler({ params: { uri: "stryker://unknown" } }, {})).rejects.toThrow("Ressource nicht gefunden");
+
+    // Tool: run_mutation_tests (success)
+    const callToolCall = setRequestHandlerSpy.mock.calls.find((c) => c[0] === CallToolRequestSchema);
+    const callToolHandler = callToolCall![1] as Function;
+    vi.mocked(runUseCase.execute).mockResolvedValue(ok(mockReport));
+    const runSuccessResult = await callToolHandler(
+      { params: { name: "run_mutation_tests", arguments: { mutate: ["src/foo.ts"] } } },
+      {},
+    );
+    expect(runSuccessResult.content[0].text).toContain("Mutationstests erfolgreich beendet");
+
+    // Tool: run_mutation_tests (error)
+    vi.mocked(runUseCase.execute).mockResolvedValue(err(new Error("Run failed")));
+    const runErrResult = await callToolHandler(
+      { params: { name: "run_mutation_tests", arguments: {} } },
+      {},
+    );
+    expect(runErrResult.isError).toBe(true);
+    expect(runErrResult.content[0].text).toContain("Run failed");
+
     reportStream.publish(mockReport);
+    const summaryRes = await readHandler({ params: { uri: "stryker://report/summary" } }, {});
+    expect(summaryRes.contents[0].text).toContain("mutationScore");
+
     const survivedRes = await readHandler({ params: { uri: "stryker://report/survived" } }, {});
     expect(survivedRes.contents[0].mimeType).toBe("application/json");
     expect(survivedRes.contents[0].text).toContain("src/foo.ts");
@@ -232,6 +273,27 @@ describe("McpServerAdapter", () => {
     expect(targetedCommitResult.content[0].text).toContain("Zielgerichtete Mutationstests erfolgreich beendet");
     expect(runTargetedUseCase.execute).toHaveBeenCalledWith({ commitSha: "a9d1206" });
 
+    // Tool: get_mutation_score (success)
+    vi.spyOn(getSummaryUseCase, "execute").mockReturnValueOnce(ok({ mutationScore: 100, killed: 10, survived: 0, totalMutants: 10, noCoverage: 0, timeout: 0, compileErrors: 0 }));
+    const scoreResult = await callToolHandler({ params: { name: "get_mutation_score", arguments: {} } }, {});
+    expect(scoreResult.content[0].text).toContain('"mutationScore": 100');
+
+    // Tool: get_mutation_score (error)
+    vi.spyOn(getSummaryUseCase, "execute").mockReturnValueOnce(err(new Error("Kein Report publiziert")));
+    const scoreErrResult = await callToolHandler({ params: { name: "get_mutation_score", arguments: {} } }, {});
+    expect(scoreErrResult.isError).toBe(true);
+    expect(scoreErrResult.content[0].text).toContain("Kein Report publiziert");
+
+    // Tool: get_survived_mutants (success)
+    vi.spyOn(getSurvivedUseCase, "execute").mockReturnValueOnce(ok([]));
+    const survivedResult = await callToolHandler({ params: { name: "get_survived_mutants", arguments: { filePath: "src/foo.ts" } } }, {});
+    expect(survivedResult.content[0].text).toBe("[]");
+
+    // Tool: get_survived_mutants (error)
+    vi.spyOn(getSurvivedUseCase, "execute").mockReturnValueOnce(err(new Error("Kein Report publiziert")));
+    const survivedErrResult = await callToolHandler({ params: { name: "get_survived_mutants", arguments: {} } }, {});
+    expect(survivedErrResult.isError).toBe(true);
+
     // Tool: configure_desktop_notifications
     const configResult = await callToolHandler(
       { params: { name: "configure_desktop_notifications", arguments: { enabled: true, sound: false } } },
@@ -274,6 +336,9 @@ describe("McpServerAdapter", () => {
 
     expect(listPromptsResult.prompts).toHaveLength(1);
     expect(listPromptsResult.prompts[0].name).toBe("analyze_survived_mutants");
+    expect(listPromptsResult.prompts[0].arguments).toHaveLength(1);
+    expect(listPromptsResult.prompts[0].arguments[0].name).toBe("filePath");
+    expect(listPromptsResult.prompts[0].arguments[0].required).toBe(false);
 
     const getPromptCall = setRequestHandlerSpy.mock.calls.find((c) => c[0] === GetPromptRequestSchema);
     const getPromptHandler = getPromptCall![1] as Function;

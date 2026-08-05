@@ -26,7 +26,7 @@ export class StrykerCliRunnerAdapter implements StrykerRunnerPort {
     if (options?.mutate && options.mutate.length > 0) {
       strykerConfig.mutate = options.mutate;
     }
-    if (options?.concurrency && options.concurrency > 0) {
+    if (typeof options?.concurrency === "number" && options.concurrency > 0) {
       strykerConfig.concurrency = options.concurrency;
     }
     if (options?.reporters && options.reporters.length > 0) {

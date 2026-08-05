@@ -11,13 +11,15 @@ describe("GitCliAdapter", () => {
     debug: vi.fn(),
   } as unknown as Logger;
 
-  it("gibt geänderte TypeScript-Dateien aus `git diff` für eine Revision zurück", async () => {
-    const execCommand = vi.fn().mockResolvedValue("src/foo.ts\nsrc/bar.ts\nREADME.md\nsrc/test.spec.ts\n");
+  it("gibt geänderte TypeScript-Dateien aus `git diff` für eine Revision zurück und filtert .spec.ts und .d.ts strikt", async () => {
+    const execCommand = vi.fn().mockResolvedValue("src/foo.ts\nsrc/bar.ts\nREADME.md\nsrc/test.spec.ts\nsrc/types.d.ts\n");
     const adapter = new GitCliAdapter(loggerMock, execCommand);
 
     const files = await adapter.getChangedFiles("HEAD~2");
 
     expect(files).toEqual(["src/foo.ts", "src/bar.ts"]);
+    expect(files).not.toContain("src/test.spec.ts");
+    expect(files).not.toContain("src/types.d.ts");
     expect(execCommand).toHaveBeenCalledWith("git diff --name-only HEAD~2");
   });
 
@@ -42,12 +44,12 @@ describe("GitCliAdapter", () => {
   });
 
   it("fällt auf `git status --porcelain` zurück, wenn kein Argument übergeben wird", async () => {
-    const execCommand = vi.fn().mockResolvedValue(" M src/calculator.ts\n?? src/new-file.ts\n M package.json\n");
+    const execCommand = vi.fn().mockResolvedValue(" M src/calculator.ts\n?? src/new-file.ts\nD  src/deleted.ts\n M package.json\n");
     const adapter = new GitCliAdapter(loggerMock, execCommand);
 
     const files = await adapter.getChangedFiles();
 
-    expect(files).toEqual(["src/calculator.ts", "src/new-file.ts"]);
+    expect(files).toEqual(["src/calculator.ts", "src/new-file.ts", "src/deleted.ts"]);
     expect(execCommand).toHaveBeenCalledWith("git status --porcelain");
   });
 
