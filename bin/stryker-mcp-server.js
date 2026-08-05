@@ -2,7 +2,8 @@
 import { startStandaloneServer } from "../dist/index.js";
 
 const args = process.argv.slice(2);
-const isStdio = args.includes("--stdio") || (!args.includes("--sse") && !process.stdin.isTTY);
+const isSse = args.includes("--sse");
+const mode = isSse ? "sse" : "stdio";
 
 const stdioLogger = {
   info: (msg) => console.error(`[INFO] ${msg}`),
@@ -22,8 +23,7 @@ const sseLogger = {
   fatal: (msg, err) => console.error(msg, err || ""),
 };
 
-const mode = isStdio ? "stdio" : "sse";
-const logger = isStdio ? stdioLogger : sseLogger;
+const logger = isSse ? sseLogger : stdioLogger;
 
 startStandaloneServer(logger, undefined, mode).catch((err) => {
   console.error("Fataler Fehler beim Start des Stryker MCP Servers:", err);
