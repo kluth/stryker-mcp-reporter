@@ -418,12 +418,11 @@ async function publishIfConfigured() {
       let publicationId = process.env.HASHNODE_PUBLICATION_ID?.trim();
       const patToken = process.env.HASHNODE_PAT.trim();
 
-      const browserHeaders = {
+      const hashnodeHeaders = {
         "Content-Type": "application/json",
         Authorization: patToken,
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         Accept: "application/json, text/plain, */*",
-        "Accept-Language": "en-US,en;q=0.9",
       };
 
       // Auto-discover publication ID if not provided explicitly
@@ -432,22 +431,11 @@ async function publishIfConfigured() {
         try {
           let meRes = await fetch("https://gql.hashnode.com", {
             method: "POST",
-            headers: browserHeaders,
+            headers: hashnodeHeaders,
             body: JSON.stringify({
               query: `query { me { publications(first: 5) { edges { node { id title domain } } } } }`,
             }),
           });
-
-          // Retry with Bearer prefix if raw token returned HTTP 401
-          if (meRes.status === 401 || meRes.status === 403) {
-            meRes = await fetch("https://gql.hashnode.com", {
-              method: "POST",
-              headers: { ...browserHeaders, Authorization: `Bearer ${patToken}` },
-              body: JSON.stringify({
-                query: `query { me { publications(first: 5) { edges { node { id title domain } } } } }`,
-              }),
-            });
-          }
 
           const meText = await meRes.text();
           if (meRes.ok && !meText.trim().startsWith("<")) {
@@ -455,9 +443,11 @@ async function publishIfConfigured() {
             publicationId = meData.data?.me?.publications?.edges?.[0]?.node?.id;
             if (publicationId) {
               console.log(`✅ Hashnode Publication ID automatisch ermittelt: ${publicationId}`);
+            } else {
+              console.warn("⚠️ Hashnode me Query Rückgabe:", meText);
             }
           } else {
-            console.warn(`⚠️ Hashnode me Query (HTTP ${meRes.status}):`, meText.substring(0, 200));
+            console.warn(`⚠️ Hashnode me Query (HTTP ${meRes.status}):`, meText.substring(0, 250));
           }
         } catch (meErr) {
           console.warn("⚠️ Hashnode me Query Fehler:", meErr.message);
@@ -467,7 +457,8 @@ async function publishIfConfigured() {
       if (!publicationId) {
         console.error("❌ Keine Hashnode Publication ID gefunden. Bitte trage das GitHub Secret 'HASHNODE_PUBLICATION_ID' ein (deine Blog ID aus den Hashnode Einstellungen).");
       } else {
-        // Attempt 1: Hashnode GraphQL v2 API (gql.hashnode.com)
+        // Hashnode GraphQL v2 API publishPost Mutation
+        // PublishPostTagInput requires ONLY slug field: [{ slug: "typescript" }, { slug: "testing" }]
         const hashnodeMutationV2 = {
           query: `
             mutation PublishPost($input: PublishPostInput!) {
@@ -489,45 +480,34 @@ async function publishIfConfigured() {
                 coverImageURL: `${repoUrl}/raw/main/real_stryker_html_report.png`,
               },
               tags: [
-                { slug: "typescript", name: "TypeScript" },
-                { slug: "testing", name: "Testing" },
-                { slug: "ai", name: "Artificial Intelligence" },
+                { slug: "typescript" },
+                { slug: "testing" },
+                { slug: "ai" },
               ],
             },
           },
         };
 
-        let authHeader = patToken;
-        let hashnodeRes = await fetch("https://gql.hashnode.com", {
+        const hashnodeRes = await fetch("https://gql.hashnode.com", {
           method: "POST",
-          headers: { ...browserHeaders, Authorization: authHeader },
+          headers: hashnodeHeaders,
           body: JSON.stringify(hashnodeMutationV2),
         });
 
-        if (hashnodeRes.status === 401 || hashnodeRes.status === 403) {
-          authHeader = `Bearer ${patToken}`;
-          hashnodeRes = await fetch("https://gql.hashnode.com", {
-            method: "POST",
-            headers: { ...browserHeaders, Authorization: authHeader },
-            body: JSON.stringify(hashnodeMutationV2),
-          });
-        }
+        const hashText = await hashnodeRes.text();
+        console.log(`📤 Hashnode Raw API HTTP Status: ${hashnodeRes.status}`);
 
-        let hashText = await hashnodeRes.text();
-        let success = false;
-
-        if (!hashText.trim().startsWith("<") && hashnodeRes.ok) {
+        if (hashText.trim().startsWith("<")) {
+          console.error(`❌ Hashnode GraphQL API antwortete mit HTML (HTTP ${hashnodeRes.status}):`, hashText.substring(0, 250));
+        } else {
           const result = JSON.parse(hashText);
           if (result.data?.publishPost?.post?.url) {
-            console.log(`✅ Hashnode v2 Artikel erfolgreich veröffentlicht: ${result.data.publishPost.post.url}`);
-            success = true;
+            console.log(`✅ Hashnode Artikel erfolgreich veröffentlicht: ${result.data.publishPost.post.url}`);
           } else if (result.errors) {
-            console.warn("⚠️ Hashnode v2 API Fehler:", JSON.stringify(result.errors));
+            console.error("❌ Hashnode GraphQL API Fehler:", JSON.stringify(result.errors, null, 2));
+          } else {
+            console.warn("⚠️ Hashnode API Antwort:", hashText);
           }
-        }
-
-        if (!success) {
-          console.error(`❌ Hashnode Veröffentlichung fehlgeschlagen (HTTP ${hashnodeRes.status}): ${hashText.substring(0, 300)}`);
         }
       }
     } catch (err) {
