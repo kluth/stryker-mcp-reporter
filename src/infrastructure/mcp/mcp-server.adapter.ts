@@ -19,6 +19,7 @@ import type { RunMutationTestsUseCase } from "../../core/application/run-mutatio
 import type { RunTargetedMutationTestsUseCase } from "../../core/application/run-targeted-mutation-tests.use-case.js";
 import type { GetSurvivedMutantsUseCase } from "../../core/application/get-survived-mutants.use-case.js";
 import type { GetMutationSummaryUseCase } from "../../core/application/get-mutation-summary.use-case.js";
+import type { NotificationServicePort } from "../../core/domain/notification-service.port.js";
 import { type Result, ok, err } from "../../core/domain/result.js";
 
 export const SERVER_INFO = { name: "stryker-mcp-server", version: "1.0.0" };
@@ -36,6 +37,7 @@ export class McpServerAdapter {
     private readonly getSurvivedUseCase: GetSurvivedMutantsUseCase,
     private readonly getSummaryUseCase: GetMutationSummaryUseCase,
     private readonly port: number = 3000,
+    private readonly notificationService?: NotificationServicePort,
   ) {
     this.mcpServer = new Server(SERVER_INFO, {
       capabilities: {
@@ -291,6 +293,27 @@ export class McpServerAdapter {
             },
           },
         },
+        {
+          name: "configure_desktop_notifications",
+          description: "Konfiguriert die nativen Desktop-Benachrichtigungen (Aktivieren, Ton, Persistenter Status).",
+          inputSchema: {
+            type: "object",
+            properties: {
+              enabled: {
+                type: "boolean",
+                description: "Benachrichtigungen aktivieren oder deaktivieren.",
+              },
+              persistentOverlay: {
+                type: "boolean",
+                description: "Persistente Floating-Benachrichtigung aktivieren.",
+              },
+              sound: {
+                type: "boolean",
+                description: "Benachrichtigungston aktivieren.",
+              },
+            },
+          },
+        },
       ],
     }));
 
@@ -406,6 +429,20 @@ export class McpServerAdapter {
             {
               type: "text",
               text: JSON.stringify(survivedResult.value, null, 2),
+            },
+          ],
+        };
+      }
+
+      if (name === "configure_desktop_notifications") {
+        const configOptions = args as { enabled?: boolean; persistentOverlay?: boolean; sound?: boolean };
+        this.notificationService?.configure(configOptions);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Desktop-Benachrichtigungen erfolgreich aktualisiert.\nOptionen: ${JSON.stringify(configOptions)}`,
             },
           ],
         };

@@ -11,6 +11,7 @@ import { GetMutationSummaryUseCase } from "./core/application/get-mutation-summa
 import { McpServerAdapter } from "./infrastructure/mcp/mcp-server.adapter.js";
 import { StrykerCliRunnerAdapter } from "./infrastructure/stryker/stryker-cli-runner.adapter.js";
 import { GitCliAdapter } from "./infrastructure/git/git-cli.adapter.js";
+import { DesktopNotifierAdapter } from "./infrastructure/notification/desktop-notifier.adapter.js";
 import { ReportStream } from "./core/domain/report-stream.js";
 import { ExecutionStatusStream } from "./core/domain/execution-status.js";
 import type { Result } from "./core/domain/result.js";
@@ -28,7 +29,9 @@ export function createMcpServerAdapter(logger: Logger, port: number = 3000): Mcp
 
   const strykerRunner = new StrykerCliRunnerAdapter(logger);
   const gitService = new GitCliAdapter(logger);
-  const runUseCase = new RunMutationTestsUseCase(reportStream, statusStream, strykerRunner);
+  const notifierService = new DesktopNotifierAdapter(logger);
+
+  const runUseCase = new RunMutationTestsUseCase(reportStream, statusStream, strykerRunner, notifierService);
   const runTargetedUseCase = new RunTargetedMutationTestsUseCase(gitService, runUseCase);
   const getSurvivedUseCase = new GetSurvivedMutantsUseCase(reportStream);
   const getSummaryUseCase = new GetMutationSummaryUseCase(reportStream);
@@ -42,6 +45,7 @@ export function createMcpServerAdapter(logger: Logger, port: number = 3000): Mcp
     getSurvivedUseCase,
     getSummaryUseCase,
     port,
+    notifierService,
   );
 }
 
@@ -55,7 +59,9 @@ function mcpReporterFactory(logger: Logger): McpReporter {
   const publishUseCase = new PublishReportUseCase(reportStream);
   const strykerRunner = new StrykerCliRunnerAdapter(logger);
   const gitService = new GitCliAdapter(logger);
-  const runUseCase = new RunMutationTestsUseCase(reportStream, statusStream, strykerRunner);
+  const notifierService = new DesktopNotifierAdapter(logger);
+
+  const runUseCase = new RunMutationTestsUseCase(reportStream, statusStream, strykerRunner, notifierService);
   const runTargetedUseCase = new RunTargetedMutationTestsUseCase(gitService, runUseCase);
   const getSurvivedUseCase = new GetSurvivedMutantsUseCase(reportStream);
   const getSummaryUseCase = new GetMutationSummaryUseCase(reportStream);
@@ -69,6 +75,7 @@ function mcpReporterFactory(logger: Logger): McpReporter {
     getSurvivedUseCase,
     getSummaryUseCase,
     3000,
+    notifierService,
   );
 
   return new McpReporter(logger, publishUseCase, serverAdapter);
@@ -89,6 +96,7 @@ export async function startStandaloneServer(
 
 export * from "./core/domain/mutation-report.js";
 export * from "./core/domain/execution-status.js";
+export * from "./core/domain/notification-service.port.js";
 export * from "./core/domain/stryker-runner.port.js";
 export * from "./core/domain/git-service.port.js";
 export * from "./core/domain/result.js";

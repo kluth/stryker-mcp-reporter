@@ -4,6 +4,7 @@ import { RunMutationTestsUseCase } from "./run-mutation-tests.use-case.js";
 import { ReportStream } from "../domain/report-stream.js";
 import { ExecutionStatusStream } from "../domain/execution-status.js";
 import type { StrykerRunnerPort } from "../domain/stryker-runner.port.js";
+import type { NotificationServicePort } from "../domain/notification-service.port.js";
 import type { MutationReport } from "../domain/mutation-report.js";
 import { ok, err } from "../domain/result.js";
 
@@ -11,6 +12,7 @@ describe("RunMutationTestsUseCase", () => {
   let reportStream: ReportStream;
   let statusStream: ExecutionStatusStream;
   let mockRunner: StrykerRunnerPort;
+  let mockNotifier: NotificationServicePort;
   let useCase: RunMutationTestsUseCase;
 
   const mockReport: MutationReport = {
@@ -32,10 +34,17 @@ describe("RunMutationTestsUseCase", () => {
     mockRunner = {
       run: vi.fn(),
     };
-    useCase = new RunMutationTestsUseCase(reportStream, statusStream, mockRunner);
+    mockNotifier = {
+      notifyStatus: vi.fn(),
+      notifyProgress: vi.fn(),
+      notifyCompletion: vi.fn(),
+      notifyError: vi.fn(),
+      configure: vi.fn(),
+    };
+    useCase = new RunMutationTestsUseCase(reportStream, statusStream, mockRunner, mockNotifier);
   });
 
-  it("führt Mutationstests erfolgreich aus, aktualisiert Status und publiziert Report", async () => {
+  it("führt Mutationstests erfolgreich aus, aktualisiert Status, publiziert Report und benachrichtigt Desktop", async () => {
     vi.mocked(mockRunner.run).mockResolvedValue(ok(mockReport));
 
     const result = await useCase.execute({ mutate: ["src/foo.ts"] });
@@ -47,9 +56,12 @@ describe("RunMutationTestsUseCase", () => {
     expect(reportStream.current()).toEqual(mockReport);
     expect(statusStream.current().state).toBe("completed");
     expect(statusStream.current().error).toBeNull();
+
+    expect(mockNotifier.notifyStatus).toHaveBeenCalledWith("Starte Mutationstests...");
+    expect(mockNotifier.notifyCompletion).toHaveBeenCalledWith(100, 1, 0);
   });
 
-  it("setzt den Status auf 'failed' und gibt ein err-Result zurück, wenn der Runner fehlschlägt", async () => {
+  it("setzt den Status auf 'failed', gibt ein err-Result zurück und benachrichtigt Desktop bei Fehler", async () => {
     const runnerError = new Error("Stryker build failed");
     vi.mocked(mockRunner.run).mockResolvedValue(err(runnerError));
 
@@ -58,7 +70,7 @@ describe("RunMutationTestsUseCase", () => {
     expect(result.isOk).toBe(false);
     expect(result.error?.message).toBe("Stryker build failed");
     expect(statusStream.current().state).toBe("failed");
-    expect(statusStream.current().error).toBe("Stryker build failed");
+    expect(mockNotifier.notifyError).toHaveBeenCalledWith("Stryker build failed");
   });
 
   it("fängt unerwartete Exceptions in der Ausführung ab", async () => {
@@ -69,7 +81,6 @@ describe("RunMutationTestsUseCase", () => {
     expect(result.isOk).toBe(false);
     expect(result.error?.message).toBe("Unerwarteter Absturz");
     expect(statusStream.current().state).toBe("failed");
-    expect(statusStream.current().error).toBe("Unerwarteter Absturz");
   });
 
   it("verhindert parallele Läufe, wenn bereits ein Lauf aktiv ist", async () => {

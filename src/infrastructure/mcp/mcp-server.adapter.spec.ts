@@ -207,7 +207,7 @@ describe("McpServerAdapter", () => {
     const listToolsHandler = listToolsCall![1] as Function;
     const listToolsResult = await listToolsHandler({}, {});
 
-    expect(listToolsResult.tools).toHaveLength(4);
+    expect(listToolsResult.tools).toHaveLength(5);
     const toolNames = listToolsResult.tools.map((t: any) => t.name);
     expect(toolNames).toContain("run_targeted_mutation_tests");
 
@@ -231,6 +231,13 @@ describe("McpServerAdapter", () => {
     );
     expect(targetedCommitResult.content[0].text).toContain("Zielgerichtete Mutationstests erfolgreich beendet");
     expect(runTargetedUseCase.execute).toHaveBeenCalledWith({ commitSha: "a9d1206" });
+
+    // Tool: configure_desktop_notifications
+    const configResult = await callToolHandler(
+      { params: { name: "configure_desktop_notifications", arguments: { enabled: true, sound: false } } },
+      {},
+    );
+    expect(configResult.content[0].text).toContain("Desktop-Benachrichtigungen erfolgreich aktualisiert");
 
     // Tool: run_targeted_mutation_tests mit Fehler
     vi.mocked(runTargetedUseCase.execute).mockResolvedValue(err(new Error("Keine Dateien geändert")));
