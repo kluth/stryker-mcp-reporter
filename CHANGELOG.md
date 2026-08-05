@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.4.0...v1.5.0) (2026-08-05)
+
+
+### Features
+
+* **notification:** add cross-platform desktop notifications and configure_desktop_notifications MCP tool ([aae3b42](https://github.com/kluth/stryker-mcp-reporter/commit/aae3b420bd7368c3a0a5beb9350519e1fce04f88))
+
 # [1.4.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.3.0...v1.4.0) (2026-08-05)
 
 
