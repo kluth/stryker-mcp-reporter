@@ -12,7 +12,8 @@
   },
   "files": [
     "dist",
-    "bin"
+    "bin",
+    "assets"
   ],
   "scripts": {
     "prebuild": "rimraf dist",

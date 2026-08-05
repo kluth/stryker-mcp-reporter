@@ -47,4 +47,11 @@ describe("Plugin Index (Composition Root)", () => {
     expect(result.isOk).toBe(true);
     expect(startSpy).toHaveBeenCalled();
   });
+
+  it("sollte den Standalone-Server im stdio Modus starten können", async () => {
+    const startStdioSpy = vi.spyOn(McpServerAdapter.prototype, "startStdio").mockResolvedValue({ isOk: true, value: undefined } as any);
+    const result = await startStandaloneServer(loggerMock, undefined, "stdio");
+    expect(result.isOk).toBe(true);
+    expect(startStdioSpy).toHaveBeenCalled();
+  });
 });

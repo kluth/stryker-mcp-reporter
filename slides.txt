@@ -1,0 +1,11 @@
+file 'C:/Users/kluth/.gemini/antigravity-cli/brain/d4058f7b-dfc6-4cc1-85f4-052c3a505031/real_stryker_html_report.png'
+duration 120
+file 'C:/Users/kluth/.gemini/antigravity-cli/brain/d4058f7b-dfc6-4cc1-85f4-052c3a505031/real_terminal_vitest_coverage.png'
+duration 120
+file 'C:/Users/kluth/.gemini/antigravity-cli/brain/d4058f7b-dfc6-4cc1-85f4-052c3a505031/real_stryker_mcp_adapter_report.png'
+duration 120
+file 'C:/Users/kluth/.gemini/antigravity-cli/brain/d4058f7b-dfc6-4cc1-85f4-052c3a505031/real_stryker_html_report.png'
+duration 120
+file 'C:/Users/kluth/.gemini/antigravity-cli/brain/d4058f7b-dfc6-4cc1-85f4-052c3a505031/real_terminal_vitest_coverage.png'
+duration 120
+file 'C:/Users/kluth/.gemini/antigravity-cli/brain/d4058f7b-dfc6-4cc1-85f4-052c3a505031/real_terminal_vitest_coverage.png'

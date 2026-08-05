@@ -50,6 +50,8 @@ Stryker mutiert deinen Quellcode (z. B. verwandelt es `>` in `>=`, löscht Rück
 * 🎯 **Targeted Git-Diff Executions**: Mit `run_targeted_mutation_tests` werden nur die in Git geänderten TypeScript-Dateien getestet – **spart bis zu 90% Laufzeit!**
 * 📦 **Live MCP Resources**: Greife über URIs wie `stryker://report/survived` oder `stryker://status` direkt auf Testdaten zu.
 * 🤖 **Agentic Testgenerierung**: Der `analyze_survived_mutants`-Prompt leitet KI-Agenten an, überlebende Mutanten nach TDD-Prinzipien mit exakten Vitest/Jest-Tests zu eliminieren.
+* 📌 **Persistente Desktop Overlays**: Endgültige Testergebnisse (Completion/Error) bleiben auf dem Bildschirm fixiert, bis sie aktiv vom Entwickler weggeklickt werden.
+* 🔊 **Dezenter Mutant Hunter Cyber-Sound**: Beinhaltet einen frei nutzbaren, synthetisierten Cyber-Chime (`assets/sounds/mutant_hunter.wav`), der das Ende der Mutantenjagd ankündigt.
 * 🧠 **Vector DB & RAG-Ready Insights**: Bündelt Testergebnisse in hochstrukturierte `MutationInsightEntity`-Objekte für automatisierte Entwickler-Fortbildungen und Skill-Gap-Analysen.
 
 ---

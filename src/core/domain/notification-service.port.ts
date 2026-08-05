@@ -4,6 +4,7 @@ export interface NotificationOptions {
   enabled?: boolean;
   persistentOverlay?: boolean;
   sound?: boolean;
+  customSoundPath?: string;
 }
 
 export interface NotificationServicePort {
