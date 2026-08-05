@@ -17,7 +17,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc",
-    "prepare": "npm run build",
+    "prepack": "npm run build",
     "test": "vitest run",
     "test:e2e": "node e2e-test.js",
     "test:mutation": "stryker run"
