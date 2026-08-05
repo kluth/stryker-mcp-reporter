@@ -1,3 +1,10 @@
+## [1.5.4](https://github.com/kluth/stryker-mcp-reporter/compare/v1.5.3...v1.5.4) (2026-08-05)
+
+
+### Bug Fixes
+
+* **build:** replace prepare script with prepack to prevent stdout pollution during npx execution ([990e10f](https://github.com/kluth/stryker-mcp-reporter/commit/990e10f8be6471d3bd408382427980e708dec2fd))
+
 ## [1.5.3](https://github.com/kluth/stryker-mcp-reporter/compare/v1.5.2...v1.5.3) (2026-08-05)
 
 

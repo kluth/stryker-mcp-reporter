@@ -1,6 +1,6 @@
 {
   "name": "stryker-mcp-reporter",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "description": "Ein Stryker Reporter Plugin, das Mutation Testing Ergebnisse nativ über das Model Context Protocol (MCP) bereitstellt.",
   "main": "dist/index.js",
   "module": "dist/index.js",
