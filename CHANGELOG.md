@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/kluth/stryker-mcp-reporter/compare/v1.5.0...v1.5.1) (2026-08-05)
+
+
+### Bug Fixes
+
+* **bin:** add type module and prepare script for npx execution ([ca415f9](https://github.com/kluth/stryker-mcp-reporter/commit/ca415f9e7d97ab860516cd6cd0f674f67ffae3d9))
+
 # [1.5.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.4.0...v1.5.0) (2026-08-05)
 
 
