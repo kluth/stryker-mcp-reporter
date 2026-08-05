@@ -102,7 +102,10 @@ jobs:
       - name: Install Dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Generate Multi-Platform Release Announcements
+      - name: Generate & Publish Multi-Platform Release Announcements
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
         run: node scripts/generate_release_announcements.js
 
       - name: Upload Announcement Artifacts
@@ -111,10 +114,4 @@ jobs:
           name: release-announcements
           path: dist/announcements/
 
-      - name: Post to Discord Webhook (if configured)
-        if: env.DISCORD_WEBHOOK_URL != ''
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: |
-          curl -H "Content-Type: application/json" -X POST -d @dist/announcements/discord_webhook.json "$DISCORD_WEBHOOK_URL"
 

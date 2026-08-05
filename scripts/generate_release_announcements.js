@@ -187,7 +187,7 @@ Feedback and contributions welcome!
 
 fs.writeFileSync(path.join(outputDir, "reddit_post.md"), redditPost);
 
-// 4. Discord / Slack Webhook Payload JSON
+// 4. Discord Webhook Payload JSON
 const discordPayload = {
   username: "Stryker MCP Release Bot",
   avatar_url: `${repoUrl}/raw/main/real_stryker_html_report.png`,
@@ -226,3 +226,63 @@ console.log("  - dist/announcements/github_discussion.md");
 console.log("  - dist/announcements/devto_article.md");
 console.log("  - dist/announcements/reddit_post.md");
 console.log("  - dist/announcements/discord_webhook.json");
+
+// Automated Publishing if Secrets are Present in Environment
+async function publishIfConfigured() {
+  // DEV.to Auto-Publishing
+  if (process.env.DEVTO_API_KEY) {
+    try {
+      console.log("📤 Veröffentliche Artikel auf DEV.to...");
+      const devToRes = await fetch("https://dev.to/api/articles", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": process.env.DEVTO_API_KEY,
+        },
+        body: JSON.stringify({
+          article: {
+            title: `Announcing stryker-mcp-reporter v${version}: 100% Mutation Score & Native MCP for AI Coding Agents`,
+            published: true,
+            body_markdown: devToArticle.replace(/^---[\s\S]*?---\n/, ""), // Remove frontmatter
+            tags: ["typescript", "testing", "mcp", "ai"],
+            main_image: `${repoUrl}/raw/main/real_stryker_html_report.png`,
+            canonical_url: repoUrl,
+          },
+        }),
+      });
+
+      if (devToRes.ok) {
+        const data = await devToRes.json();
+        console.log(`✅ DEV.to Artikel erfolgreich veröffentlicht: ${data.url}`);
+      } else {
+        const errText = await devToRes.text();
+        console.error(`❌ DEV.to Veröffentlichung fehlgeschlagen: ${devToRes.status} ${errText}`);
+      }
+    } catch (err) {
+      console.error("❌ Fehler bei DEV.to Veröffentlichung:", err.message);
+    }
+  }
+
+  // Discord Auto-Publishing
+  if (process.env.DISCORD_WEBHOOK_URL) {
+    try {
+      console.log("📤 Sende Release-Card an Discord Webhook...");
+      const discordRes = await fetch(process.env.DISCORD_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(discordPayload),
+      });
+
+      if (discordRes.ok) {
+        console.log("✅ Discord Benachrichtigung erfolgreich gesendet.");
+      } else {
+        console.error(`❌ Discord Webhook fehlgeschlagen: ${discordRes.status}`);
+      }
+    } catch (err) {
+      console.error("❌ Fehler beim Senden des Discord Webhooks:", err.message);
+    }
+  }
+}
+
+await publishIfConfigured();
+
