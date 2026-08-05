@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/kluth/stryker-mcp-reporter/compare/v1.8.1...v1.8.2) (2026-08-05)
+
+
+### Bug Fixes
+
+* **announcements:** correct Hashnode PublishPostTagInput schema and log raw API responses ([3305c2f](https://github.com/kluth/stryker-mcp-reporter/commit/3305c2fce561887243eaa76f440d36ce1f1d9c14))
+
 ## [1.8.1](https://github.com/kluth/stryker-mcp-reporter/compare/v1.8.0...v1.8.1) (2026-08-05)
 
 
