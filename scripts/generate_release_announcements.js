@@ -229,7 +229,9 @@ console.log("  - dist/announcements/discord_webhook.json");
 
 // Automated Publishing if Secrets are Present in Environment
 async function publishIfConfigured() {
-  // DEV.to Auto-Publishing
+  console.log("\n🚀 Starte automatische Multi-Plattform Veröffentlichung...");
+
+  // 1. DEV.to Auto-Publishing
   if (process.env.DEVTO_API_KEY) {
     try {
       console.log("📤 Veröffentliche Artikel auf DEV.to...");
@@ -238,6 +240,7 @@ async function publishIfConfigured() {
         headers: {
           "Content-Type": "application/json",
           "api-key": process.env.DEVTO_API_KEY,
+          "User-Agent": "stryker-mcp-reporter/1.6.0 (https://github.com/kluth/stryker-mcp-reporter)",
         },
         body: JSON.stringify({
           article: {
@@ -251,97 +254,139 @@ async function publishIfConfigured() {
         }),
       });
 
+      const responseText = await devToRes.text();
       if (devToRes.ok) {
-        const data = await devToRes.json();
+        const data = JSON.parse(responseText);
         console.log(`✅ DEV.to Artikel erfolgreich veröffentlicht: ${data.url}`);
       } else {
-        const errText = await devToRes.text();
-        console.error(`❌ DEV.to Veröffentlichung fehlgeschlagen: ${devToRes.status} ${errText}`);
+        console.error(`❌ DEV.to Veröffentlichung fehlgeschlagen (HTTP ${devToRes.status}): ${responseText}`);
       }
     } catch (err) {
       console.error("❌ Fehler bei DEV.to Veröffentlichung:", err.message);
     }
+  } else {
+    console.log("ℹ️ DEVTO_API_KEY nicht konfiguriert -> DEV.to Übersprungen.");
   }
 
-  // Hashnode Auto-Publishing (GraphQL API v2)
-  if (process.env.HASHNODE_PAT && process.env.HASHNODE_PUBLICATION_ID) {
+  // 2. Hashnode Auto-Publishing (GraphQL API v2)
+  if (process.env.HASHNODE_PAT) {
     try {
       console.log("📤 Veröffentliche Artikel auf Hashnode...");
-      const hashnodeMutation = {
-        query: `
-          mutation PublishPost($input: PublishPostInput!) {
-            publishPost(input: $input) {
-              post {
-                id
-                title
-                url
+      let publicationId = process.env.HASHNODE_PUBLICATION_ID;
+
+      // Auto-discover publication ID if not provided explicitly
+      if (!publicationId) {
+        console.log("🔍 Ermittle Hashnode Publication ID via GraphQL me Query...");
+        const meRes = await fetch("https://gql.hashnode.com", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: process.env.HASHNODE_PAT,
+            "User-Agent": "stryker-mcp-reporter",
+          },
+          body: JSON.stringify({
+            query: `query { me { publications(first: 5) { edges { node { id title domain } } } } }`,
+          }),
+        });
+
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          publicationId = meData.data?.me?.publications?.edges?.[0]?.node?.id;
+          if (publicationId) {
+            console.log(`✅ Hashnode Publication ID automatisch ermittelt: ${publicationId}`);
+          }
+        }
+      }
+
+      if (!publicationId) {
+        console.error("❌ Keine Hashnode Publication ID gefunden. Bitte HASHNODE_PUBLICATION_ID angeben.");
+      } else {
+        const hashnodeMutation = {
+          query: `
+            mutation PublishPost($input: PublishPostInput!) {
+              publishPost(input: $input) {
+                post {
+                  id
+                  title
+                  url
+                }
               }
             }
-          }
-        `,
-        variables: {
-          input: {
-            title: `Announcing stryker-mcp-reporter v${version}: 100% Mutation Score & Native MCP for AI Coding Agents`,
-            contentMarkdown: devToArticle.replace(/^---[\s\S]*?---\n/, ""),
-            publicationId: process.env.HASHNODE_PUBLICATION_ID,
-            coverImageOptions: {
-              coverImageURL: `${repoUrl}/raw/main/real_stryker_html_report.png`,
+          `,
+          variables: {
+            input: {
+              title: `Announcing stryker-mcp-reporter v${version}: 100% Mutation Score & Native MCP for AI Coding Agents`,
+              contentMarkdown: devToArticle.replace(/^---[\s\S]*?---\n/, ""),
+              publicationId,
+              coverImageOptions: {
+                coverImageURL: `${repoUrl}/raw/main/real_stryker_html_report.png`,
+              },
+              tags: [
+                { slug: "typescript", name: "TypeScript" },
+                { slug: "testing", name: "Testing" },
+                { slug: "ai", name: "Artificial Intelligence" },
+              ],
             },
-            tags: [
-              { slug: "typescript", name: "TypeScript" },
-              { slug: "testing", name: "Testing" },
-              { slug: "ai", name: "Artificial Intelligence" },
-            ],
           },
-        },
-      };
+        };
 
-      const hashnodeRes = await fetch("https://gql.hashnode.com", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: process.env.HASHNODE_PAT,
-        },
-        body: JSON.stringify(hashnodeMutation),
-      });
+        const hashnodeRes = await fetch("https://gql.hashnode.com", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: process.env.HASHNODE_PAT,
+            "User-Agent": "stryker-mcp-reporter",
+          },
+          body: JSON.stringify(hashnodeMutation),
+        });
 
-      if (hashnodeRes.ok) {
-        const result = await hashnodeRes.json();
-        if (result.errors) {
-          console.error("❌ Hashnode API-Fehler:", JSON.stringify(result.errors));
+        const hashText = await hashnodeRes.text();
+        if (hashnodeRes.ok) {
+          const result = JSON.parse(hashText);
+          if (result.errors) {
+            console.error("❌ Hashnode GraphQL Fehler:", JSON.stringify(result.errors));
+          } else {
+            console.log(`✅ Hashnode Artikel erfolgreich veröffentlicht: ${result.data?.publishPost?.post?.url}`);
+          }
         } else {
-          console.log(`✅ Hashnode Artikel erfolgreich veröffentlicht: ${result.data?.publishPost?.post?.url}`);
+          console.error(`❌ Hashnode Veröffentlichung fehlgeschlagen (HTTP ${hashnodeRes.status}): ${hashText}`);
         }
-      } else {
-        const errText = await hashnodeRes.text();
-        console.error(`❌ Hashnode Veröffentlichung fehlgeschlagen: ${hashnodeRes.status} ${errText}`);
       }
     } catch (err) {
       console.error("❌ Fehler bei Hashnode Veröffentlichung:", err.message);
     }
+  } else {
+    console.log("ℹ️ HASHNODE_PAT nicht konfiguriert -> Hashnode Übersprungen.");
   }
 
-  // Discord Auto-Publishing
+  // 3. Discord Auto-Publishing
   if (process.env.DISCORD_WEBHOOK_URL) {
     try {
       console.log("📤 Sende Release-Card an Discord Webhook...");
       const discordRes = await fetch(process.env.DISCORD_WEBHOOK_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "stryker-mcp-reporter",
+        },
         body: JSON.stringify(discordPayload),
       });
 
       if (discordRes.ok) {
         console.log("✅ Discord Benachrichtigung erfolgreich gesendet.");
       } else {
-        console.error(`❌ Discord Webhook fehlgeschlagen: ${discordRes.status}`);
+        const discText = await discordRes.text();
+        console.error(`❌ Discord Webhook fehlgeschlagen (HTTP ${discordRes.status}): ${discText}`);
       }
     } catch (err) {
       console.error("❌ Fehler beim Senden des Discord Webhooks:", err.message);
     }
+  } else {
+    console.log("ℹ️ DISCORD_WEBHOOK_URL nicht konfiguriert -> Discord Übersprungen.");
   }
 }
 
 await publishIfConfigured();
+
 
 
