@@ -263,6 +263,64 @@ async function publishIfConfigured() {
     }
   }
 
+  // Hashnode Auto-Publishing (GraphQL API v2)
+  if (process.env.HASHNODE_PAT && process.env.HASHNODE_PUBLICATION_ID) {
+    try {
+      console.log("📤 Veröffentliche Artikel auf Hashnode...");
+      const hashnodeMutation = {
+        query: `
+          mutation PublishPost($input: PublishPostInput!) {
+            publishPost(input: $input) {
+              post {
+                id
+                title
+                url
+              }
+            }
+          }
+        `,
+        variables: {
+          input: {
+            title: `Announcing stryker-mcp-reporter v${version}: 100% Mutation Score & Native MCP for AI Coding Agents`,
+            contentMarkdown: devToArticle.replace(/^---[\s\S]*?---\n/, ""),
+            publicationId: process.env.HASHNODE_PUBLICATION_ID,
+            coverImageOptions: {
+              coverImageURL: `${repoUrl}/raw/main/real_stryker_html_report.png`,
+            },
+            tags: [
+              { slug: "typescript", name: "TypeScript" },
+              { slug: "testing", name: "Testing" },
+              { slug: "ai", name: "Artificial Intelligence" },
+            ],
+          },
+        },
+      };
+
+      const hashnodeRes = await fetch("https://gql.hashnode.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: process.env.HASHNODE_PAT,
+        },
+        body: JSON.stringify(hashnodeMutation),
+      });
+
+      if (hashnodeRes.ok) {
+        const result = await hashnodeRes.json();
+        if (result.errors) {
+          console.error("❌ Hashnode API-Fehler:", JSON.stringify(result.errors));
+        } else {
+          console.log(`✅ Hashnode Artikel erfolgreich veröffentlicht: ${result.data?.publishPost?.post?.url}`);
+        }
+      } else {
+        const errText = await hashnodeRes.text();
+        console.error(`❌ Hashnode Veröffentlichung fehlgeschlagen: ${hashnodeRes.status} ${errText}`);
+      }
+    } catch (err) {
+      console.error("❌ Fehler bei Hashnode Veröffentlichung:", err.message);
+    }
+  }
+
   // Discord Auto-Publishing
   if (process.env.DISCORD_WEBHOOK_URL) {
     try {
@@ -285,4 +343,5 @@ async function publishIfConfigured() {
 }
 
 await publishIfConfigured();
+
 
