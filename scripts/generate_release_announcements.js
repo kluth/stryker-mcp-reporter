@@ -218,44 +218,7 @@ Check out the full open-source project on GitHub: [${repoUrl}](${repoUrl})
 
 fs.writeFileSync(path.join(outputDir, "devto_article.md"), devToArticle);
 
-// 3. Reddit Community Post (r/typescript, r/javascript, r/programming)
-const redditPost = `Title: stryker-mcp-reporter v${version} released – Give your AI Coding Agent Stryker Mutation Testing via MCP
-
-Hey r/typescript!
-
-We just released v${version} of **stryker-mcp-reporter**, an open-source Stryker Mutator plugin and standalone control server that brings native **Model Context Protocol (MCP)** support to mutation testing.
-
-**Why Mutation Testing for AI?**
-Code coverage only tells you if lines executed, not if your tests actually catch bugs. AI tools write great boilerplate tests, but miss subtle edge cases. Stryker mutates your source code (e.g. turning \`>\` into \`>=\` or removing return values). If a mutant survives, Stryker MCP feeds the exact mutated file, line, and replacement to your AI pair-programmer via MCP tools (\`run_targeted_mutation_tests\`, \`get_survived_mutants\`).
-
-**Key Highlights in v${version}:**
-${latestChangelog}
-
-- ⚡ **Targeted Diff Executions**: Only test files modified in Git (up to 90% faster!).
-- 📌 **Persistent Desktop Overlays & Cyber Sound**: Real-time cross-platform notifications with sound when mutant hunting completes.
-- 💯 **Verified 100% Mutation Score Guarantee**.
-
-**Try it out:**
-\`\`\`json
-{
-  "mcpServers": {
-    "stryker-mutation-testing": {
-      "command": "npx",
-      "args": ["-y", "--silent", "stryker-mcp-reporter"]
-    }
-  }
-}
-\`\`\`
-
-GitHub: ${repoUrl}  
-npm: https://www.npmjs.com/package/stryker-mcp-reporter
-
-Feedback and contributions welcome!
-`;
-
-fs.writeFileSync(path.join(outputDir, "reddit_post.md"), redditPost);
-
-// 4. Discord Webhook Payload JSON
+// 3. Discord Webhook Payload JSON
 const discordPayload = {
   username: "Stryker MCP Release Bot",
   avatar_url: `${repoUrl}/raw/main/real_stryker_html_report.png`,
@@ -292,14 +255,100 @@ fs.writeFileSync(path.join(outputDir, "discord_webhook.json"), JSON.stringify(di
 console.log(`🎉 Release-Ankündigungen für v${version} erfolgreich generiert unter: dist/announcements/`);
 console.log("  - dist/announcements/github_discussion.md");
 console.log("  - dist/announcements/devto_article.md");
-console.log("  - dist/announcements/reddit_post.md");
 console.log("  - dist/announcements/discord_webhook.json");
 
 // Automated Publishing if Secrets are Present in Environment
 async function publishIfConfigured() {
   console.log("\n🚀 Starte automatische Multi-Plattform Veröffentlichung...");
 
-  // 1. DEV.to Auto-Publishing
+  // 1. GitHub Discussions Auto-Publishing via GitHub GraphQL API
+  if (process.env.GITHUB_TOKEN) {
+    try {
+      console.log("📤 Erstelle GitHub Discussion für Release...");
+      const owner = "kluth";
+      const name = "stryker-mcp-reporter";
+
+      const getRepoRes = await fetch("https://api.github.com/graphql", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+          "User-Agent": "stryker-mcp-reporter",
+        },
+        body: JSON.stringify({
+          query: `
+            query GetRepoDetails($owner: String!, $name: String!) {
+              repository(owner: $owner, name: $name) {
+                id
+                discussionCategories(first: 10) {
+                  nodes {
+                    id
+                    name
+                    slug
+                  }
+                }
+              }
+            }
+          `,
+          variables: { owner, name },
+        }),
+      });
+
+      if (getRepoRes.ok) {
+        const repoData = await getRepoRes.json();
+        const repositoryId = repoData.data?.repository?.id;
+        const categories = repoData.data?.repository?.discussionCategories?.nodes || [];
+        const category = categories.find((c) => c.slug === "announcements" || c.name === "Announcements") || categories[0];
+
+        if (repositoryId && category) {
+          const createDiscussionRes = await fetch("https://api.github.com/graphql", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+              "User-Agent": "stryker-mcp-reporter",
+            },
+            body: JSON.stringify({
+              query: `
+                mutation CreateDiscussion($repositoryId: ID!, $categoryId: ID!, $title: String!, $body: String!) {
+                  createDiscussion(input: {repositoryId: $repositoryId, categoryId: $categoryId, title: $title, body: $body}) {
+                    discussion {
+                      url
+                      title
+                    }
+                  }
+                }
+              `,
+              variables: {
+                repositoryId,
+                categoryId: category.id,
+                title: `🚀 Release v${version} – stryker-mcp-reporter & Control Server`,
+                body: githubDiscussion,
+              },
+            }),
+          });
+
+          const discResult = await createDiscussionRes.json();
+          if (discResult.data?.createDiscussion?.discussion?.url) {
+            console.log(`✅ GitHub Discussion erfolgreich erstellt: ${discResult.data.createDiscussion.discussion.url}`);
+          } else {
+            console.warn("⚠️ GitHub Discussion Mutation Antwort:", JSON.stringify(discResult));
+          }
+        } else {
+          console.warn("⚠️ GitHub Discussions in diesem Repository nicht aktiviert oder keine Kategorien gefunden.");
+        }
+      } else {
+        const errText = await getRepoRes.text();
+        console.error(`❌ GitHub GraphQL Abfrage fehlgeschlagen (HTTP ${getRepoRes.status}): ${errText}`);
+      }
+    } catch (err) {
+      console.error("❌ Fehler bei GitHub Discussion Erstellung:", err.message);
+    }
+  } else {
+    console.log("ℹ️ GITHUB_TOKEN nicht konfiguriert -> GitHub Discussion Übersprungen.");
+  }
+
+  // 2. DEV.to Auto-Publishing
   if (process.env.DEVTO_API_KEY) {
     try {
       console.log("📤 Veröffentliche Artikel auf DEV.to...");
@@ -362,7 +411,7 @@ async function publishIfConfigured() {
     console.log("ℹ️ DEVTO_API_KEY nicht konfiguriert -> DEV.to Übersprungen.");
   }
 
-  // 2. Hashnode Auto-Publishing (GraphQL API v2 with v1 Fallback)
+  // 3. Hashnode Auto-Publishing (GraphQL API v2 with v1 Fallback)
   if (process.env.HASHNODE_PAT) {
     try {
       console.log("📤 Veröffentliche Artikel auf Hashnode...");
@@ -514,7 +563,7 @@ async function publishIfConfigured() {
     console.log("ℹ️ HASHNODE_PAT nicht konfiguriert -> Hashnode Übersprungen.");
   }
 
-  // 3. Discord Auto-Publishing
+  // 4. Discord Auto-Publishing
   if (process.env.DISCORD_WEBHOOK_URL) {
     try {
       console.log("📤 Sende Release-Card an Discord Webhook...");

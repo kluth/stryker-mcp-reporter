@@ -108,6 +108,7 @@ jobs:
 
       - name: Generate & Publish Multi-Platform Release Announcements
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
           HASHNODE_PAT: ${{ secrets.HASHNODE_PAT }}
