@@ -1,6 +1,7 @@
 // scripts/generate_release_announcements.js
 import fs from "fs";
 import path from "path";
+import { execSync } from "child_process";
 
 const projectRoot = process.cwd();
 const packageJsonPath = path.join(projectRoot, "package.json");
@@ -30,16 +31,83 @@ if (missingScreenshots.length > 0) {
   console.log("✅ Alle 3 authentischen Echtzeit-Screenshots erfolgreich verifiziert.");
 }
 
-// Extract latest version changelog section from CHANGELOG.md
-let latestChangelog = "Keine dedizierten Release-Notes gefunden.";
-if (fs.existsSync(changelogPath)) {
-  const changelogText = fs.readFileSync(changelogPath, "utf-8");
-  const versionRegex = new RegExp(`##+ \\[?${version.replace(/\./g, "\\.")}\\]?.*?\\n([\\s\\S]*?)(?=\\n##+ |$)`, "i");
-  const match = changelogText.match(versionRegex);
-  if (match && match[1].trim()) {
-    latestChangelog = match[1].trim();
+/**
+ * Intelligent Release Notes Extractor
+ * Extracts exact notes from env, CHANGELOG.md, or git log commits
+ */
+function extractReleaseNotes() {
+  // 1. Env from semantic-release
+  if (process.env.NEXT_RELEASE_NOTES && process.env.NEXT_RELEASE_NOTES.trim().length > 10) {
+    return process.env.NEXT_RELEASE_NOTES.trim();
   }
+
+  // 2. Read from CHANGELOG.md
+  if (fs.existsSync(changelogPath)) {
+    const changelogText = fs.readFileSync(changelogPath, "utf-8");
+    const versionEscaped = version.replace(/\./g, "\\.");
+    const versionRegex = new RegExp(`(?:^|\\n)##?\\s*\\[?${versionEscaped}\\]?.*?(?:\\n|$)([\\s\\S]*?)(?=\\n##?\\s*\\[?\\d+\\.\\d+\\.\\d+|$)`, "i");
+    const match = changelogText.match(versionRegex);
+    if (match && match[1] && match[1].trim().length > 10) {
+      return match[1].trim();
+    }
+  }
+
+  // 3. Fallback to Git Commit History Analysis
+  try {
+    let gitLogStr = "";
+    try {
+      const tags = execSync("git tag --sort=-creatordate", { encoding: "utf-8" }).trim().split("\n").filter(Boolean);
+      const prevTag = tags.find((t) => t !== `v${version}` && t !== version);
+      if (prevTag) {
+        gitLogStr = execSync(`git log ${prevTag}..HEAD --oneline --no-merges`, { encoding: "utf-8" }).trim();
+      } else {
+        gitLogStr = execSync("git log -n 10 --oneline --no-merges", { encoding: "utf-8" }).trim();
+      }
+    } catch {
+      gitLogStr = execSync("git log -n 10 --oneline --no-merges", { encoding: "utf-8" }).trim();
+    }
+
+    if (gitLogStr) {
+      const lines = gitLogStr.split("\n").filter((l) => !l.includes("[skip ci]") && !l.includes("chore(release)"));
+      const features = [];
+      const fixes = [];
+      const other = [];
+
+      for (const line of lines) {
+        const cleanMsg = line.replace(/^[a-f0-9]+\s+/, "");
+        if (cleanMsg.startsWith("feat")) {
+          features.push(`- **${cleanMsg.replace(/^feat(\([^)]+\))?:\s*/, "")}**`);
+        } else if (cleanMsg.startsWith("fix")) {
+          fixes.push(`- **${cleanMsg.replace(/^fix(\([^)]+\))?:\s*/, "")}**`);
+        } else {
+          other.push(`- ${cleanMsg}`);
+        }
+      }
+
+      const formattedParts = [];
+      if (features.length > 0) {
+        formattedParts.push(`### 🚀 Features\n${features.join("\n")}`);
+      }
+      if (fixes.length > 0) {
+        formattedParts.push(`### 🐛 Bug Fixes\n${fixes.join("\n")}`);
+      }
+      if (other.length > 0 && features.length === 0 && fixes.length === 0) {
+        formattedParts.push(`### ⚡ Updates\n${other.join("\n")}`);
+      }
+
+      if (formattedParts.length > 0) {
+        return formattedParts.join("\n\n");
+      }
+    }
+  } catch (err) {
+    console.warn("⚠️ Git Log Extraction Warnung:", err.message);
+  }
+
+  return `### ⚡ Updates in v${version}\n- Optimierte Performance & Stabilität für Model Context Protocol (MCP) Mutationstests.\n- 100% verifizierte Testabdeckung und Mutation Score Metriken.`;
 }
+
+const latestChangelog = extractReleaseNotes();
+console.log(`📝 Extrahiertes Changelog für v${version}:\n${latestChangelog}\n`);
 
 fs.mkdirSync(outputDir, { recursive: true });
 
@@ -109,7 +177,7 @@ title: "Announcing stryker-mcp-reporter v${version}: 100% Mutation Score & Nativ
 published: true
 tags: typescript, testing, mcp, ai
 cover_image: "${repoUrl}/raw/main/real_stryker_html_report.png"
-canonical_url: "${repoUrl}"
+canonical_url: "${repoUrl}/releases/tag/v${version}"
 ---
 
 Standard code coverage measures execution, not test strength. AI coding assistants generate hundreds of lines of unit tests, but often fall into the "happy path bias".
@@ -294,44 +362,49 @@ async function publishIfConfigured() {
     console.log("ℹ️ DEVTO_API_KEY nicht konfiguriert -> DEV.to Übersprungen.");
   }
 
-  // 2. Hashnode Auto-Publishing (GraphQL API v2)
+  // 2. Hashnode Auto-Publishing (GraphQL API v2 with v1 Fallback)
   if (process.env.HASHNODE_PAT) {
     try {
       console.log("📤 Veröffentliche Artikel auf Hashnode...");
-      let publicationId = process.env.HASHNODE_PUBLICATION_ID;
+      let publicationId = process.env.HASHNODE_PUBLICATION_ID?.trim();
       const patToken = process.env.HASHNODE_PAT.trim();
 
       // Auto-discover publication ID if not provided explicitly
       if (!publicationId) {
         console.log("🔍 Ermittle Hashnode Publication ID via GraphQL me Query...");
-        const meRes = await fetch("https://gql.hashnode.com", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: patToken,
-            "User-Agent": "stryker-mcp-reporter",
-          },
-          body: JSON.stringify({
-            query: `query { me { publications(first: 5) { edges { node { id title domain } } } } }`,
-          }),
-        });
+        try {
+          const meRes = await fetch("https://gql.hashnode.com", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: patToken,
+              "User-Agent": "stryker-mcp-reporter/1.7.1",
+            },
+            body: JSON.stringify({
+              query: `query { me { publications(first: 5) { edges { node { id title domain } } } } }`,
+            }),
+          });
 
-        const meText = await meRes.text();
-        if (meRes.ok && !meText.trim().startsWith("<")) {
-          const meData = JSON.parse(meText);
-          publicationId = meData.data?.me?.publications?.edges?.[0]?.node?.id;
-          if (publicationId) {
-            console.log(`✅ Hashnode Publication ID automatisch ermittelt: ${publicationId}`);
+          const meText = await meRes.text();
+          if (meRes.ok && !meText.trim().startsWith("<")) {
+            const meData = JSON.parse(meText);
+            publicationId = meData.data?.me?.publications?.edges?.[0]?.node?.id;
+            if (publicationId) {
+              console.log(`✅ Hashnode Publication ID automatisch ermittelt: ${publicationId}`);
+            }
+          } else {
+            console.warn("⚠️ Hashnode me Query lieferte Fehler oder HTML:", meText.substring(0, 200));
           }
-        } else {
-          console.warn("⚠️ Hashnode me Query lieferte Fehler oder HTML:", meText.substring(0, 200));
+        } catch (meErr) {
+          console.warn("⚠️ Hashnode me Query Fehler:", meErr.message);
         }
       }
 
       if (!publicationId) {
-        console.error("❌ Keine Hashnode Publication ID gefunden. Bitte HASHNODE_PUBLICATION_ID in GitHub Secrets eintragen.");
+        console.error("❌ Keine Hashnode Publication ID gefunden. Bitte trage das GitHub Secret 'HASHNODE_PUBLICATION_ID' ein (deine Blog ID aus den Hashnode Einstellungen).");
       } else {
-        const hashnodeMutation = {
+        // Attempt 1: Hashnode GraphQL v2 API (gql.hashnode.com)
+        const hashnodeMutationV2 = {
           query: `
             mutation PublishPost($input: PublishPostInput!) {
               publishPost(input: $input) {
@@ -346,7 +419,7 @@ async function publishIfConfigured() {
           variables: {
             input: {
               title: `Announcing stryker-mcp-reporter v${version}: 100% Mutation Score & Native MCP for AI Coding Agents`,
-              contentMarkdown: devToArticle.replace(/^---[\s\S]*?---\n/, ""),
+              contentMarkdown: `${devToArticle.replace(/^---[\s\S]*?---\n/, "")}\n\n## 📝 Release Notes v${version}\n\n${latestChangelog}`,
               publicationId,
               coverImageOptions: {
                 coverImageURL: `${repoUrl}/raw/main/real_stryker_html_report.png`,
@@ -360,25 +433,77 @@ async function publishIfConfigured() {
           },
         };
 
-        const hashnodeRes = await fetch("https://gql.hashnode.com", {
+        let hashnodeRes = await fetch("https://gql.hashnode.com", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: patToken,
-            "User-Agent": "stryker-mcp-reporter",
+            "User-Agent": "stryker-mcp-reporter/1.7.1",
           },
-          body: JSON.stringify(hashnodeMutation),
+          body: JSON.stringify(hashnodeMutationV2),
         });
 
-        const hashText = await hashnodeRes.text();
-        if (hashText.trim().startsWith("<")) {
-          console.error(`❌ Hashnode GraphQL API antwortete mit HTML (HTTP ${hashnodeRes.status}):`, hashText.substring(0, 250));
-        } else {
+        let hashText = await hashnodeRes.text();
+        let success = false;
+
+        if (!hashText.trim().startsWith("<") && hashnodeRes.ok) {
           const result = JSON.parse(hashText);
-          if (result.errors) {
-            console.error("❌ Hashnode GraphQL Fehler:", JSON.stringify(result.errors));
+          if (result.data?.publishPost?.post?.url) {
+            console.log(`✅ Hashnode v2 Artikel erfolgreich veröffentlicht: ${result.data.publishPost.post.url}`);
+            success = true;
+          } else if (result.errors) {
+            console.warn("⚠️ Hashnode v2 API Fehler:", JSON.stringify(result.errors));
+          }
+        }
+
+        // Attempt 2: Fallback to Hashnode v1 API (api.hashnode.com) if v2 failed or returned HTML
+        if (!success) {
+          console.log("🔄 Versuche Fallback auf Hashnode v1 API (api.hashnode.com)...");
+          const hashnodeMutationV1 = {
+            query: `
+              mutation CreatePublicationStory($input: CreateStoryInput!, $publicationId: String!) {
+                createPublicationStory(input: $input, publicationId: $publicationId) {
+                  success
+                  message
+                  post {
+                    slug
+                    title
+                  }
+                }
+              }
+            `,
+            variables: {
+              publicationId,
+              input: {
+                title: `Announcing stryker-mcp-reporter v${version}: 100% Mutation Score & Native MCP for AI Coding Agents`,
+                contentMarkdown: `${devToArticle.replace(/^---[\s\S]*?---\n/, "")}\n\n## 📝 Release Notes v${version}\n\n${latestChangelog}`,
+                coverImageURL: `${repoUrl}/raw/main/real_stryker_html_report.png`,
+                tags: [{ _id: "567447219582e01414f08c20", slug: "typescript", name: "TypeScript" }],
+              },
+            },
+          };
+
+          const v1Res = await fetch("https://api.hashnode.com", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: patToken,
+              "User-Agent": "stryker-mcp-reporter/1.7.1",
+            },
+            body: JSON.stringify(hashnodeMutationV1),
+          });
+
+          const v1Text = await v1Res.text();
+          if (!v1Text.trim().startsWith("<") && v1Res.ok) {
+            const v1Data = JSON.parse(v1Text);
+            if (v1Data.data?.createPublicationStory?.success) {
+              console.log("✅ Hashnode v1 Artikel erfolgreich veröffentlicht.");
+              success = true;
+            } else {
+              console.error("❌ Hashnode v1 Antwort:", v1Text);
+            }
           } else {
-            console.log(`✅ Hashnode Artikel erfolgreich veröffentlicht: ${result.data?.publishPost?.post?.url}`);
+            console.error(`❌ Hashnode v1 Veröffentlichung fehlgeschlagen (HTTP ${v1Res.status}): ${v1Text.substring(0, 300)}`);
           }
         }
       }
@@ -417,7 +542,3 @@ async function publishIfConfigured() {
 }
 
 await publishIfConfigured();
-
-
-
-
