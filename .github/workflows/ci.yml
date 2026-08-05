@@ -76,3 +76,45 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npx semantic-release
+
+  announce-release:
+    name: Generate & Post Release Announcements
+    needs: release
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      discussions: write
+      issues: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "26.x"
+
+      - name: Install Dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Generate Multi-Platform Release Announcements
+        run: node scripts/generate_release_announcements.js
+
+      - name: Upload Announcement Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-announcements
+          path: dist/announcements/
+
+      - name: Post to Discord Webhook (if configured)
+        if: env.DISCORD_WEBHOOK_URL != ''
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          curl -H "Content-Type: application/json" -X POST -d @dist/announcements/discord_webhook.json "$DISCORD_WEBHOOK_URL"
+
