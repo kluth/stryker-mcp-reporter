@@ -90,7 +90,11 @@ Beim Ausführen von `npx stryker run` startet der MCP-Server nach dem Testlauf a
 Starte den MCP Server direkt über die CLI:
 
 ```bash
-npx stryker-mcp-server
+# STDIO Modus (für lokale KI-Tools & direktes Spawning):
+npx stryker-mcp-server --stdio
+
+# Oder SSE Modus (Server-Sent Events via HTTP Port 3000):
+npx stryker-mcp-server --sse
 ```
 
 Der Server steht dauerhaft bereit und erlaubt KI-Agenten das dynamische Ausführen von Mutationstests per MCP Tool Call.
@@ -99,7 +103,42 @@ Der Server steht dauerhaft bereit und erlaubt KI-Agenten das dynamische Ausführ
 
 ## 🤖 Interaktives KI-Agenten Setup
 
-Verbinde deine bevorzugte KI-Entwicklungsumgebung im Handumdrehen mit `stryker-mcp-reporter`.
+Verbinde deine bevorzugte KI-Entwicklungsumgebung im Handumdrehen mit `stryker-mcp-reporter`. Du kannst zwischen **STDIO** (direktes Spawning via CLI, empfohlen) und **SSE** (HTTP/Server-Sent Events) wählen.
+
+### 🌟 Option A: STDIO Transport (Empfohlen für lokale IDEs & KI-Tools)
+
+Füge folgende Konfiguration in die MCP-Einstellungen deines KI-Tools ein:
+
+```json
+{
+  "mcpServers": {
+    "stryker-mutation-testing": {
+      "command": "npx",
+      "args": ["-y", "stryker-mcp-server", "--stdio"]
+    }
+  }
+}
+```
+
+*Unterstützt in: Claude Desktop, Cursor IDE, Google Antigravity, Roo Code, Cline, Windsurf.*
+
+---
+
+### 🌐 Option B: SSE Transport (Server-Sent Events via HTTP)
+
+Starte den MCP Server vorher im Hintergrund via `npx stryker-mcp-server --sse` und trage folgende URL ein:
+
+```json
+{
+  "mcpServers": {
+    "stryker-mutation-testing": {
+      "url": "http://127.0.0.1:3000/mcp/sse"
+    }
+  }
+}
+```
+
+---
 
 ### 1. 🪐 Google Antigravity (Antigravity CLI / IDE)
 
@@ -109,7 +148,8 @@ Füge die Konfiguration zu deiner Workspace-Konfiguration `.antigravity/mcp.json
 {
   "mcpServers": {
     "stryker-mutation-testing": {
-      "url": "http://127.0.0.1:3000/mcp/sse"
+      "command": "npx",
+      "args": ["-y", "stryker-mcp-server", "--stdio"]
     }
   }
 }
@@ -123,21 +163,21 @@ Füge folgenden Block in deine Datei `.cursor/mcp.json` ein (*Settings -> Featur
 {
   "mcpServers": {
     "stryker-mcp": {
-      "url": "http://127.0.0.1:3000/mcp/sse"
+      "command": "npx",
+      "args": ["-y", "stryker-mcp-server", "--stdio"]
     }
   }
 }
 ```
 
-### 3. 🧩 Cline (VS Code Extension)
+### 3. 🧩 Cline & Roo Code (VS Code Extension)
 
-Öffne die Cline MCP-Einstellungen (`cline_mcp_settings.json`) in VS Code:
+Öffne die MCP-Einstellungen (`cline_mcp_settings.json` / `roo_code_mcp_settings.json`) in VS Code:
 
 ```json
 {
   "mcpServers": {
     "stryker-mcp-reporter": {
-      "url": "http://127.0.0.1:3000/mcp/sse"
     }
   }
 }
