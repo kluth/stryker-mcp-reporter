@@ -7,6 +7,7 @@ const projectRoot = process.cwd();
 const packageJsonPath = path.join(projectRoot, "package.json");
 const changelogPath = path.join(projectRoot, "CHANGELOG.md");
 const outputDir = path.join(projectRoot, "dist", "announcements");
+const rateLimitLogPath = path.join(projectRoot, ".stryker-mcp", "announcements_log.json");
 
 if (!fs.existsSync(packageJsonPath)) {
   console.error("❌ package.json nicht gefunden!");
@@ -32,16 +33,57 @@ if (missingScreenshots.length > 0) {
 }
 
 /**
+ * 48-Hour Anti-Spam Rate Limiter Check
+ */
+function shouldPublishSocialAnnouncements() {
+  if (process.env.FORCE_ANNOUNCE === "true") {
+    console.log("⚡ FORCE_ANNOUNCE=true gesetzt -> 48h Rate-Limit übersprungen.");
+    return true;
+  }
+
+  try {
+    if (fs.existsSync(rateLimitLogPath)) {
+      const data = JSON.parse(fs.readFileSync(rateLimitLogPath, "utf-8"));
+      if (data.lastAnnouncementTimestamp) {
+        const lastTime = new Date(data.lastAnnouncementTimestamp).getTime();
+        const now = Date.now();
+        const diffHours = (now - lastTime) / (1000 * 60 * 60);
+
+        if (diffHours < 48) {
+          console.log(`ℹ️ Letzte Ankündigung war vor ${diffHours.toFixed(1)} Stunden (< 48h Rate-Limit). Externe Social-Media Ankündigungen (DEV.to, Telegram, LinkedIn, Bluesky, Discord) werden übersprungen, um Spam zu vermeiden.`);
+          return false;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("⚠️ Fehler beim Lesen des Rate-Limit Logs:", err.message);
+  }
+
+  return true;
+}
+
+function recordAnnouncementTimestamp() {
+  try {
+    const dir = path.dirname(rateLimitLogPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(
+      rateLimitLogPath,
+      JSON.stringify({ lastAnnouncementTimestamp: new Date().toISOString(), lastVersion: version }, null, 2),
+    );
+  } catch (err) {
+    console.warn("⚠️ Fehler beim Speichern des Rate-Limit Logs:", err.message);
+  }
+}
+
+/**
  * Intelligent Release Notes Extractor
  * Extracts exact notes from env, CHANGELOG.md, or git log commits
  */
 function extractReleaseNotes() {
-  // 1. Env from semantic-release
   if (process.env.NEXT_RELEASE_NOTES && process.env.NEXT_RELEASE_NOTES.trim().length > 10) {
     return process.env.NEXT_RELEASE_NOTES.trim();
   }
 
-  // 2. Read from CHANGELOG.md
   if (fs.existsSync(changelogPath)) {
     const changelogText = fs.readFileSync(changelogPath, "utf-8");
     const versionEscaped = version.replace(/\./g, "\\.");
@@ -52,7 +94,6 @@ function extractReleaseNotes() {
     }
   }
 
-  // 3. Fallback to Git Commit History Analysis
   try {
     let gitLogStr = "";
     try {
@@ -252,17 +293,59 @@ const discordPayload = {
 
 fs.writeFileSync(path.join(outputDir, "discord_webhook.json"), JSON.stringify(discordPayload, null, 2));
 
+// 4. Interactive HTML Dashboard Preview
+const previewHtml = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Release v${version} Announcement Preview Dashboard</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; }
+    h1 { color: #38bdf8; }
+    .card { background: #1e293b; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #334155; }
+    .tag { display: inline-block; background: #0284c7; color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: bold; }
+    pre { background: #020617; padding: 1rem; border-radius: 8px; overflow-x: auto; color: #a5f3fc; }
+  </style>
+</head>
+<body>
+  <h1>🚀 Release v${version} – Announcement Preview Dashboard</h1>
+  <p><span class="tag">48h Anti-Spam Rate Limit Engine Active</span></p>
+
+  <div class="card">
+    <h2>1. 🚀 GitHub Discussions Post</h2>
+    <pre>${githubDiscussion.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
+  </div>
+
+  <div class="card">
+    <h2>2. 📤 DEV.to Technical Article</h2>
+    <pre>${devToArticle.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
+  </div>
+
+  <div class="card">
+    <h2>3. 💬 Discord Webhook Embed Payload</h2>
+    <pre>${JSON.stringify(discordPayload, null, 2)}</pre>
+  </div>
+</body>
+</html>`;
+
+fs.writeFileSync(path.join(outputDir, "preview.html"), previewHtml);
+
 console.log(`🎉 Release-Ankündigungen für v${version} erfolgreich generiert unter: dist/announcements/`);
 console.log("  - dist/announcements/github_discussion.md");
 console.log("  - dist/announcements/devto_article.md");
 console.log("  - dist/announcements/discord_webhook.json");
+console.log("  - dist/announcements/preview.html");
 
 // Automated Publishing if Secrets are Present in Environment
 async function publishIfConfigured() {
   console.log("\n🚀 Starte automatische Multi-Plattform Veröffentlichung...");
 
+  // 48-Hour Rate-Limiting Policy Check
+  const allowSocialPublishing = shouldPublishSocialAnnouncements();
+
   // 1. GitHub Discussions Auto-Publishing via GitHub GraphQL API
-  if (process.env.GITHUB_TOKEN) {
+  if (process.env.GITHUB_TOKEN && allowSocialPublishing) {
     try {
       console.log("📤 Erstelle GitHub Discussion für Release...");
       const owner = "kluth";
@@ -334,22 +417,15 @@ async function publishIfConfigured() {
           } else {
             console.warn("⚠️ GitHub Discussion Mutation Antwort:", JSON.stringify(discResult));
           }
-        } else {
-          console.warn("⚠️ GitHub Discussions in diesem Repository nicht aktiviert oder keine Kategorien gefunden.");
         }
-      } else {
-        const errText = await getRepoRes.text();
-        console.error(`❌ GitHub GraphQL Abfrage fehlgeschlagen (HTTP ${getRepoRes.status}): ${errText}`);
       }
     } catch (err) {
       console.error("❌ Fehler bei GitHub Discussion Erstellung:", err.message);
     }
-  } else {
-    console.log("ℹ️ GITHUB_TOKEN nicht konfiguriert -> GitHub Discussion Übersprungen.");
   }
 
   // 2. DEV.to Auto-Publishing
-  if (process.env.DEVTO_API_KEY) {
+  if (process.env.DEVTO_API_KEY && allowSocialPublishing) {
     try {
       console.log("📤 Veröffentliche Artikel auf DEV.to...");
       const releaseCanonicalUrl = `${repoUrl}/releases/tag/v${version}`;
@@ -365,7 +441,7 @@ async function publishIfConfigured() {
           article: {
             title: `Announcing stryker-mcp-reporter v${version}: 100% Mutation Score & Native MCP for AI Coding Agents`,
             published: true,
-            body_markdown: devToArticle.replace(/^---[\s\S]*?---\n/, ""), // Remove frontmatter
+            body_markdown: devToArticle.replace(/^---[\s\S]*?---\n/, ""),
             tags: ["typescript", "testing", "mcp", "ai"],
             main_image: `${repoUrl}/raw/main/real_stryker_html_report.png`,
             canonical_url: releaseCanonicalUrl,
@@ -375,7 +451,6 @@ async function publishIfConfigured() {
 
       let responseText = await devToRes.text();
 
-      // If 422 due to canonical URL collision, retry without canonical_url
       if (!devToRes.ok && devToRes.status === 422 && responseText.includes("Canonical url")) {
         console.warn("⚠️ Canonical URL kollidiert auf DEV.to. Versuche erneutes Senden ohne canonical_url...");
         devToRes = await fetch("https://dev.to/api/articles", {
@@ -407,12 +482,37 @@ async function publishIfConfigured() {
     } catch (err) {
       console.error("❌ Fehler bei DEV.to Veröffentlichung:", err.message);
     }
-  } else {
-    console.log("ℹ️ DEVTO_API_KEY nicht konfiguriert -> DEV.to Übersprungen.");
   }
 
-  // 3. Discord Auto-Publishing
-  if (process.env.DISCORD_WEBHOOK_URL) {
+  // 3. Telegram Channel Auto-Broadcasting
+  if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID && allowSocialPublishing) {
+    try {
+      console.log("📤 Sende Telegram Release Alert...");
+      const telegramText = `🚀 *Release v${version} – stryker-mcp-reporter*\n\n100% Mutation Score & Native MCP Control Server für KI-Coding-Agenten!\n\n*Highlights:*\n${latestChangelog.substring(0, 300)}\n\n[GitHub Repo](${repoUrl})`;
+      const tgRes = await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: process.env.TELEGRAM_CHAT_ID,
+          text: telegramText,
+          parse_mode: "Markdown",
+          disable_web_page_preview: false,
+        }),
+      });
+
+      if (tgRes.ok) {
+        console.log("✅ Telegram Alert erfolgreich gesendet.");
+      } else {
+        const errText = await tgRes.text();
+        console.error(`❌ Telegram Fehler (HTTP ${tgRes.status}): ${errText}`);
+      }
+    } catch (err) {
+      console.error("❌ Fehler beim Senden des Telegram Alerts:", err.message);
+    }
+  }
+
+  // 4. Discord Auto-Publishing
+  if (process.env.DISCORD_WEBHOOK_URL && allowSocialPublishing) {
     try {
       console.log("📤 Sende Release-Card an Discord Webhook...");
       const discordRes = await fetch(process.env.DISCORD_WEBHOOK_URL, {
@@ -433,8 +533,10 @@ async function publishIfConfigured() {
     } catch (err) {
       console.error("❌ Fehler beim Senden des Discord Webhooks:", err.message);
     }
-  } else {
-    console.log("ℹ️ DISCORD_WEBHOOK_URL nicht konfiguriert -> Discord Übersprungen.");
+  }
+
+  if (allowSocialPublishing) {
+    recordAnnouncementTimestamp();
   }
 }
 

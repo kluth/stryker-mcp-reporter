@@ -20,6 +20,9 @@ import type { RunMutationTestsUseCase } from "../../core/application/run-mutatio
 import type { RunTargetedMutationTestsUseCase } from "../../core/application/run-targeted-mutation-tests.use-case.js";
 import type { GetSurvivedMutantsUseCase } from "../../core/application/get-survived-mutants.use-case.js";
 import type { GetMutationSummaryUseCase } from "../../core/application/get-mutation-summary.use-case.js";
+import { SuggestMutantFixesUseCase } from "../../core/application/suggest-mutant-fixes.use-case.js";
+import { PredictMutationImpactUseCase } from "../../core/application/predict-mutation-impact.use-case.js";
+import { MutationTrendTracker } from "../../core/domain/mutation-trend-tracker.js";
 import type { NotificationServicePort } from "../../core/domain/notification-service.port.js";
 import { NullNotificationAdapter } from "../notification/null-notification.adapter.js";
 import { type Result, ok, err } from "../../core/domain/result.js";
@@ -36,6 +39,9 @@ export class McpServerAdapter {
   private httpServer: HttpServer | null = null;
   private readonly mcpServer: Server;
   private readonly sseTransports = new Map<string, SSEServerTransport>();
+  private readonly suggestFixesUseCase = new SuggestMutantFixesUseCase();
+  private readonly predictImpactUseCase = new PredictMutationImpactUseCase();
+  private readonly trendTracker = new MutationTrendTracker();
 
   constructor(
     private readonly logger: Logger,
@@ -99,52 +105,44 @@ export class McpServerAdapter {
       }
 
       const transport = this.sseTransports.get(sessionId);
-      if (transport) {
-        await transport.handlePostMessage(req, res, req.body);
-      } else {
-        res.status(404).send(`Session not found: ${sessionId}`);
+      if (!transport) {
+        res.status(404).send("Session not found");
+        return;
       }
+
+      await transport.handlePostMessage(req, res);
     });
 
     return new Promise((resolve) => {
-      this.httpServer = app.listen(this.port);
-
-      this.httpServer.once("listening", () => {
-        this.logConnectionInstructions();
+      this.httpServer = app.listen(this.port, () => {
+        this.logger.info(`MCP Server started on port ${this.activePort}`);
         resolve(ok(undefined));
       });
 
-      this.httpServer.once("error", (error) => {
+      this.httpServer.on("error", (error) => {
+        this.logger.error("Failed to start MCP Server", error);
         resolve(err(error));
       });
     });
   }
 
-  private logConnectionInstructions(): void {
-    const sseUrl = `http://127.0.0.1:${this.activePort}/mcp/sse`;
-
-    this.logger.info("🚀 Stryker MCP Server läuft!");
-    this.logger.info(`🔗 SSE URL: ${sseUrl}`);
-    this.logger.info("💡 Um KI-Agenten (wie Cline, Cursor oder Roo Code) zu verbinden, nutze dieses Snippet:");
-    this.logger.info(`
-{
-  "mcpServers": {
-    "stryker-mutation-testing": {
-      "url": "${sseUrl}"
-    }
-  }
-}
-`);
-    this.logger.info("🛑 Drücke Strg+C, um den Server zu beenden.");
-  }
-
-  public stop(): Promise<void> {
+  public async stop(): Promise<Result<void, Error>> {
     return new Promise((resolve) => {
-      if (this.httpServer) {
-        this.httpServer.close(() => resolve());
-      } else {
-        resolve();
+      if (!this.httpServer) {
+        resolve(ok(undefined));
+        return;
       }
+
+      this.httpServer.close((error) => {
+        if (error) {
+          this.logger.error("Error stopping MCP Server", error);
+          resolve(err(error));
+        } else {
+          this.logger.info("MCP Server stopped");
+          this.httpServer = null;
+          resolve(ok(undefined));
+        }
+      });
     });
   }
 
@@ -168,6 +166,12 @@ export class McpServerAdapter {
           name: "Survived Mutants List",
           mimeType: "application/json",
           description: "Liste aller überlebenden Mutanten inkl. Pfad, Zeile, Mutator und Ersetzung.",
+        },
+        {
+          uri: "stryker://analytics/trends",
+          name: "Mutation Testing Score Trends",
+          mimeType: "application/json",
+          description: "Historische Trendanalyse der Mutationsscore-Entwicklung.",
         },
         {
           uri: "stryker://status",
@@ -223,6 +227,28 @@ export class McpServerAdapter {
               uri,
               mimeType: "application/json",
               text,
+            },
+          ],
+        };
+      }
+
+      if (uri === "stryker://analytics/trends") {
+        const summary = this.getSummaryUseCase.execute();
+        if (summary.isOk) {
+          this.trendTracker.recordRun({
+            timestamp: new Date().toISOString(),
+            mutationScore: summary.value.mutationScore,
+            totalMutants: summary.value.totalMutants,
+            killedMutants: summary.value.killed,
+            survivedMutants: summary.value.survived,
+          });
+        }
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(this.trendTracker.getTrendSummary(), null, 2),
             },
           ],
         };
@@ -301,6 +327,34 @@ export class McpServerAdapter {
                 description: "Veraltet: Nutze 'revision' stattdessen.",
               },
             },
+          },
+        },
+        {
+          name: "suggest_mutant_fixes",
+          description: "Generiert KI-gestützte Behebungsratschläge, konkrete Code-Assertions und Boundary-Tests für überlebte Mutanten.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              filePath: {
+                type: "string",
+                description: "Optionaler Dateipfad-Filter (z.B. 'src/calculator.ts').",
+              },
+            },
+          },
+        },
+        {
+          name: "predict_mutation_impact",
+          description: "Analysiert geänderte Quelldateien und prognostiziert in < 1 Sekunde das Risiko überlebender Mutanten.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              changedFiles: {
+                type: "array",
+                items: { type: "string" },
+                description: "Liste der geänderten Dateipfade.",
+              },
+            },
+            required: ["changedFiles"],
           },
         },
         {
@@ -430,6 +484,36 @@ export class McpServerAdapter {
         };
       }
 
+      if (name === "suggest_mutant_fixes") {
+        const filterPath = parseFilePath(args);
+        const survivedResult = this.getSurvivedUseCase.execute(filterPath);
+        const survivedMutants = survivedResult.isOk ? survivedResult.value : [];
+        const advice = this.suggestFixesUseCase.execute(survivedMutants);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(advice, null, 2),
+            },
+          ],
+        };
+      }
+
+      if (name === "predict_mutation_impact") {
+        const changedFiles = (args as { changedFiles?: string[] })?.changedFiles || [];
+        const riskAnalysis = this.predictImpactUseCase.execute(changedFiles);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(riskAnalysis, null, 2),
+            },
+          ],
+        };
+      }
+
       if (name === "get_mutation_score") {
         const summaryResult = this.getSummaryUseCase.execute();
         if (!summaryResult.isOk) {
@@ -450,8 +534,8 @@ export class McpServerAdapter {
       }
 
       if (name === "get_survived_mutants") {
-        const filePath = parseFilePath(args);
-        const survivedResult = this.getSurvivedUseCase.execute(filePath);
+        const filterPath = parseFilePath(args);
+        const survivedResult = this.getSurvivedUseCase.execute(filterPath);
         if (!survivedResult.isOk) {
           return {
             isError: true,
@@ -470,20 +554,20 @@ export class McpServerAdapter {
       }
 
       if (name === "configure_desktop_notifications") {
-        const configOptions = args as { enabled?: boolean; persistentOverlay?: boolean; sound?: boolean };
-        this.notificationService.configure(configOptions);
+        const options = args as { enabled?: boolean; persistentOverlay?: boolean; sound?: boolean };
+        this.notificationService.configure(options);
 
         return {
           content: [
             {
               type: "text",
-              text: "Desktop-Benachrichtigungen erfolgreich konfiguriert.",
+              text: `Desktop Benachrichtigungseinstellungen aktualisiert: ${JSON.stringify(options)}`,
             },
           ],
         };
       }
 
-      throw new Error(`Unbekanntes MCP Tool '${name}'`);
+      throw new Error(`Unbekanntes Tool: ${name}`);
     });
   }
 
@@ -491,57 +575,61 @@ export class McpServerAdapter {
     this.mcpServer.setRequestHandler(ListPromptsRequestSchema, async () => ({
       prompts: [
         {
-          name: "analyze_survived_mutants",
-          description: "Generiert einen KI-Prompt zur tiefenursächlichen Analyse und Behebung überlebender Mutanten.",
-          arguments: [
-            {
-              name: "filePath",
-              description: "Optionaler Dateipfad zur Eingrenzung der Analyse.",
-              required: false,
-            },
-          ],
+          name: "explain_survived_mutants",
+          description: "Formatiert alle überlebenden Mutanten als verständliche Prompt-Anweisung zur KI-Testgenerierung.",
+        },
+        {
+          name: "remediate_mutants",
+          description: "Generiert konkreten Test-Code und Randwertprüfungen für überlebte Mutanten.",
         },
       ],
     }));
 
     this.mcpServer.setRequestHandler(GetPromptRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
+      const { name } = request.params;
 
-      if (name === "analyze_survived_mutants") {
-        const filePath = parseFilePath(args);
-        const survivedResult = this.getSurvivedUseCase.execute(filePath);
+      if (name === "explain_survived_mutants" || name === "remediate_mutants") {
+        const survivedResult = this.getSurvivedUseCase.execute();
         const survived = survivedResult.isOk ? survivedResult.value : [];
-        const summaryResult = this.getSummaryUseCase.execute();
-        const summary = summaryResult.isOk ? summaryResult.value : null;
+        const advice = this.suggestFixesUseCase.execute(survived);
 
-        const promptText = `Du bist ein Experte für Mutation Testing und TDD.
-Hier ist die Analyse der überlebenden Mutanten für das Projekt:
+        if (survived.length === 0) {
+          return {
+            description: "Keine überlebenden Mutanten vorhanden.",
+            messages: [
+              {
+                role: "user",
+                content: {
+                  type: "text",
+                  text: "🎉 Perfekt! Es gibt aktuell keine überlebenden Mutanten. Der Mutation Score liegt bei 100%!",
+                },
+              },
+            ],
+          };
+        }
 
-Gesamter Mutationsscore: ${summary?.mutationScore ?? "N/A"}%
-Überlebte Mutanten: ${survived.length}
-
-Details der überlebenden Mutanten:
-${JSON.stringify(survived, null, 2)}
-
-Bitte führe Folgendes aus:
-1. Analysiere jeden überlebenden Mutanten und erkläre, warum der bestehende Testsuite-Code diesen Mutanten nicht getötet hat.
-2. Schreibe präzise Unit Tests in Vitest/Jest, die jeden dieser überlebenden Mutanten gezielt eliminieren.
-3. Stelle sicher, dass die neuen Tests nach TDD-Prinzipien verfasst sind und keine Nebeneffekte haben.`;
+        const formattedMutants = advice
+          .map(
+            (m) =>
+              `- **Datei**: \`${m.fileName}:${m.location.start.line}\`\n  - Mutator: \`${m.mutatorName}\`\n  - Erklärung: ${m.explanation}\n  - Vorab-Assertion: \`${m.suggestedAssertion}\`\n  - Test-Snippet:\n\`\`\`typescript\n${m.boundaryTestSnippet}\n\`\`\``,
+          )
+          .join("\n\n");
 
         return {
+          description: "Aufforderung zur KI-Behebung überlebender Mutanten.",
           messages: [
             {
               role: "user",
               content: {
                 type: "text",
-                text: promptText,
+                text: `Bitte erstelle Unit-Tests, um die folgenden überlebenden Mutanten zu beheben und einen 100% Mutation Score zu erreichen:\n\n${formattedMutants}`,
               },
             },
           ],
         };
       }
 
-      throw new Error(`Prompt '${name}' nicht gefunden.`);
+      throw new Error(`Unbekannter Prompt: ${name}`);
     });
   }
 }
