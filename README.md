@@ -107,8 +107,9 @@ Verbinde deine bevorzugte KI-Entwicklungsumgebung im Handumdrehen mit `stryker-m
 
 ### 🌟 Option A: STDIO Transport (Empfohlen für lokale IDEs & KI-Tools)
 
-Füge folgende Konfiguration in die MCP-Einstellungen deines KI-Tools ein:
+Wähle die passende Konfiguration für dein Betriebssystem aus:
 
+#### 🐧 🍏 Linux & macOS (`npx`):
 ```json
 {
   "mcpServers": {
@@ -120,10 +121,39 @@ Füge folgende Konfiguration in die MCP-Einstellungen deines KI-Tools ein:
 }
 ```
 
-> [!NOTE]  
-> **Hinweis für Windows-Nutzer:** Falls dein KI-Tool unter Windows `npx` nicht direkt ausführen kann (da `npx` auf Windows als `npx.cmd` vorliegt), verwende `"command": "cmd.exe"` mit `"args": ["/c", "npx", "-y", "--silent", "stryker-mcp-reporter"]` oder binde die lokale Datei direkt via `"command": "node"` ein.
+#### 🪟 Windows (`cmd.exe` Wrapper - empfohlener Npx-Start):
+> **Warum `cmd.exe`?** Auf Windows ist `npx` ein Batch-Skript (`npx.cmd`). Viele KI-Tools starten Prozesse ohne Shell-Kontext. `cmd.exe /c` stellt den sauberen Start sicher und das `--silent`-Flag verhindert `stdout`-Verschmutzung.
 
-*Unterstützt in: Claude Desktop, Cursor IDE, Google Antigravity, Roo Code, Cline, Windsurf.*
+```json
+{
+  "mcpServers": {
+    "stryker-mutation-testing": {
+      "command": "cmd.exe",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "--silent",
+        "stryker-mcp-reporter"
+      ]
+    }
+  }
+}
+```
+
+#### ⚡ Direkter Pfad (Lokale Entwicklung / Maximale Geschwindigkeit):
+```json
+{
+  "mcpServers": {
+    "stryker-mutation-testing": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\DEIN_BENUTZER\\Projects\\stryker-mcp-reporter\\bin\\stryker-mcp-server.js"
+      ]
+    }
+  }
+}
+```
 
 ---
 
@@ -145,14 +175,14 @@ Starte den MCP Server vorher im Hintergrund via `npx stryker-mcp-server --sse` u
 
 ### 1. 🪐 Google Antigravity (Antigravity CLI / IDE)
 
-Füge die Konfiguration zu deiner Workspace-Konfiguration `.antigravity/mcp.json` oder global unter `~/.gemini/antigravity-cli/mcp.json` hinzu:
+Konfigurationsdatei `.antigravity/mcp.json` oder global unter `~/.gemini/antigravity-cli/mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "stryker-mutation-testing": {
-      "command": "npx",
-      "args": ["-y", "stryker-mcp-server", "--stdio"]
+      "command": "cmd.exe",
+      "args": ["/c", "npx", "-y", "--silent", "stryker-mcp-reporter"]
     }
   }
 }
@@ -160,14 +190,14 @@ Füge die Konfiguration zu deiner Workspace-Konfiguration `.antigravity/mcp.json
 
 ### 2. ⚡ Cursor IDE
 
-Füge folgenden Block in deine Datei `.cursor/mcp.json` ein (*Settings -> Features -> MCP*):
+Datei `.cursor/mcp.json` (*Settings -> Features -> MCP*):
 
 ```json
 {
   "mcpServers": {
-    "stryker-mcp": {
-      "command": "npx",
-      "args": ["-y", "stryker-mcp-server", "--stdio"]
+    "stryker-mutation-testing": {
+      "command": "cmd.exe",
+      "args": ["/c", "npx", "-y", "--silent", "stryker-mcp-reporter"]
     }
   }
 }
@@ -175,42 +205,31 @@ Füge folgenden Block in deine Datei `.cursor/mcp.json` ein (*Settings -> Featur
 
 ### 3. 🧩 Cline & Roo Code (VS Code Extension)
 
-Öffne die MCP-Einstellungen (`cline_mcp_settings.json` / `roo_code_mcp_settings.json`) in VS Code:
-
-```json
-{
-  "mcpServers": {
-    "stryker-mcp-reporter": {
-    }
-  }
-}
-```
-
-### 4. 🦘 Roo Code
-
-Öffne die Einstellungen für Roo Code (`roo_code_mcp_settings.json`):
-
-```json
-{
-  "mcpServers": {
-    "stryker-mcp": {
-      "command": "npx",
-      "args": ["-y", "stryker-mcp-server"]
-    }
-  }
-}
-```
-
-### 5. 🧡 Claude Desktop
-
-Editiere deine Claude Desktop Konfigurationsdatei (`claude_desktop_config.json`):
+Einstellungen (`cline_mcp_settings.json` / `roo_code_mcp_settings.json`):
 
 ```json
 {
   "mcpServers": {
     "stryker-mutation-testing": {
-      "command": "npx",
-      "args": ["-y", "stryker-mcp-server"]
+      "command": "cmd.exe",
+      "args": ["/c", "npx", "-y", "--silent", "stryker-mcp-reporter"]
+    }
+  }
+}
+```
+
+### 4. 🧡 Claude Desktop
+
+Editiere deine Claude Desktop Konfigurationsdatei (`claude_desktop_config.json`):
+* **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+* **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "stryker-mutation-testing": {
+      "command": "cmd.exe",
+      "args": ["/c", "npx", "-y", "--silent", "stryker-mcp-reporter"]
     }
   }
 }
