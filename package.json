@@ -3,6 +3,8 @@
   "version": "1.5.0",
   "description": "Ein Stryker Reporter Plugin, das Mutation Testing Ergebnisse nativ über das Model Context Protocol (MCP) bereitstellt.",
   "main": "dist/index.js",
+  "module": "dist/index.js",
+  "type": "module",
   "types": "dist/index.d.ts",
   "bin": {
     "stryker-mcp-server": "bin/stryker-mcp-server.js"
@@ -14,6 +16,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc",
+    "prepare": "npm run build",
     "test": "vitest run",
     "test:e2e": "node e2e-test.js",
     "test:mutation": "stryker run"
