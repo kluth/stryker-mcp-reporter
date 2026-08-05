@@ -133,7 +133,15 @@ describe("McpServerAdapter", () => {
       method: "POST",
     });
     expect(earlyMsgRes.status).toBe(400);
-    expect(await earlyMsgRes.text()).toBe("SSE connection not established");
+    expect(await earlyMsgRes.text()).toBe("Missing sessionId query parameter");
+
+    const invalidSessionRes = await fetch(`http://127.0.0.1:${port}/mcp/messages?sessionId=invalid_session_id`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", method: "ping" }),
+    });
+    expect(invalidSessionRes.status).toBe(404);
+    expect(await invalidSessionRes.text()).toContain("Session not found");
 
     const abortController = new AbortController();
     const sseRes = await fetch(`http://127.0.0.1:${port}/mcp/sse`, {
@@ -144,9 +152,15 @@ describe("McpServerAdapter", () => {
     const reader = sseRes.body?.getReader();
     expect(reader).toBeDefined();
     const { value } = await reader!.read();
-    expect(new TextDecoder().decode(value)).toContain("/mcp/messages");
+    const ssePayload = new TextDecoder().decode(value);
+    expect(ssePayload).toContain("/mcp/messages");
 
-    const validMsgRes = await fetch(`http://127.0.0.1:${port}/mcp/messages`, {
+    // Extract endpoint path from SSE payload (e.g. /mcp/messages?sessionId=...)
+    const match = ssePayload.match(/\/mcp\/messages\?sessionId=[a-zA-Z0-9-]+/);
+    expect(match).not.toBeNull();
+    const endpointPath = match![0];
+
+    const validMsgRes = await fetch(`http://127.0.0.1:${port}${endpointPath}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", method: "ping" }),
@@ -154,6 +168,11 @@ describe("McpServerAdapter", () => {
     expect(validMsgRes.ok).toBe(true);
 
     abortController.abort();
+  });
+
+  it("sollte startStdio() aufrufen können", async () => {
+    const stdioResult = await adapter.startStdio();
+    expect(stdioResult.isOk).toBe(true);
   });
 
   it("sollte MCP-Ressourcen inklusive stryker://report/survived strikt prüfen", async () => {

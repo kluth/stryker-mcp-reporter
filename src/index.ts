@@ -89,8 +89,12 @@ mcpReporterFactory.inject = [commonTokens.logger] as ["logger"];
 export async function startStandaloneServer(
   logger: Logger,
   adapter?: McpServerAdapter,
+  mode: "sse" | "stdio" = "sse",
 ): Promise<Result<void, Error>> {
   const server = adapter || createMcpServerAdapter(logger, 3000);
+  if (mode === "stdio") {
+    return server.startStdio();
+  }
   return server.start();
 }
 

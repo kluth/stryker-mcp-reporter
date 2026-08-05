@@ -4,6 +4,7 @@ import type { Server as HttpServer } from "http";
 import type { AddressInfo } from "net";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
@@ -34,6 +35,7 @@ function parseFilePath(args: unknown): string | undefined {
 export class McpServerAdapter {
   private httpServer: HttpServer | null = null;
   private readonly mcpServer: Server;
+  private readonly sseTransports = new Map<string, SSEServerTransport>();
 
   constructor(
     private readonly logger: Logger,
@@ -64,21 +66,43 @@ export class McpServerAdapter {
     return address ? (address as AddressInfo).port : this.port;
   }
 
+  public async startStdio(): Promise<Result<void, Error>> {
+    try {
+      const transport = new StdioServerTransport();
+      await this.mcpServer.connect(transport);
+      return ok(undefined);
+    } catch (error) {
+      return err(error as Error);
+    }
+  }
+
   public async start(): Promise<Result<void, Error>> {
     const app = express();
     app.use(express.json());
-    let transport: SSEServerTransport | undefined;
 
     app.get("/mcp/sse", async (_req, res) => {
-      transport = new SSEServerTransport("/mcp/messages", res);
+      const transport = new SSEServerTransport("/mcp/messages", res);
+      this.sseTransports.set(transport.sessionId, transport);
+
+      transport.onclose = () => {
+        this.sseTransports.delete(transport.sessionId);
+      };
+
       await this.mcpServer.connect(transport);
     });
 
     app.post("/mcp/messages", async (req, res) => {
+      const sessionId = req.query.sessionId as string | undefined;
+      if (!sessionId) {
+        res.status(400).send("Missing sessionId query parameter");
+        return;
+      }
+
+      const transport = this.sseTransports.get(sessionId);
       if (transport) {
         await transport.handlePostMessage(req, res, req.body);
       } else {
-        res.status(400).send("SSE connection not established");
+        res.status(404).send(`Session not found: ${sessionId}`);
       }
     });
 
