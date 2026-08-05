@@ -171,7 +171,7 @@ ${latestChangelog}
 
 fs.writeFileSync(path.join(outputDir, "github_discussion.md"), githubDiscussion);
 
-// 2. DEV.to & Hashnode Technical Blog Post
+// 2. DEV.to Technical Blog Post
 const devToArticle = `---
 title: "Announcing stryker-mcp-reporter v${version}: 100% Mutation Score & Native MCP for AI Coding Agents"
 published: true
@@ -411,117 +411,7 @@ async function publishIfConfigured() {
     console.log("ℹ️ DEVTO_API_KEY nicht konfiguriert -> DEV.to Übersprungen.");
   }
 
-  // 3. Hashnode Auto-Publishing (GraphQL API v2)
-  if (process.env.HASHNODE_PAT) {
-    try {
-      console.log("📤 Veröffentliche Artikel auf Hashnode...");
-      let publicationId = process.env.HASHNODE_PUBLICATION_ID?.trim();
-      const patToken = process.env.HASHNODE_PAT.trim();
-
-      // Manual redirect mode to prevent following 301 HTML redirects silently
-      const hashnodeHeaders = {
-        "Content-Type": "application/json",
-        Authorization: patToken,
-        "User-Agent": "stryker-mcp-reporter/1.8.2",
-      };
-
-      // Auto-discover publication ID if not provided explicitly
-      if (!publicationId) {
-        console.log("🔍 Ermittle Hashnode Publication ID via GraphQL me Query...");
-        try {
-          const meRes = await fetch("https://gql.hashnode.com", {
-            method: "POST",
-            redirect: "manual",
-            headers: hashnodeHeaders,
-            body: JSON.stringify({
-              query: `query { me { publications(first: 5) { edges { node { id title domain } } } } }`,
-            }),
-          });
-
-          if (meRes.status === 301 || meRes.status === 302) {
-            const loc = meRes.headers.get("location") || "";
-            console.error(`❌ Hashnode API 301 Redirect to ${loc}: Hashnode verlangt seit 2026 einen aktiven Hashnode Pro Account für API-Veröffentlichungen.`);
-          } else {
-            const meText = await meRes.text();
-            if (meRes.ok && !meText.trim().startsWith("<")) {
-              const meData = JSON.parse(meText);
-              publicationId = meData.data?.me?.publications?.edges?.[0]?.node?.id;
-              if (publicationId) {
-                console.log(`✅ Hashnode Publication ID automatisch ermittelt: ${publicationId}`);
-              }
-            } else {
-              console.warn(`⚠️ Hashnode me Query (HTTP ${meRes.status}):`, meText.substring(0, 200));
-            }
-          }
-        } catch (meErr) {
-          console.warn("⚠️ Hashnode me Query Fehler:", meErr.message);
-        }
-      }
-
-      if (!publicationId) {
-        console.error("❌ Hashnode Veröffentlichung abgebrochen: Keine valide Publication ID ermittelt (Hashnode Pro Account erforderlich).");
-      } else {
-        const hashnodeMutationV2 = {
-          query: `
-            mutation PublishPost($input: PublishPostInput!) {
-              publishPost(input: $input) {
-                post {
-                  id
-                  title
-                  url
-                }
-              }
-            }
-          `,
-          variables: {
-            input: {
-              title: `Announcing stryker-mcp-reporter v${version}: 100% Mutation Score & Native MCP for AI Coding Agents`,
-              contentMarkdown: `${devToArticle.replace(/^---[\s\S]*?---\n/, "")}\n\n## 📝 Release Notes v${version}\n\n${latestChangelog}`,
-              publicationId,
-              coverImageOptions: {
-                coverImageURL: `${repoUrl}/raw/main/real_stryker_html_report.png`,
-              },
-              tags: [
-                { slug: "typescript" },
-                { slug: "testing" },
-                { slug: "ai" },
-              ],
-            },
-          },
-        };
-
-        const hashnodeRes = await fetch("https://gql.hashnode.com", {
-          method: "POST",
-          redirect: "manual",
-          headers: hashnodeHeaders,
-          body: JSON.stringify(hashnodeMutationV2),
-        });
-
-        if (hashnodeRes.status === 301 || hashnodeRes.status === 302) {
-          const loc = hashnodeRes.headers.get("location") || "";
-          console.error(`❌ Hashnode API 301 Redirect nach: ${loc}. (Hashnode Pro Plan für API-Zugriff erforderlich).`);
-        } else {
-          const hashText = await hashnodeRes.text();
-          if (hashnodeRes.ok && !hashText.trim().startsWith("<")) {
-            const result = JSON.parse(hashText);
-            if (result.data?.publishPost?.post?.url) {
-              console.log(`✅ Hashnode Artikel erfolgreich veröffentlicht: ${result.data.publishPost.post.url}`);
-            } else if (result.errors) {
-              console.error("❌ Hashnode GraphQL API Fehler:", JSON.stringify(result.errors, null, 2));
-            }
-          } else {
-            console.error(`❌ Hashnode API Antwort (HTTP ${hashnodeRes.status}):`, hashText.substring(0, 250));
-          }
-        }
-      }
-    } catch (err) {
-      console.error("❌ Fehler bei Hashnode Veröffentlichung:", err.message);
-    }
-  } else {
-    console.log("ℹ️ HASHNODE_PAT nicht konfiguriert -> Hashnode Übersprungen.");
-  }
-
-  // 4. Discord Auto-Publishing
+  // 3. Discord Auto-Publishing
   if (process.env.DISCORD_WEBHOOK_URL) {
     try {
       console.log("📤 Sende Release-Card an Discord Webhook...");
