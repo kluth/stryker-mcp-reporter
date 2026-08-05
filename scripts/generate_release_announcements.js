@@ -411,28 +411,43 @@ async function publishIfConfigured() {
     console.log("ℹ️ DEVTO_API_KEY nicht konfiguriert -> DEV.to Übersprungen.");
   }
 
-  // 3. Hashnode Auto-Publishing (GraphQL API v2 with v1 Fallback)
+  // 3. Hashnode Auto-Publishing (GraphQL API v2)
   if (process.env.HASHNODE_PAT) {
     try {
       console.log("📤 Veröffentliche Artikel auf Hashnode...");
       let publicationId = process.env.HASHNODE_PUBLICATION_ID?.trim();
       const patToken = process.env.HASHNODE_PAT.trim();
 
+      const browserHeaders = {
+        "Content-Type": "application/json",
+        Authorization: patToken,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        Accept: "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+      };
+
       // Auto-discover publication ID if not provided explicitly
       if (!publicationId) {
         console.log("🔍 Ermittle Hashnode Publication ID via GraphQL me Query...");
         try {
-          const meRes = await fetch("https://gql.hashnode.com", {
+          let meRes = await fetch("https://gql.hashnode.com", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: patToken,
-              "User-Agent": "stryker-mcp-reporter/1.7.1",
-            },
+            headers: browserHeaders,
             body: JSON.stringify({
               query: `query { me { publications(first: 5) { edges { node { id title domain } } } } }`,
             }),
           });
+
+          // Retry with Bearer prefix if raw token returned HTTP 401
+          if (meRes.status === 401 || meRes.status === 403) {
+            meRes = await fetch("https://gql.hashnode.com", {
+              method: "POST",
+              headers: { ...browserHeaders, Authorization: `Bearer ${patToken}` },
+              body: JSON.stringify({
+                query: `query { me { publications(first: 5) { edges { node { id title domain } } } } }`,
+              }),
+            });
+          }
 
           const meText = await meRes.text();
           if (meRes.ok && !meText.trim().startsWith("<")) {
@@ -442,7 +457,7 @@ async function publishIfConfigured() {
               console.log(`✅ Hashnode Publication ID automatisch ermittelt: ${publicationId}`);
             }
           } else {
-            console.warn("⚠️ Hashnode me Query lieferte Fehler oder HTML:", meText.substring(0, 200));
+            console.warn(`⚠️ Hashnode me Query (HTTP ${meRes.status}):`, meText.substring(0, 200));
           }
         } catch (meErr) {
           console.warn("⚠️ Hashnode me Query Fehler:", meErr.message);
@@ -482,15 +497,21 @@ async function publishIfConfigured() {
           },
         };
 
+        let authHeader = patToken;
         let hashnodeRes = await fetch("https://gql.hashnode.com", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: patToken,
-            "User-Agent": "stryker-mcp-reporter/1.7.1",
-          },
+          headers: { ...browserHeaders, Authorization: authHeader },
           body: JSON.stringify(hashnodeMutationV2),
         });
+
+        if (hashnodeRes.status === 401 || hashnodeRes.status === 403) {
+          authHeader = `Bearer ${patToken}`;
+          hashnodeRes = await fetch("https://gql.hashnode.com", {
+            method: "POST",
+            headers: { ...browserHeaders, Authorization: authHeader },
+            body: JSON.stringify(hashnodeMutationV2),
+          });
+        }
 
         let hashText = await hashnodeRes.text();
         let success = false;
@@ -505,55 +526,8 @@ async function publishIfConfigured() {
           }
         }
 
-        // Attempt 2: Fallback to Hashnode v1 API (api.hashnode.com) if v2 failed or returned HTML
         if (!success) {
-          console.log("🔄 Versuche Fallback auf Hashnode v1 API (api.hashnode.com)...");
-          const hashnodeMutationV1 = {
-            query: `
-              mutation CreatePublicationStory($input: CreateStoryInput!, $publicationId: String!) {
-                createPublicationStory(input: $input, publicationId: $publicationId) {
-                  success
-                  message
-                  post {
-                    slug
-                    title
-                  }
-                }
-              }
-            `,
-            variables: {
-              publicationId,
-              input: {
-                title: `Announcing stryker-mcp-reporter v${version}: 100% Mutation Score & Native MCP for AI Coding Agents`,
-                contentMarkdown: `${devToArticle.replace(/^---[\s\S]*?---\n/, "")}\n\n## 📝 Release Notes v${version}\n\n${latestChangelog}`,
-                coverImageURL: `${repoUrl}/raw/main/real_stryker_html_report.png`,
-                tags: [{ _id: "567447219582e01414f08c20", slug: "typescript", name: "TypeScript" }],
-              },
-            },
-          };
-
-          const v1Res = await fetch("https://api.hashnode.com", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: patToken,
-              "User-Agent": "stryker-mcp-reporter/1.7.1",
-            },
-            body: JSON.stringify(hashnodeMutationV1),
-          });
-
-          const v1Text = await v1Res.text();
-          if (!v1Text.trim().startsWith("<") && v1Res.ok) {
-            const v1Data = JSON.parse(v1Text);
-            if (v1Data.data?.createPublicationStory?.success) {
-              console.log("✅ Hashnode v1 Artikel erfolgreich veröffentlicht.");
-              success = true;
-            } else {
-              console.error("❌ Hashnode v1 Antwort:", v1Text);
-            }
-          } else {
-            console.error(`❌ Hashnode v1 Veröffentlichung fehlgeschlagen (HTTP ${v1Res.status}): ${v1Text.substring(0, 300)}`);
-          }
+          console.error(`❌ Hashnode Veröffentlichung fehlgeschlagen (HTTP ${hashnodeRes.status}): ${hashText.substring(0, 300)}`);
         }
       }
     } catch (err) {
