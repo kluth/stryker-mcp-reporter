@@ -235,12 +235,14 @@ async function publishIfConfigured() {
   if (process.env.DEVTO_API_KEY) {
     try {
       console.log("📤 Veröffentliche Artikel auf DEV.to...");
-      const devToRes = await fetch("https://dev.to/api/articles", {
+      const releaseCanonicalUrl = `${repoUrl}/releases/tag/v${version}`;
+
+      let devToRes = await fetch("https://dev.to/api/articles", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "api-key": process.env.DEVTO_API_KEY,
-          "User-Agent": "stryker-mcp-reporter/1.6.0 (https://github.com/kluth/stryker-mcp-reporter)",
+          "User-Agent": "stryker-mcp-reporter (https://github.com/kluth/stryker-mcp-reporter)",
         },
         body: JSON.stringify({
           article: {
@@ -249,12 +251,36 @@ async function publishIfConfigured() {
             body_markdown: devToArticle.replace(/^---[\s\S]*?---\n/, ""), // Remove frontmatter
             tags: ["typescript", "testing", "mcp", "ai"],
             main_image: `${repoUrl}/raw/main/real_stryker_html_report.png`,
-            canonical_url: repoUrl,
+            canonical_url: releaseCanonicalUrl,
           },
         }),
       });
 
-      const responseText = await devToRes.text();
+      let responseText = await devToRes.text();
+
+      // If 422 due to canonical URL collision, retry without canonical_url
+      if (!devToRes.ok && devToRes.status === 422 && responseText.includes("Canonical url")) {
+        console.warn("⚠️ Canonical URL kollidiert auf DEV.to. Versuche erneutes Senden ohne canonical_url...");
+        devToRes = await fetch("https://dev.to/api/articles", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "api-key": process.env.DEVTO_API_KEY,
+            "User-Agent": "stryker-mcp-reporter (https://github.com/kluth/stryker-mcp-reporter)",
+          },
+          body: JSON.stringify({
+            article: {
+              title: `Announcing stryker-mcp-reporter v${version}: 100% Mutation Score & Native MCP for AI Coding Agents`,
+              published: true,
+              body_markdown: devToArticle.replace(/^---[\s\S]*?---\n/, ""),
+              tags: ["typescript", "testing", "mcp", "ai"],
+              main_image: `${repoUrl}/raw/main/real_stryker_html_report.png`,
+            },
+          }),
+        });
+        responseText = await devToRes.text();
+      }
+
       if (devToRes.ok) {
         const data = JSON.parse(responseText);
         console.log(`✅ DEV.to Artikel erfolgreich veröffentlicht: ${data.url}`);
@@ -273,6 +299,7 @@ async function publishIfConfigured() {
     try {
       console.log("📤 Veröffentliche Artikel auf Hashnode...");
       let publicationId = process.env.HASHNODE_PUBLICATION_ID;
+      const patToken = process.env.HASHNODE_PAT.trim();
 
       // Auto-discover publication ID if not provided explicitly
       if (!publicationId) {
@@ -281,7 +308,7 @@ async function publishIfConfigured() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: process.env.HASHNODE_PAT,
+            Authorization: patToken,
             "User-Agent": "stryker-mcp-reporter",
           },
           body: JSON.stringify({
@@ -289,17 +316,20 @@ async function publishIfConfigured() {
           }),
         });
 
-        if (meRes.ok) {
-          const meData = await meRes.json();
+        const meText = await meRes.text();
+        if (meRes.ok && !meText.trim().startsWith("<")) {
+          const meData = JSON.parse(meText);
           publicationId = meData.data?.me?.publications?.edges?.[0]?.node?.id;
           if (publicationId) {
             console.log(`✅ Hashnode Publication ID automatisch ermittelt: ${publicationId}`);
           }
+        } else {
+          console.warn("⚠️ Hashnode me Query lieferte Fehler oder HTML:", meText.substring(0, 200));
         }
       }
 
       if (!publicationId) {
-        console.error("❌ Keine Hashnode Publication ID gefunden. Bitte HASHNODE_PUBLICATION_ID angeben.");
+        console.error("❌ Keine Hashnode Publication ID gefunden. Bitte HASHNODE_PUBLICATION_ID in GitHub Secrets eintragen.");
       } else {
         const hashnodeMutation = {
           query: `
@@ -334,22 +364,22 @@ async function publishIfConfigured() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: process.env.HASHNODE_PAT,
+            Authorization: patToken,
             "User-Agent": "stryker-mcp-reporter",
           },
           body: JSON.stringify(hashnodeMutation),
         });
 
         const hashText = await hashnodeRes.text();
-        if (hashnodeRes.ok) {
+        if (hashText.trim().startsWith("<")) {
+          console.error(`❌ Hashnode GraphQL API antwortete mit HTML (HTTP ${hashnodeRes.status}):`, hashText.substring(0, 250));
+        } else {
           const result = JSON.parse(hashText);
           if (result.errors) {
             console.error("❌ Hashnode GraphQL Fehler:", JSON.stringify(result.errors));
           } else {
             console.log(`✅ Hashnode Artikel erfolgreich veröffentlicht: ${result.data?.publishPost?.post?.url}`);
           }
-        } else {
-          console.error(`❌ Hashnode Veröffentlichung fehlgeschlagen (HTTP ${hashnodeRes.status}): ${hashText}`);
         }
       }
     } catch (err) {
@@ -387,6 +417,7 @@ async function publishIfConfigured() {
 }
 
 await publishIfConfigured();
+
 
 
 
