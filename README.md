@@ -175,7 +175,10 @@ Starte den MCP Server vorher im Hintergrund via `npx stryker-mcp-server --sse` u
 
 ### 1. 🪐 Google Antigravity (Antigravity CLI / IDE)
 
-Konfigurationsdatei `.antigravity/mcp.json` oder global unter `~/.gemini/antigravity-cli/mcp.json`:
+* **Projekt-Ebene**: `.antigravity/mcp.json` (im Wurzelverzeichnis deines Projekts)
+* **Globale Konfiguration**:
+  * **Windows**: `%USERPROFILE%\.gemini\config\mcp_config.json`
+  * **macOS / Linux**: `~/.gemini/config/mcp_config.json`
 
 ```json
 {
@@ -190,7 +193,11 @@ Konfigurationsdatei `.antigravity/mcp.json` oder global unter `~/.gemini/antigra
 
 ### 2. ⚡ Cursor IDE
 
-Datei `.cursor/mcp.json` (*Settings -> Features -> MCP*):
+* **Projekt-Ebene**: `.cursor/mcp.json` (im Wurzelverzeichnis deines Projekts)
+* **Globale Konfiguration**:
+  * **Windows**: `%USERPROFILE%\.cursor\mcp.json`
+  * **macOS / Linux**: `~/.cursor/mcp.json`
+  * *Oder im GUI-Menü*: **Cursor Settings -> Features -> MCP**
 
 ```json
 {
@@ -203,9 +210,14 @@ Datei `.cursor/mcp.json` (*Settings -> Features -> MCP*):
 }
 ```
 
-### 3. 🧩 Cline & Roo Code (VS Code Extension)
+### 3. 🧩 Cline (VS Code Extension)
 
-Einstellungen (`cline_mcp_settings.json` / `roo_code_mcp_settings.json`):
+* **Datei**: `cline_mcp_settings.json`
+* **Pfade**:
+  * **Windows**: `%APPDATA%\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json`
+  * **macOS**: `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
+  * **Linux**: `~/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`
+* *Oder in VS Code*: **Cline Tab -> MCP Servers Icon -> Configure MCP Servers**
 
 ```json
 {
@@ -218,11 +230,50 @@ Einstellungen (`cline_mcp_settings.json` / `roo_code_mcp_settings.json`):
 }
 ```
 
-### 4. 🧡 Claude Desktop
+### 4. 🦘 Roo Code (VS Code Extension)
 
-Editiere deine Claude Desktop Konfigurationsdatei (`claude_desktop_config.json`):
-* **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-* **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+* **Projekt-Ebene**: `.roo/mcp.json`
+* **Globale Konfiguration**: `mcp_settings.json`
+  * **Windows**: `%APPDATA%\Code\User\globalStorage\rooveterinaryinc.roo-cline\settings\mcp_settings.json`
+  * **macOS**: `~/Library/Application Support/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json`
+  * **Linux**: `~/.config/Code/User/globalStorage/rooveterinaryinc.roo-cline/settings/mcp_settings.json`
+
+```json
+{
+  "mcpServers": {
+    "stryker-mutation-testing": {
+      "command": "cmd.exe",
+      "args": ["/c", "npx", "-y", "--silent", "stryker-mcp-reporter"]
+    }
+  }
+}
+```
+
+### 5. 🏄 Windsurf IDE (Codeium)
+
+* **Datei**: `mcp_config.json`
+* **Pfade**:
+  * **Windows**: `%USERPROFILE%\.codeium\windsurf\mcp_config.json`
+  * **macOS / Linux**: `~/.codeium/windsurf/mcp_config.json`
+* *Oder via Command Palette*: `Ctrl+Shift+P` / `Cmd+Shift+P` -> **Windsurf: Open MCP Configuration**
+
+```json
+{
+  "mcpServers": {
+    "stryker-mutation-testing": {
+      "command": "cmd.exe",
+      "args": ["/c", "npx", "-y", "--silent", "stryker-mcp-reporter"]
+    }
+  }
+}
+```
+
+### 6. 🧡 Claude Desktop
+
+* **Datei**: `claude_desktop_config.json`
+* **Pfade**:
+  * **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+  * **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 ```json
 {
