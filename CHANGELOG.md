@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.6.0...v1.7.0) (2026-08-05)
+
+
+### Features
+
+* **ci:** add native Hashnode GraphQL v2 API auto-publishing integration ([fff68ff](https://github.com/kluth/stryker-mcp-reporter/commit/fff68ff8f88ca079a6c811585fe8ee6616e0c7ae))
+
 # [1.6.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.5.4...v1.6.0) (2026-08-05)
 
 
