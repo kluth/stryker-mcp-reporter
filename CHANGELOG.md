@@ -1,3 +1,11 @@
+## [1.5.2](https://github.com/kluth/stryker-mcp-reporter/compare/v1.5.1...v1.5.2) (2026-08-05)
+
+
+### Bug Fixes
+
+* **bin:** default to stdio mode when executed as mcp server binary ([c55a3c3](https://github.com/kluth/stryker-mcp-reporter/commit/c55a3c30fb9065b353c00b763335e7e477863906))
+* **mcp:** add SSE session tracking map and native stdio transport support ([8142d9d](https://github.com/kluth/stryker-mcp-reporter/commit/8142d9df462b367c7108ae7199dd2569932f2e0f))
+
 ## [1.5.1](https://github.com/kluth/stryker-mcp-reporter/compare/v1.5.0...v1.5.1) (2026-08-05)
 
 
