@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.3.0...v1.4.0) (2026-08-05)
+
+
+### Features
+
+* **mcp:** support specific commits, ranges and revisions in targeted mutation runs ([916928a](https://github.com/kluth/stryker-mcp-reporter/commit/916928afd1278cd5421a6e0ce6b29df5d5f55df4))
+
 # [1.3.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.2.0...v1.3.0) (2026-08-04)
 
 
