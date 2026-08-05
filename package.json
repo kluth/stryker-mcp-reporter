@@ -7,7 +7,8 @@
   "type": "module",
   "types": "dist/index.d.ts",
   "bin": {
-    "stryker-mcp-server": "bin/stryker-mcp-server.js"
+    "stryker-mcp-server": "bin/stryker-mcp-server.js",
+    "stryker-mcp-reporter": "bin/stryker-mcp-server.js"
   },
   "files": [
     "dist",
