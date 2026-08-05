@@ -1,12 +1,33 @@
 # ⚡ stryker-mcp-reporter & Control Server
 
-[![npm version](https://img.shields.io/npm/v/stryker-mcp-reporter)](https://www.npmjs.com/package/stryker-mcp-reporter)
-![Node version](https://img.shields.io/node/v/stryker-mcp-reporter)
-![Mutation Score](https://img.shields.io/badge/Mutation%20Score-100%25-brightgreen)
-![Semantic Release](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release)
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
+<div align="center">
 
-Ein umfassendes **Stryker Mutator Plugin & Standalone Control Server**, das Mutation Testing Ergebnisse sowie **interaktive Steuerung per Model Context Protocol (MCP)** über SSE für KI-Agenten (z. B. Antigravity, Cursor, Cline, Roo Code, Claude) bereitstellt.
+[![npm version](https://img.shields.io/npm/v/stryker-mcp-reporter?style=for-the-badge&color=CB3837&logo=npm)](https://www.npmjs.com/package/stryker-mcp-reporter)
+[![Node version](https://img.shields.io/badge/node-%3E%3D22.0.0-339933?style=for-the-badge&logo=nodedotjs)](https://nodejs.org/)
+[![Mutation Score](https://img.shields.io/badge/Mutation%20Score-100%25-brightgreen?style=for-the-badge&logo=stryker)](https://stryker-mutator.io/)
+[![Architecture](https://img.shields.io/badge/Architecture-Hexagonal%20%2F%20DDD-blueviolet?style=for-the-badge)](#-software-engineering--architektur-highlights)
+[![GitHub Discussions](https://img.shields.io/badge/GitHub-Discussions-007EC6?style=for-the-badge&logo=github)](https://github.com/kluth/stryker-mcp-reporter/discussions)
+[![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
+
+> **"100% Code Coverage sagt dir nur, was ausgeführt wurde. Stryker MCP befähigt deine KI zu beweisen, was unzerstörbar ist."**
+
+Ein hochmodernes **Stryker Mutator Plugin & Standalone Control Server**, das Mutation Testing Ergebnisse sowie **interaktive Steuerung per Model Context Protocol (MCP)** über SSE und stdio für KI-Agenten (*Antigravity, Cursor, Cline, Roo Code, Claude Desktop*) bereitstellt.
+
+[🚀 Quickstart](#-installation--schnellstart) • [🤖 KI-Agenten Setup](#-interaktives-ki-agenten-setup) • [🏗️ Architektur](#-software-engineering--architektur-highlights) • [🤝 Contributing](#-contributor-onboarding--community)
+
+</div>
+
+---
+
+## 📖 Die Story: Warum stryker-mcp-reporter?
+
+> [!IMPORTANT]
+> **Das 100% Coverage-Paradoxon:**  
+> Standard Code Coverage misst lediglich, welche Zeilen Code während eines Tests einmal ausgeführt wurden – selbst wenn deine Tests schwache oder gar keine Assertions enthalten. Generative KI-Agenten schreiben heute in Sekunden hunderte Zeilen Testcode, neigen aber zum "Happy Path Bias" und lassen logische Randfälle unbemerkt durch.
+
+**Die Stryker MCP Revolution:**  
+Stryker mutiert deinen Quellcode (z. B. verwandelt es `>` in `>=`, löscht Rückgabewerte oder invertiert Logik). Überlebt ein Mutant, existiert eine unsichtbare Testlücke.  
+**`stryker-mcp-reporter` macht diese Mutanten für KI-Agenten lesbar und steuerbar.** KI-Pair-Programmer erkennen Lücken autonom, schreiben exakte Grenzwert-Tests und eliminieren überlebende Mutanten in Echtzeit.
 
 ---
 
@@ -15,7 +36,7 @@ Ein umfassendes **Stryker Mutator Plugin & Standalone Control Server**, das Muta
 ### 📊 1. Echter Stryker HTML Mutation Testing Report
 ![Stryker HTML Report](real_stryker_html_report.png)
 
-### 🧬 2. Mutanten-Detailanalyse & Quellcode-Instrumentierung
+### 🧬 2. Mutanten-Detailanalyse mit In-Line Code Diff
 ![Stryker File Detail](real_stryker_file_detail_report.png)
 
 ### 💻 3. Standalone MCP Control Server & Real-Time Protocol Verification (`npm run test:e2e`)
@@ -25,15 +46,15 @@ Ein umfassendes **Stryker Mutator Plugin & Standalone Control Server**, das Muta
 
 ## 🌟 Hauptmerkmale
 
-* **⚡ Interaktives Mutation Testing**: KI-Agenten können Mutationstests gezielt per Tool-Call anstoßen, beobachten und auswerten.
-* **🎯 Targeted Git-Diff Executions**: Mit `run_targeted_mutation_tests` werden nur die in Git geänderten TypeScript-Dateien getestet – spart bis zu 90% Laufzeit!
-* **📦 Live MCP Resources**: Greife über standardisierte URIs wie `stryker://report/survived` oder `stryker://status` auf Testdaten zu.
-* **🤖 KI-Assolidierte Testgenerierung**: Der `analyze_survived_mutants`-Prompt leitet KI-Agenten an, überlebende Mutanten nach TDD-Prinzipien mit exakten Vitest/Jest Tests zu eliminieren.
-* **🧠 Vector DB & RAG-Ready Insights**: Bündelt Testergebnisse in hochstrukturierte `MutationInsightEntity`-Objekte für automatisierte Entwickler-Fortbildungen und Skill-Gap-Analysen.
+* ⚡ **Interaktives Mutation Testing**: KI-Agenten können Mutationstests gezielt per MCP-Tool-Call anstoßen, beobachten und auswerten.
+* 🎯 **Targeted Git-Diff Executions**: Mit `run_targeted_mutation_tests` werden nur die in Git geänderten TypeScript-Dateien getestet – **spart bis zu 90% Laufzeit!**
+* 📦 **Live MCP Resources**: Greife über URIs wie `stryker://report/survived` oder `stryker://status` direkt auf Testdaten zu.
+* 🤖 **Agentic Testgenerierung**: Der `analyze_survived_mutants`-Prompt leitet KI-Agenten an, überlebende Mutanten nach TDD-Prinzipien mit exakten Vitest/Jest-Tests zu eliminieren.
+* 🧠 **Vector DB & RAG-Ready Insights**: Bündelt Testergebnisse in hochstrukturierte `MutationInsightEntity`-Objekte für automatisierte Entwickler-Fortbildungen und Skill-Gap-Analysen.
 
 ---
 
-## 📦 Installation
+## 📦 Installation & Schnellstart
 
 **Voraussetzungen:** Node.js >= 22.0.0 und `@stryker-mutator/core` >= 8.0.0.
 
@@ -42,10 +63,6 @@ Installiere das Plugin in deinem Projekt:
 ```bash
 npm install --save-dev stryker-mcp-reporter
 ```
-
----
-
-## 🚀 Betriebsmodi
 
 ### Modus 1: Stryker Reporter Plugin
 
@@ -80,6 +97,84 @@ Der Server steht dauerhaft bereit und erlaubt KI-Agenten das dynamische Ausführ
 
 ---
 
+## 🤖 Interaktives KI-Agenten Setup
+
+Verbinde deine bevorzugte KI-Entwicklungsumgebung im Handumdrehen mit `stryker-mcp-reporter`.
+
+### 1. 🪐 Google Antigravity (Antigravity CLI / IDE)
+
+Füge die Konfiguration zu deiner Workspace-Konfiguration `.antigravity/mcp.json` oder global unter `~/.gemini/antigravity-cli/mcp.json` hinzu:
+
+```json
+{
+  "mcpServers": {
+    "stryker-mutation-testing": {
+      "url": "http://127.0.0.1:3000/mcp/sse"
+    }
+  }
+}
+```
+
+### 2. ⚡ Cursor IDE
+
+Füge folgenden Block in deine Datei `.cursor/mcp.json` ein (*Settings -> Features -> MCP*):
+
+```json
+{
+  "mcpServers": {
+    "stryker-mcp": {
+      "url": "http://127.0.0.1:3000/mcp/sse"
+    }
+  }
+}
+```
+
+### 3. 🧩 Cline (VS Code Extension)
+
+Öffne die Cline MCP-Einstellungen (`cline_mcp_settings.json`) in VS Code:
+
+```json
+{
+  "mcpServers": {
+    "stryker-mcp-reporter": {
+      "url": "http://127.0.0.1:3000/mcp/sse"
+    }
+  }
+}
+```
+
+### 4. 🦘 Roo Code
+
+Öffne die Einstellungen für Roo Code (`roo_code_mcp_settings.json`):
+
+```json
+{
+  "mcpServers": {
+    "stryker-mcp": {
+      "command": "npx",
+      "args": ["-y", "stryker-mcp-server"]
+    }
+  }
+}
+```
+
+### 5. 🧡 Claude Desktop
+
+Editiere deine Claude Desktop Konfigurationsdatei (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "stryker-mutation-testing": {
+      "command": "npx",
+      "args": ["-y", "stryker-mcp-server"]
+    }
+  }
+}
+```
+
+---
+
 ## 🔌 MCP Schnittstellen
 
 ### 📦 Resources (Datenabruf)
@@ -106,39 +201,75 @@ Der Server steht dauerhaft bereit und erlaubt KI-Agenten das dynamische Ausführ
 
 ---
 
+## 🏗️ Software Engineering & Architektur-Highlights
+
+`stryker-mcp-reporter` ist nach den Prinzipien der **Clean Architecture / Hexagonal Architecture** aufgebaut, um maximale Testbarkeit, Wartbarkeit und Entkopplung zu gewährleisten.
+
+```mermaid
+graph TD
+    subgraph Infrastructure Layer ["Infrastruktur (Adapters)"]
+        Express["Express Server (SSE / MCP)"]
+        McpAdapter["McpServerAdapter"]
+        StrykerRunner["StrykerCliRunnerAdapter"]
+        GitAdapter["GitCliAdapter"]
+    end
+
+    subgraph Application Layer ["Applikation (Use Cases)"]
+        RunUC["RunMutationTestsUseCase"]
+        RunTargetedUC["RunTargetedMutationTestsUseCase"]
+        GetSurvivedUC["GetSurvivedMutantsUseCase"]
+        GetSummaryUC["GetMutationSummaryUseCase"]
+        PublishUC["PublishReportUseCase"]
+    end
+
+    subgraph Core Domain Layer ["Kern-Domäne (Pure TS)"]
+        ReportStream["ReportStream"]
+        StatusStream["ExecutionStatusStream"]
+        Entity["MutationInsightEntity"]
+        Result["Result<T, E>"]
+    end
+
+    Express --> McpAdapter
+    McpAdapter --> RunUC
+    McpAdapter --> RunTargetedUC
+    McpAdapter --> GetSurvivedUC
+    McpAdapter --> GetSummaryUC
+    
+    RunUC --> ReportStream
+    RunUC --> StatusStream
+    RunUC --> StrykerRunner
+    RunTargetedUC --> GitAdapter
+    RunTargetedUC --> RunUC
+    
+    PublishUC --> ReportStream
+```
+
+---
+
 ## 🧠 Vector DB & Developer Skill-Gap Data Model
 
-`stryker-mcp-reporter` transformiert rohe Mutanten-Ergebnisse in angereicherte `MutationInsightEntity`-Objekte. Diese enthalten:
+`stryker-mcp-reporter` transformiert rohe Mutanten-Ergebnisse in angereicherte `MutationInsightEntity`-Objekte. Diese enthalten strukturierte Daten zur Speicherung in Vektordatenbanken (Qdrant, Pinecone, ChromaDB, Weaviate) für RAG-Pipelines:
 
 1. **Mutator-Kategorie**: (z. B. `Arithmetic & Math`, `Equality & Logic`, `Exception Handling`).
 2. **Architekturschicht**: (z. B. `Domain`, `Application`, `Infrastructure`).
 3. **Risikoscore & Schweregrad**: Automatisches Scoring (0 – 100) zur Priorisierung von Testlücken.
-4. **Embedding Payload**: Vektor-DB ready Text-String für RAG-Pipelines (Qdrant, Pinecone, ChromaDB).
+4. **Embedding Payload**: Vektor-DB-ready Text-String für automatisierte KI-Trainings und Entwickler-Analysen.
 
 ---
 
-## 🗺️ Feature Roadmap (150 Features)
+## 🤝 Contributor Onboarding & Community
 
-Eine umfassende Übersicht über geplante und zukünftige Erweiterungen in 9 Kategorien findest du im Feature-Katalog.
+Wir freuen uns über jede Unterstützung! Egal ob Bugfix, neue MCP-Tools oder Dokumentations-Verbesserungen.
 
----
-
-## 🏗️ Software Engineering & Qualitätssicherung
-
-* **Clean Architecture & Hexagonal Design:** Die Kern-Domäne (`src/core/domain/`) ist vollständig von der Infrastruktur (`Express`, `MCP SDK`, `@stryker-mutator/core`) getrennt.
-* **TDD & 100% Mutation Coverage:** Vollständige Testabdeckung in Vitest sowie fortlaufendes Mutation Testing über Stryker.
-* **Automatisierte E2E Protokollprüfung:** Verifikation über `npm run test:e2e` prüft das echte SSE JSON-RPC 2.0 Protokoll.
-
----
-
-## 🛠️ Lokale Entwicklung
+### 🏁 Quickstart für Contributor
 
 ```bash
-npm install          # Abhängigkeiten installieren
-npm run build        # TypeScript Build
-npm run test         # Unit Tests (Vitest)
-npm run test:e2e     # Real E2E MCP Protocol Verification
-npm run test:mutation# Mutation Testing (Stryker)
+git clone https://github.com/kluth/stryker-mcp-reporter.git
+cd stryker-mcp-reporter
+npm install
+npm test              # Unit Tests (Vitest)
+npm run test:e2e      # Real E2E MCP SSE Protocol Verification
+npm run test:mutation # Stryker Mutation Testing (100% Target)
 ```
 
 ---
