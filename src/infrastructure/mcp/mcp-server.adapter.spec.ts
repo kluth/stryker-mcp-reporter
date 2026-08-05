@@ -223,6 +223,15 @@ describe("McpServerAdapter", () => {
     expect(targetedResult.content[0].text).toContain("Zielgerichtete Mutationstests erfolgreich beendet");
     expect(runTargetedUseCase.execute).toHaveBeenCalledWith("main");
 
+    // Tool: run_targeted_mutation_tests mit commitSha
+    vi.mocked(runTargetedUseCase.execute).mockResolvedValue(ok(mockReport));
+    const targetedCommitResult = await callToolHandler(
+      { params: { name: "run_targeted_mutation_tests", arguments: { commitSha: "a9d1206" } } },
+      {},
+    );
+    expect(targetedCommitResult.content[0].text).toContain("Zielgerichtete Mutationstests erfolgreich beendet");
+    expect(runTargetedUseCase.execute).toHaveBeenCalledWith({ commitSha: "a9d1206" });
+
     // Tool: run_targeted_mutation_tests mit Fehler
     vi.mocked(runTargetedUseCase.execute).mockResolvedValue(err(new Error("Keine Dateien geändert")));
     const targetedErrResult = await callToolHandler(

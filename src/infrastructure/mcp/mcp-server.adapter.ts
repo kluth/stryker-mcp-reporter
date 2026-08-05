@@ -243,13 +243,29 @@ export class McpServerAdapter {
         },
         {
           name: "run_targeted_mutation_tests",
-          description: "Erkennt in Git geänderte TypeScript-Dateien und führt Mutationstests gezielt nur für diese aus.",
+          description: "Erkennt in Git geänderte TypeScript-Dateien (für Commits, Commit-Ranges oder Uncommitted Changes) und führt Mutationstests gezielt nur für diese aus.",
           inputSchema: {
             type: "object",
             properties: {
+              commitSha: {
+                type: "string",
+                description: "Spezifischer Commit-Hash für gezielten Testlauf (z.B. 'a9d1206').",
+              },
+              revision: {
+                type: "string",
+                description: "Ziel-Branch oder Revision für Git-Diff (z.B. 'HEAD~1' oder 'main').",
+              },
+              fromRevision: {
+                type: "string",
+                description: "Start-Revision für Commit-Bereich (z.B. 'v1.0.0' oder 'HEAD~3').",
+              },
+              toRevision: {
+                type: "string",
+                description: "Ziel-Revision für Commit-Bereich (z.B. 'v1.1.0' oder 'HEAD').",
+              },
               baseBranch: {
                 type: "string",
-                description: "Optionaler Ziel-Branch für Git-Diff (z.B. 'main' oder 'master'). Standard: Uncommitted Changes.",
+                description: "Veraltet: Nutze 'revision' stattdessen.",
               },
             },
           },
@@ -311,8 +327,25 @@ export class McpServerAdapter {
       }
 
       if (name === "run_targeted_mutation_tests") {
-        const baseBranch = (args as { baseBranch?: string })?.baseBranch;
-        const runResult = await this.runTargetedUseCase.execute(baseBranch);
+        const rawArgs = args as {
+          commitSha?: string;
+          revision?: string;
+          fromRevision?: string;
+          toRevision?: string;
+          baseBranch?: string;
+        };
+
+        const targetOptions =
+          rawArgs?.commitSha || rawArgs?.revision || rawArgs?.fromRevision
+            ? {
+                commitSha: rawArgs.commitSha,
+                revision: rawArgs.revision,
+                fromRevision: rawArgs.fromRevision,
+                toRevision: rawArgs.toRevision,
+              }
+            : rawArgs?.baseBranch;
+
+        const runResult = await this.runTargetedUseCase.execute(targetOptions);
 
         if (!runResult.isOk) {
           return {

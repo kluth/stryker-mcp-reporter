@@ -17,19 +17,41 @@ export class GitCliAdapter implements GitServicePort {
     },
   ) {}
 
-  public async getChangedFiles(baseBranch?: string): Promise<string[]> {
+  public async getChangedFiles(revisionOrBranch?: string): Promise<string[]> {
     try {
-      let command: string;
-      if (baseBranch) {
-        command = `git diff --name-only ${baseBranch}`;
-      } else {
-        command = "git status --porcelain";
-      }
+      const command = revisionOrBranch
+        ? `git diff --name-only ${revisionOrBranch}`
+        : "git status --porcelain";
 
       const output = await this.execFn(command);
-      return this.parseGitOutput(output, !!baseBranch);
+      return this.parseGitOutput(output, !!revisionOrBranch);
     } catch (error) {
       this.logger.warn("Konnte geänderte Git-Dateien nicht ermitteln:", error as Error);
+      return [];
+    }
+  }
+
+  public async getChangedFilesBetween(fromRevision: string, toRevision: string): Promise<string[]> {
+    try {
+      const command = `git diff --name-only ${fromRevision}..${toRevision}`;
+      const output = await this.execFn(command);
+      return this.parseGitOutput(output, true);
+    } catch (error) {
+      this.logger.warn(
+        `Konnte geänderte Git-Dateien zwischen ${fromRevision} und ${toRevision} nicht ermitteln:`,
+        error as Error,
+      );
+      return [];
+    }
+  }
+
+  public async getChangedFilesForCommit(commitSha: string): Promise<string[]> {
+    try {
+      const command = `git diff-tree --no-commit-id --name-only -r ${commitSha}`;
+      const output = await this.execFn(command);
+      return this.parseGitOutput(output, true);
+    } catch (error) {
+      this.logger.warn(`Konnte geänderte Git-Dateien für Commit ${commitSha} nicht ermitteln:`, error as Error);
       return [];
     }
   }

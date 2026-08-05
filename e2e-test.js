@@ -124,7 +124,15 @@ async function runE2eTest() {
   await sendJsonRpc("prompts/get", { name: "analyze_survived_mutants", arguments: {} });
   console.log("✅ Prompts erfolgreich abgefragt.");
 
-  // 11. MCP Tool Call (run_mutation_tests auf eine kleine Datei: src/core/domain/result.ts)
+  // 11. MCP Tool Call (run_targeted_mutation_tests mit commitSha / revision)
+  console.log("\n--- TEST: tools/call (run_targeted_mutation_tests für revision HEAD~1) ---");
+  await sendJsonRpc("tools/call", {
+    name: "run_targeted_mutation_tests",
+    arguments: { revision: "HEAD~1" },
+  });
+  console.log("✅ run_targeted_mutation_tests Tool gestartet.");
+
+  // 12. MCP Tool Call (run_mutation_tests auf eine kleine Datei: src/core/domain/result.ts)
   console.log("\n--- TEST: tools/call (run_mutation_tests auf src/core/domain/result.ts) ---");
   await sendJsonRpc("tools/call", {
     name: "run_mutation_tests",
