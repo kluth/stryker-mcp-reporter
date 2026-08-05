@@ -34,32 +34,32 @@ Stryker mutiert deinen Quellcode (z. B. verwandelt es `>` in `>=`, löscht Rück
 ## 📸 In Aktion (Reale Screenshots)
 
 ### 📊 1. Echter Stryker HTML Mutation Testing Report
-![Stryker HTML Report](real_stryker_html_report.png)
+![Stryker HTML Report](assets/images/real_stryker_html_report.png)
 
 ### 🧬 2. Mutanten-Detailanalyse mit In-Line Code Diff
-![Stryker File Detail](real_stryker_file_detail_report.png)
+![Stryker File Detail](assets/images/real_stryker_file_detail_report.png)
 
 ### 💻 3. Standalone MCP Control Server & Real-Time Protocol Verification (`npm run test:e2e`)
-![Terminal MCP Server](real_terminal_mcp_server.png)
+![Terminal MCP Server](assets/images/real_terminal_mcp_server.png)
 
 ### 🤖 4. Live KI-Mutanten Auto-Remediation (`suggest_mutant_fixes`)
-![AI Mutant Auto Remediation](real_step1_suggest_fixes.png)
+![AI Mutant Auto Remediation](assets/images/real_step1_suggest_fixes.png)
 *Analysiert überlebende Mutanten im Code-Kontext und erzeugt präzise TypeScript-Assertions (`expect(result).toBe(...)`) sowie konkrete Randwert-Test-Snippets für KI-Pair-Programmer.*
 
 ### 🔮 5. Gezielte Mutanten-Risikoprognose (`predict_mutation_impact`)
-![Mutation Impact Risk Predictor](real_step2_impact_predict.png)
+![Mutation Impact Risk Predictor](assets/images/real_step2_impact_predict.png)
 *Analysiert geänderte Quelldateien aus `git diff` in unter einer Sekunde und klassifiziert das Risiko überlebender Mutanten (`HIGH`, `MEDIUM`, `LOW`) für optimale Test-Priorisierung.*
 
 ### 📈 6. Historische Score Trend Analytics (`stryker://analytics/trends`)
-![Mutation Score Trend Analytics](real_step3_trend_analytics.png)
+![Mutation Score Trend Analytics](assets/images/real_step3_trend_analytics.png)
 *Verfolgt den historischen Verlauf von Mutation-Scores über mehrere Testläufe hinweg, berechnet Score-Deltas (+5.7% Steigerung) und visualisiert die Trend-Richtung.*
 
 ### 🛡️ 7. 48-Stunden Anti-Spam Rate Limiter Engine
-![48h Anti Spam Rate Limiter](real_step4_antispam_limit.png)
+![48h Anti Spam Rate Limiter](assets/images/real_step4_antispam_limit.png)
 *Verhindert Spam bei schnellen Release-Zyklen. Sofern innerhalb von 48 Stunden ein neues Release veröffentlicht wird, fängt die Engine doppelte Social-Media-Posts automatisch ab.*
 
 ### 🖼️ 8. Multi-Platform Release Announcement Dashboard (`preview.html`)
-![Release Announcement Dashboard Preview](real_step5_announcement_dash.png)
+![Release Announcement Dashboard Preview](assets/images/real_step5_announcement_dash.png)
 *Interaktives HTML-Dashboard (`dist/announcements/preview.html`) zur visuellen Vorschau aller automatischen Veröffentlichungen (GitHub Discussions, DEV.to, Telegram, Discord).*
 
 ---
@@ -339,7 +339,7 @@ Starte den MCP Server vorher im Hintergrund via `npx stryker-mcp-server --sse` u
 
 ### 💡 Prompts (KI-gestützte Testgenerierung)
 
-* **`analyze_survived_mutants`**: Erzeugt eine strukturierte KI-Instruktion zur detaillierten Ursachenanalyse überlebender Mutanten und zur automatischen Erstellung fehlender Unit Tests nach TDD-Standards.
+* **`explain_survived_mutants`**: Erzeugt eine strukturierte KI-Instruktion zur detaillierten Ursachenanalyse überlebender Mutanten und zur automatischen Erstellung fehlender Unit Tests nach TDD-Standards.
 
 ---
 

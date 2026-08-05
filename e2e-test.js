@@ -121,7 +121,7 @@ async function runE2eTest() {
   // 10. MCP Prompts Listing & Get
   console.log("\n--- TEST: prompts/list & prompts/get ---");
   await sendJsonRpc("prompts/list");
-  await sendJsonRpc("prompts/get", { name: "analyze_survived_mutants", arguments: {} });
+  await sendJsonRpc("prompts/get", { name: "explain_survived_mutants", arguments: {} });
   console.log("✅ Prompts erfolgreich abgefragt.");
 
   // 11. MCP Tool Call (run_targeted_mutation_tests mit commitSha / revision)
