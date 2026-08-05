@@ -77,7 +77,7 @@ describe("StrykerCliRunnerAdapter", () => {
     });
   });
 
-  it("ignoriert leere oder nicht gesetzte Optionseigenschaften", async () => {
+  it("ignoriert concurrency=0 oder leere Optionseigenschaften", async () => {
     const fakeReport: MutationReport = { files: {} };
     mockStrykerFactory = vi.fn().mockReturnValue({
       runMutationTest: vi.fn().mockResolvedValue(fakeReport),
@@ -99,6 +99,19 @@ describe("StrykerCliRunnerAdapter", () => {
 
     expect(result.isOk).toBe(true);
     expect(result.value).toEqual({ files: {} });
+  });
+
+  it("handhabt null rawResult und erzeugt ein valides MutationReport-Objekt mit files", async () => {
+    mockStrykerFactory = vi.fn().mockReturnValue({
+      runMutationTest: vi.fn().mockResolvedValue(null),
+    });
+
+    const adapter = new StrykerCliRunnerAdapter(mockLogger, mockStrykerFactory);
+    const result = await adapter.run();
+
+    expect(result.isOk).toBe(true);
+    expect(result.value).toEqual({ files: {} });
+    expect(result.value?.files).toBeDefined();
   });
 
   it("fängt Fehler bei der Stryker-Ausführung ab und gibt ein err-Result zurück", async () => {

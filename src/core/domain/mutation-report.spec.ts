@@ -127,6 +127,28 @@ describe("MutationReport Domain Model", () => {
       expect(extractSurvivedMutants({ files: { "a.ts": {} as any } })).toEqual([]);
     });
 
+    it("handhabt mutant ohne ID fallback", () => {
+      const report: MutationReport = {
+        files: {
+          "src/invalid.ts": {
+            mutants: [
+              {
+                status: "Survived",
+                mutatorName: "Unknown",
+              } as any,
+            ],
+          },
+        },
+      };
+
+      const survived = extractSurvivedMutants(report);
+
+      expect(survived).toHaveLength(1);
+      expect(survived[0].id).toBe("unknown");
+      expect(survived[0].line).toBe(1);
+      expect(survived[0].column).toBe(1);
+    });
+
     it("handhabt fehlerhafte oder unvollständige Mutanten-Objekte gracefully", () => {
       const malformedReport: MutationReport = {
         files: {

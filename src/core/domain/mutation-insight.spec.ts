@@ -43,6 +43,85 @@ describe("MutationInsight Entity Domain Model", () => {
     expect(insight.vectorEmbedding.vectorId).toBe("insight-mutant-101");
   });
 
+  it("mappt alle Mutator-Kategorien und Dateitypen korrekt", () => {
+    const inputArray: RawMutantInsightInput = {
+      mutantId: "mutant-3",
+      filePath: "src/application/use-case.ts",
+      mutatorName: "ArrayDeclaration",
+      replacement: "[]",
+      line: 1,
+      column: 1,
+      status: "Survived",
+    };
+    const insightArray = buildMutationInsightEntity(inputArray);
+    expect(insightArray.mutant.mutatorCategory).toBe("Array & Collection");
+    expect(insightArray.codeContext.fileCategory).toBe("Application");
+
+    const inputAsync: RawMutantInsightInput = {
+      mutantId: "mutant-4",
+      filePath: "src/ui/components/button.ts",
+      mutatorName: "AsyncAwait",
+      replacement: "",
+      line: 1,
+      column: 1,
+      status: "Survived",
+    };
+    const insightAsync = buildMutationInsightEntity(inputAsync);
+    expect(insightAsync.mutant.mutatorCategory).toBe("Async & Promises");
+    expect(insightAsync.codeContext.fileCategory).toBe("UI");
+
+    const inputBlock: RawMutantInsightInput = {
+      mutantId: "mutant-5",
+      filePath: "src/util/helper.ts",
+      mutatorName: "BlockStatement",
+      replacement: "{}",
+      line: 1,
+      column: 1,
+      status: "Survived",
+    };
+    const insightBlock = buildMutationInsightEntity(inputBlock);
+    expect(insightBlock.mutant.mutatorCategory).toBe("Block & Structure");
+    expect(insightBlock.codeContext.fileCategory).toBe("Utility");
+
+    const inputStringMutator: RawMutantInsightInput = {
+      mutantId: "mutant-8",
+      filePath: "src/domain/model.ts",
+      mutatorName: "string_literal_mutator",
+      replacement: "foo",
+      line: 1,
+      column: 1,
+      status: "Survived",
+    };
+    const insightString = buildMutationInsightEntity(inputStringMutator);
+    expect(insightString.mutant.mutatorCategory).toBe("String & Literals");
+
+    const inputConditionalMutator: RawMutantInsightInput = {
+      mutantId: "mutant-9",
+      filePath: "src/infrastructure/db.ts",
+      mutatorName: "conditional_if_expression",
+      replacement: "true",
+      line: 1,
+      column: 1,
+      status: "Survived",
+    };
+    const insightConditional = buildMutationInsightEntity(inputConditionalMutator);
+    expect(insightConditional.mutant.mutatorCategory).toBe("Control Flow & Conditionals");
+
+    const inputException: RawMutantInsightInput = {
+      mutantId: "mutant-7",
+      filePath: "src/infrastructure/adapter.ts",
+      mutatorName: "ExceptionFilter",
+      replacement: "null",
+      line: 10,
+      column: 5,
+      status: "Survived",
+    };
+    const insightException = buildMutationInsightEntity(inputException);
+    expect(insightException.mutant.mutatorCategory).toBe("Exception & Error Handling");
+    expect(insightException.educationalInsight.severity).toBe("High");
+    expect(insightException.educationalInsight.riskScore).toBe(80);
+  });
+
   it("kategorisiert NoCoverage Mutanten korrekt mit hohem Risiko", () => {
     const input: RawMutantInsightInput = {
       mutantId: "mutant-202",

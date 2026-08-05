@@ -41,13 +41,10 @@ describe("Plugin Index (Composition Root)", () => {
     expect(adapter.activePort).toBe(3005);
   });
 
-  it("sollte den Standalone-Server starten können", async () => {
-    const adapterMock = {
-      start: vi.fn().mockResolvedValue({ isOk: true }),
-    } as unknown as McpServerAdapter;
-
-    const result = await startStandaloneServer(loggerMock, adapterMock);
+  it("sollte den Standalone-Server mit Standard-Adapter erzeugen und starten können", async () => {
+    const startSpy = vi.spyOn(McpServerAdapter.prototype, "start").mockResolvedValue({ isOk: true, value: undefined } as any);
+    const result = await startStandaloneServer(loggerMock);
     expect(result.isOk).toBe(true);
-    expect(adapterMock.start).toHaveBeenCalledOnce();
+    expect(startSpy).toHaveBeenCalled();
   });
 });

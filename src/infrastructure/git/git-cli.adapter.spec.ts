@@ -51,16 +51,23 @@ describe("GitCliAdapter", () => {
     expect(execCommand).toHaveBeenCalledWith("git status --porcelain");
   });
 
-  it("fängt Fehler bei Befehlsausführung ab und gibt leeres Array zurück", async () => {
-    const execCommand = vi.fn().mockRejectedValue(new Error("Git fatal error"));
+  it("nutzt die Standard execFn, wenn keine übergeben wird", async () => {
+    const adapter = new GitCliAdapter(loggerMock);
+    const files = await adapter.getChangedFiles();
+    expect(Array.isArray(files)).toBe(true);
+  });
+
+  it("fängt Fehler bei getChangedFiles, getChangedFilesBetween und getChangedFilesForCommit ab", async () => {
+    const execCommand = vi.fn().mockRejectedValue(new Error("Git range error"));
     const adapter = new GitCliAdapter(loggerMock, execCommand);
 
-    const files = await adapter.getChangedFiles("main");
+    const mainFiles = await adapter.getChangedFiles("main");
+    const betweenFiles = await adapter.getChangedFilesBetween("v1", "v2");
+    const commitFiles = await adapter.getChangedFilesForCommit("invalid");
 
-    expect(files).toEqual([]);
-    expect(loggerMock.warn).toHaveBeenCalledWith(
-      expect.stringContaining("Konnte geänderte Git-Dateien nicht ermitteln"),
-      expect.any(Error),
-    );
+    expect(mainFiles).toEqual([]);
+    expect(betweenFiles).toEqual([]);
+    expect(commitFiles).toEqual([]);
+    expect(loggerMock.warn).toHaveBeenCalledTimes(3);
   });
 });

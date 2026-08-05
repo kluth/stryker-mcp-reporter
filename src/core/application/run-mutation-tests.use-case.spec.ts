@@ -73,7 +73,7 @@ describe("RunMutationTestsUseCase", () => {
     expect(mockNotifier.notifyError).toHaveBeenCalledWith("Stryker build failed");
   });
 
-  it("fängt unerwartete Exceptions in der Ausführung ab", async () => {
+  it("fängt unerwartete Exceptions in der Ausführung ab und benachrichtigt Desktop", async () => {
     vi.mocked(mockRunner.run).mockRejectedValue("Unerwarteter Absturz");
 
     const result = await useCase.execute();
@@ -81,6 +81,7 @@ describe("RunMutationTestsUseCase", () => {
     expect(result.isOk).toBe(false);
     expect(result.error?.message).toBe("Unerwarteter Absturz");
     expect(statusStream.current().state).toBe("failed");
+    expect(mockNotifier.notifyError).toHaveBeenCalledWith("Unerwarteter Absturz");
   });
 
   it("verhindert parallele Läufe, wenn bereits ein Lauf aktiv ist", async () => {

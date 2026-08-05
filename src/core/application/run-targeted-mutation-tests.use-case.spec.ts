@@ -69,6 +69,16 @@ describe("RunTargetedMutationTestsUseCase", () => {
     expect(mockGitService.getChangedFiles).toHaveBeenCalledWith("main");
   });
 
+  it("fällt auf getChangedFiles zurück wenn nur fromRevision ohne toRevision angegeben wird", async () => {
+    vi.mocked(mockGitService.getChangedFiles).mockResolvedValue(["src/fallback.ts"]);
+    vi.mocked(mockRunUseCase.execute).mockResolvedValue(ok(mockReport));
+
+    const result = await useCase.execute({ fromRevision: "v1.0.0" });
+
+    expect(result.isOk).toBe(true);
+    expect(mockGitService.getChangedFiles).toHaveBeenCalled();
+  });
+
   it("gibt ein err-Result zurück, wenn keine geänderten Dateien gefunden wurden", async () => {
     vi.mocked(mockGitService.getChangedFiles).mockResolvedValue([]);
 

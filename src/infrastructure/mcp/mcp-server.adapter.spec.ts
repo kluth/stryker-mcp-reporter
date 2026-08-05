@@ -239,6 +239,11 @@ describe("McpServerAdapter", () => {
     );
     expect(configResult.content[0].text).toContain("Desktop-Benachrichtigungen erfolgreich aktualisiert");
 
+    // Tool: unbekanntes Tool
+    await expect(
+      callToolHandler({ params: { name: "unknown_tool", arguments: {} } }, {}),
+    ).rejects.toThrow("Tool 'unknown_tool' nicht gefunden.");
+
     // Tool: run_targeted_mutation_tests mit Fehler
     vi.mocked(runTargetedUseCase.execute).mockResolvedValue(err(new Error("Keine Dateien geändert")));
     const targetedErrResult = await callToolHandler(
@@ -269,6 +274,15 @@ describe("McpServerAdapter", () => {
 
     expect(listPromptsResult.prompts).toHaveLength(1);
     expect(listPromptsResult.prompts[0].name).toBe("analyze_survived_mutants");
+
+    const getPromptCall = setRequestHandlerSpy.mock.calls.find((c) => c[0] === GetPromptRequestSchema);
+    const getPromptHandler = getPromptCall![1] as Function;
+
+    reportStream.publish(mockReport);
+    const promptRes = await getPromptHandler({ params: { name: "analyze_survived_mutants", arguments: { filePath: "src/foo.ts" } } }, {});
+    expect(promptRes.messages[0].content.text).toContain("Du bist ein Experte für Mutation Testing");
+
+    await expect(getPromptHandler({ params: { name: "unknown_prompt" } }, {})).rejects.toThrow("Prompt 'unknown_prompt' nicht gefunden.");
   });
 
   it("schließt den aktiven HTTP-Server während des Shutdowns", async () => {

@@ -39,6 +39,19 @@ describe("DesktopNotifierAdapter", () => {
     );
   });
 
+  it("sendet Benachrichtigung bei Fortschrittsaktualisierung", async () => {
+    await adapter.notifyProgress(50, "src/calculator.ts");
+    await adapter.notifyProgress(75);
+
+    expect(notifierFnMock.notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "⚡ Stryker Mutationstests (50%)",
+        message: "Fortschritt: 50% | Mutieren: src/calculator.ts",
+      }),
+      expect.any(Function),
+    );
+  });
+
   it("sendet Benachrichtigung bei erfolgreichem Abschluss mit Score", async () => {
     await adapter.notifyCompletion(100, 390, 0);
 
@@ -71,12 +84,14 @@ describe("DesktopNotifierAdapter", () => {
     expect(notifierFnMock.notify).not.toHaveBeenCalled();
   });
 
-  it("fängt Fehler von node-notifier ab ohne abzustürzen", async () => {
-    notifierFnMock.notify = vi.fn((_opts, cb) => cb(new Error("Notification system error")));
+  it("fängt synchrone Fehler von node-notifier ab ohne abzustürzen", async () => {
+    notifierFnMock.notify = vi.fn().mockImplementation(() => {
+      throw new Error("Synchronous notification crash");
+    });
     await adapter.notifyStatus("Test Notification");
 
     expect(loggerMock.debug).toHaveBeenCalledWith(
-      expect.stringContaining("Desktop-Benachrichtigung konnte nicht gesendet werden"),
+      expect.stringContaining("Unerwarteter Fehler beim Senden der Benachrichtigung"),
       expect.any(Error),
     );
   });
