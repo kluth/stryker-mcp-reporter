@@ -1,3 +1,11 @@
+# [1.6.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.5.4...v1.6.0) (2026-08-05)
+
+
+### Features
+
+* **ci:** add automated multi-platform release announcement generator job for verified releases ([a7b1d59](https://github.com/kluth/stryker-mcp-reporter/commit/a7b1d593ebfd86ff71940c30af66429a16fab4c1))
+* **notification:** add persistent completion overlays and royalty-free mutant hunter sound chime asset ([47abeb0](https://github.com/kluth/stryker-mcp-reporter/commit/47abeb04b5c00647f44f81bcceb1b5905d2ad79f))
+
 ## [1.5.4](https://github.com/kluth/stryker-mcp-reporter/compare/v1.5.3...v1.5.4) (2026-08-05)
 
 
