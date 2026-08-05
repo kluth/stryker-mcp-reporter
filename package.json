@@ -47,6 +47,7 @@
     "@types/node": "^22.0.0",
     "@types/node-notifier": "^8.0.5",
     "@vitest/coverage-v8": "^2.1.9",
+    "playwright": "^1.62.1",
     "rimraf": "^6.0.1",
     "semantic-release": "^24.0.0",
     "stryker-mcp-reporter": "^1.0.2",
