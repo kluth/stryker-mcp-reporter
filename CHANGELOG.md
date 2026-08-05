@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/kluth/stryker-mcp-reporter/compare/v1.8.0...v1.8.1) (2026-08-05)
+
+
+### Bug Fixes
+
+* **announcements:** refine Hashnode GraphQL v2 authentication and browser headers ([2c33372](https://github.com/kluth/stryker-mcp-reporter/commit/2c33372cd5f4a5783bd25d9d4d945d53e76f8f89))
+
 # [1.8.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.7.2...v1.8.0) (2026-08-05)
 
 
