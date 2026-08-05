@@ -20,9 +20,16 @@ import type { RunTargetedMutationTestsUseCase } from "../../core/application/run
 import type { GetSurvivedMutantsUseCase } from "../../core/application/get-survived-mutants.use-case.js";
 import type { GetMutationSummaryUseCase } from "../../core/application/get-mutation-summary.use-case.js";
 import type { NotificationServicePort } from "../../core/domain/notification-service.port.js";
+import { NullNotificationAdapter } from "../notification/null-notification.adapter.js";
 import { type Result, ok, err } from "../../core/domain/result.js";
 
 export const SERVER_INFO = { name: "stryker-mcp-server", version: "1.0.0" };
+
+function parseFilePath(args: unknown): string | undefined {
+  if (typeof args !== "object" || args === null) return undefined;
+  const rawPath = (args as { filePath?: unknown }).filePath;
+  return typeof rawPath === "string" && rawPath.trim() !== "" ? rawPath.trim() : undefined;
+}
 
 export class McpServerAdapter {
   private httpServer: HttpServer | null = null;
@@ -37,7 +44,7 @@ export class McpServerAdapter {
     private readonly getSurvivedUseCase: GetSurvivedMutantsUseCase,
     private readonly getSummaryUseCase: GetMutationSummaryUseCase,
     private readonly port: number = 3000,
-    private readonly notificationService?: NotificationServicePort,
+    private readonly notificationService: NotificationServicePort = new NullNotificationAdapter(),
   ) {
     this.mcpServer = new Server(SERVER_INFO, {
       capabilities: {
@@ -358,15 +365,19 @@ export class McpServerAdapter {
           baseBranch?: string;
         };
 
-        const targetOptions =
-          rawArgs?.commitSha || rawArgs?.revision || rawArgs?.fromRevision
-            ? {
-                commitSha: rawArgs.commitSha,
-                revision: rawArgs.revision,
-                fromRevision: rawArgs.fromRevision,
-                toRevision: rawArgs.toRevision,
-              }
-            : rawArgs?.baseBranch;
+        const hasSpecificOptions =
+          typeof rawArgs?.commitSha === "string" ||
+          typeof rawArgs?.revision === "string" ||
+          typeof rawArgs?.fromRevision === "string";
+
+        const targetOptions = hasSpecificOptions
+          ? {
+              commitSha: rawArgs?.commitSha,
+              revision: rawArgs?.revision,
+              fromRevision: rawArgs?.fromRevision,
+              toRevision: rawArgs?.toRevision,
+            }
+          : rawArgs?.baseBranch;
 
         const runResult = await this.runTargetedUseCase.execute(targetOptions);
 
@@ -415,7 +426,7 @@ export class McpServerAdapter {
       }
 
       if (name === "get_survived_mutants") {
-        const filePath = (args as { filePath?: string })?.filePath;
+        const filePath = parseFilePath(args);
         const survivedResult = this.getSurvivedUseCase.execute(filePath);
         if (!survivedResult.isOk) {
           return {
@@ -436,19 +447,19 @@ export class McpServerAdapter {
 
       if (name === "configure_desktop_notifications") {
         const configOptions = args as { enabled?: boolean; persistentOverlay?: boolean; sound?: boolean };
-        this.notificationService?.configure(configOptions);
+        this.notificationService.configure(configOptions);
 
         return {
           content: [
             {
               type: "text",
-              text: `Desktop-Benachrichtigungen erfolgreich aktualisiert.\nOptionen: ${JSON.stringify(configOptions)}`,
+              text: "Desktop-Benachrichtigungen erfolgreich konfiguriert.",
             },
           ],
         };
       }
 
-      throw new Error(`Tool '${name}' nicht gefunden.`);
+      throw new Error(`Unbekanntes MCP Tool '${name}'`);
     });
   }
 
@@ -457,7 +468,7 @@ export class McpServerAdapter {
       prompts: [
         {
           name: "analyze_survived_mutants",
-          description: "Erzeugt eine detaillierte KI-Anweisung zur Analyse überlebender Mutanten und zur Erstellung fehlender Unit Tests.",
+          description: "Generiert einen KI-Prompt zur tiefenursächlichen Analyse und Behebung überlebender Mutanten.",
           arguments: [
             {
               name: "filePath",
@@ -473,7 +484,7 @@ export class McpServerAdapter {
       const { name, arguments: args } = request.params;
 
       if (name === "analyze_survived_mutants") {
-        const filePath = args?.filePath;
+        const filePath = parseFilePath(args);
         const survivedResult = this.getSurvivedUseCase.execute(filePath);
         const survived = survivedResult.isOk ? survivedResult.value : [];
         const summaryResult = this.getSummaryUseCase.execute();

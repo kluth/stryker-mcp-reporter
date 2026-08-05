@@ -155,15 +155,19 @@ export function extractSurvivedMutants(
 
     for (const mutant of fileResult.mutants) {
       if (mutant.status === "Survived") {
+        const id = typeof mutant.id === "string" && mutant.id !== "" ? mutant.id : "unknown";
+        const mutatorName = typeof mutant.mutatorName === "string" && mutant.mutatorName !== "" ? mutant.mutatorName : "Unknown";
+        const testsRan = Array.isArray(mutant.testsRan) ? mutant.testsRan : [];
+
         result.push({
-          id: mutant.id || "unknown",
+          id,
           filePath,
-          mutatorName: mutant.mutatorName || "Unknown",
+          mutatorName,
           replacement: mutant.replacement ?? "",
           line: mutant.location?.start?.line ?? 1,
           column: mutant.location?.start?.column ?? 1,
           status: "Survived",
-          testsRan: mutant.testsRan || [],
+          testsRan,
         });
       }
     }

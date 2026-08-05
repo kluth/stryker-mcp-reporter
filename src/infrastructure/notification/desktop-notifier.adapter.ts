@@ -9,7 +9,6 @@ import type {
 export class DesktopNotifierAdapter implements NotificationServicePort {
   private options: NotificationOptions = {
     enabled: true,
-    persistentOverlay: false,
     sound: true,
   };
 
@@ -29,7 +28,6 @@ export class DesktopNotifierAdapter implements NotificationServicePort {
       title,
       message,
       sound: this.options.sound,
-      wait: false,
     });
   }
 
@@ -44,7 +42,6 @@ export class DesktopNotifierAdapter implements NotificationServicePort {
       title: `⚡ Stryker Mutationstests (${progressPercent}%)`,
       message,
       sound: false,
-      wait: false,
     });
   }
 
@@ -58,7 +55,6 @@ export class DesktopNotifierAdapter implements NotificationServicePort {
       title,
       message,
       sound: this.options.sound,
-      wait: false,
     });
   }
 
@@ -69,14 +65,13 @@ export class DesktopNotifierAdapter implements NotificationServicePort {
       title: "❌ Stryker Mutationstest Fehler",
       message: errorMessage,
       sound: this.options.sound,
-      wait: false,
     });
   }
 
-  private sendNotification(params: { title: string; message: string; sound?: boolean; wait?: boolean }): Promise<void> {
+  private sendNotification(params: { title: string; message: string; sound?: boolean }): Promise<void> {
     return new Promise((resolve) => {
       try {
-        this.notifierService.notify(params, (err: Error | null) => {
+        this.notifierService.notify({ ...params, wait: false }, (err: Error | null) => {
           if (err) {
             this.logger.debug("Desktop-Benachrichtigung konnte nicht gesendet werden:", err);
           }

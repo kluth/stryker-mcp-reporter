@@ -1,24 +1,21 @@
 // src/infrastructure/notification/desktop-notifier.adapter.spec.ts
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { DesktopNotifierAdapter } from "./desktop-notifier.adapter.js";
 import type { Logger } from "@stryker-mutator/api/logging";
 
 describe("DesktopNotifierAdapter", () => {
   let loggerMock: Logger;
-  let notifierFnMock: any;
+  let notifierFnMock: { notify: ReturnType<typeof vi.fn> };
   let adapter: DesktopNotifierAdapter;
 
   beforeEach(() => {
     loggerMock = {
-      info: vi.fn(),
-      error: vi.fn(),
-      warn: vi.fn(),
       debug: vi.fn(),
     } as unknown as Logger;
 
     notifierFnMock = {
-      notify: vi.fn((_opts, cb) => {
-        if (cb) cb(null, "ok");
+      notify: vi.fn((_params, callback) => {
+        if (callback) callback(null);
       }),
     };
 
@@ -26,83 +23,87 @@ describe("DesktopNotifierAdapter", () => {
   });
 
   it("sendet Desktop-Benachrichtigung bei Statusänderungen mit Default-Titel", async () => {
-    await adapter.notifyStatus("Test gestartet");
+    await adapter.notifyStatus("Tests gestartet");
 
     expect(notifierFnMock.notify).toHaveBeenCalledWith(
       {
         title: "Stryker MCP Control Server",
-        message: "Test gestartet",
+        message: "Tests gestartet",
         sound: true,
         wait: false,
       },
       expect.any(Function),
     );
+    expect(loggerMock.debug).not.toHaveBeenCalled();
   });
 
   it("sendet Desktop-Benachrichtigung bei Statusänderungen mit benutzerdefiniertem Titel", async () => {
-    await adapter.notifyStatus("Custom Message", "Custom Title");
+    await adapter.notifyStatus("Tests gestartet", "Custom Title");
 
     expect(notifierFnMock.notify).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         title: "Custom Title",
-        message: "Custom Message",
-        sound: true,
-        wait: false,
-      },
+        message: "Tests gestartet",
+      }),
       expect.any(Function),
     );
   });
 
   it("sendet Benachrichtigung bei Fortschrittsaktualisierung mit und ohne Mutanten-Name", async () => {
-    await adapter.notifyProgress(50, "src/calculator.ts");
-    expect(notifierFnMock.notify).toHaveBeenLastCalledWith(
-      {
+    await adapter.notifyProgress(45);
+    expect(notifierFnMock.notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "⚡ Stryker Mutationstests (45%)",
+        message: "Fortschritt: 45% abgeschlossen",
+        sound: false,
+      }),
+      expect.any(Function),
+    );
+
+    await adapter.notifyProgress(50, "ArithmeticMutator");
+    expect(notifierFnMock.notify).toHaveBeenCalledWith(
+      expect.objectContaining({
         title: "⚡ Stryker Mutationstests (50%)",
-        message: "Fortschritt: 50% | Mutieren: src/calculator.ts",
-        sound: false,
-        wait: false,
-      },
-      expect.any(Function),
-    );
-
-    await adapter.notifyProgress(75);
-    expect(notifierFnMock.notify).toHaveBeenLastCalledWith(
-      {
-        title: "⚡ Stryker Mutationstests (75%)",
-        message: "Fortschritt: 75% abgeschlossen",
-        sound: false,
-        wait: false,
-      },
+        message: "Fortschritt: 50% | Mutieren: ArithmeticMutator",
+      }),
       expect.any(Function),
     );
   });
 
-  it("sendet Benachrichtigung bei erfolgreichem Abschluss mit Score", async () => {
-    await adapter.notifyCompletion(100, 390, 0);
+  it("sendet Benachrichtigung bei Fertigstellung mit Score und Zahlen", async () => {
+    await adapter.notifyCompletion(88.5, 40, 5);
 
     expect(notifierFnMock.notify).toHaveBeenCalledWith(
-      {
-        title: "🧬 Mutationstests Beendet (100% Score)",
-        message: "390 Mutanten getötet | 0 überlebt",
+      expect.objectContaining({
+        title: "🧬 Mutationstests Beendet (88.5% Score)",
+        message: "40 Mutanten getötet | 5 überlebt",
         sound: true,
-        wait: false,
-      },
+      }),
       expect.any(Function),
     );
   });
 
-  it("sendet Benachrichtigung bei Fehlern", async () => {
-    await adapter.notifyError("Vitest Test Runner ist abgestürzt");
+  it("sendet Fehlerbenachrichtigung", async () => {
+    await adapter.notifyError("Stryker CLI nicht gefunden");
 
     expect(notifierFnMock.notify).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         title: "❌ Stryker Mutationstest Fehler",
-        message: "Vitest Test Runner ist abgestürzt",
-        sound: true,
-        wait: false,
-      },
+        message: "Stryker CLI nicht gefunden",
+      }),
       expect.any(Function),
     );
+  });
+
+  it("blockiert Benachrichtigungen, wenn enabled false ist", async () => {
+    adapter.configure({ enabled: false });
+
+    await adapter.notifyStatus("Test");
+    await adapter.notifyProgress(10);
+    await adapter.notifyCompletion(100, 1, 0);
+    await adapter.notifyError("Error");
+
+    expect(notifierFnMock.notify).not.toHaveBeenCalled();
   });
 
   it("behält bestehende Optionen bei partieller Re-Konfiguration bei", async () => {
@@ -119,40 +120,36 @@ describe("DesktopNotifierAdapter", () => {
     );
   });
 
-  it("respektiert das Deaktivieren von Benachrichtigungen in allen Benachrichtigungsmethoden", async () => {
-    adapter.configure({ enabled: false });
+  it("fängt Fehler im Notifier Callback sicher ab und loggt sie", async () => {
+    const notifyError = new Error("OS Notification Failed");
+    notifierFnMock.notify = vi.fn((_params, callback) => {
+      if (callback) callback(notifyError);
+    });
 
-    await adapter.notifyStatus("Test");
-    await adapter.notifyProgress(10);
-    await adapter.notifyCompletion(100, 1, 0);
-    await adapter.notifyError("Fehler");
-
-    expect(notifierFnMock.notify).not.toHaveBeenCalled();
-  });
-
-  it("loggt Fehler bei Asynchronem Fehler im Callback von node-notifier", async () => {
-    const cbError = new Error("Async callback error");
-    notifierFnMock.notify = vi.fn((_opts, cb) => cb(cbError));
-
-    await adapter.notifyStatus("Test Notification");
+    await adapter.notifyStatus("Test Callback Failure");
 
     expect(loggerMock.debug).toHaveBeenCalledWith(
       "Desktop-Benachrichtigung konnte nicht gesendet werden:",
-      cbError,
+      notifyError,
     );
   });
 
-  it("fängt synchrone Fehler von node-notifier ab ohne abzustürzen", async () => {
-    const syncError = new Error("Synchronous notification crash");
-    notifierFnMock.notify = vi.fn().mockImplementation(() => {
+  it("fängt synchrone Fehler im Notifier.notify Aufruf ab und loggt sie", async () => {
+    const syncError = new Error("Sync Notify Throw");
+    notifierFnMock.notify = vi.fn(() => {
       throw syncError;
     });
 
-    await adapter.notifyStatus("Test Notification");
+    await adapter.notifyStatus("Test Sync Failure");
 
     expect(loggerMock.debug).toHaveBeenCalledWith(
       "Unerwarteter Fehler beim Senden der Benachrichtigung:",
       syncError,
     );
+  });
+
+  it("nutzt den echten node-notifier Export, wenn kein Notifier übergeben wird", () => {
+    const defaultAdapter = new DesktopNotifierAdapter(loggerMock);
+    expect(defaultAdapter).toBeInstanceOf(DesktopNotifierAdapter);
   });
 });

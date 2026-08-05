@@ -266,11 +266,12 @@ describe("McpServerAdapter", () => {
 
     // Tool: run_targeted_mutation_tests mit commitSha
     vi.mocked(runTargetedUseCase.execute).mockResolvedValue(ok(mockReport));
+    vi.spyOn(getSummaryUseCase, "execute").mockReturnValueOnce(err(new Error("No summary")));
     const targetedCommitResult = await callToolHandler(
       { params: { name: "run_targeted_mutation_tests", arguments: { commitSha: "a9d1206" } } },
       {},
     );
-    expect(targetedCommitResult.content[0].text).toContain("Zielgerichtete Mutationstests erfolgreich beendet");
+    expect(targetedCommitResult.content[0].text).toContain("Mutationsscore: N/A%");
     expect(runTargetedUseCase.execute).toHaveBeenCalledWith({ commitSha: "a9d1206" });
 
     // Tool: get_mutation_score (success)
@@ -299,12 +300,12 @@ describe("McpServerAdapter", () => {
       { params: { name: "configure_desktop_notifications", arguments: { enabled: true, sound: false } } },
       {},
     );
-    expect(configResult.content[0].text).toContain("Desktop-Benachrichtigungen erfolgreich aktualisiert");
+    expect(configResult.content[0].text).toContain("Desktop-Benachrichtigungen erfolgreich konfiguriert");
 
     // Tool: unbekanntes Tool
     await expect(
       callToolHandler({ params: { name: "unknown_tool", arguments: {} } }, {}),
-    ).rejects.toThrow("Tool 'unknown_tool' nicht gefunden.");
+    ).rejects.toThrow("Unbekanntes MCP Tool 'unknown_tool'");
 
     // Tool: run_targeted_mutation_tests mit Fehler
     vi.mocked(runTargetedUseCase.execute).mockResolvedValue(err(new Error("Keine Dateien geändert")));
@@ -346,6 +347,11 @@ describe("McpServerAdapter", () => {
     reportStream.publish(mockReport);
     const promptRes = await getPromptHandler({ params: { name: "analyze_survived_mutants", arguments: { filePath: "src/foo.ts" } } }, {});
     expect(promptRes.messages[0].content.text).toContain("Du bist ein Experte für Mutation Testing");
+
+    // Prompt wenn getSummaryUseCase fehlschlägt (N/A Fallback)
+    vi.spyOn(getSummaryUseCase, "execute").mockReturnValueOnce(err(new Error("Kein Summary")));
+    const promptNullRes = await getPromptHandler({ params: { name: "analyze_survived_mutants", arguments: {} } }, {});
+    expect(promptNullRes.messages[0].content.text).toContain("Gesamter Mutationsscore: N/A%");
 
     await expect(getPromptHandler({ params: { name: "unknown_prompt" } }, {})).rejects.toThrow("Prompt 'unknown_prompt' nicht gefunden.");
   });

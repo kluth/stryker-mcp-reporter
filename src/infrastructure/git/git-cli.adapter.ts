@@ -19,12 +19,13 @@ export class GitCliAdapter implements GitServicePort {
 
   public async getChangedFiles(revisionOrBranch?: string): Promise<string[]> {
     try {
-      const command = revisionOrBranch
+      const isDiff = typeof revisionOrBranch === "string" && revisionOrBranch.trim().length > 0;
+      const command = isDiff
         ? `git diff --name-only ${revisionOrBranch}`
         : "git status --porcelain";
 
       const output = await this.execFn(command);
-      return this.parseGitOutput(output, !!revisionOrBranch);
+      return this.parseGitOutput(output, isDiff);
     } catch (error) {
       this.logger.warn("Konnte geänderte Git-Dateien nicht ermitteln:", error as Error);
       return [];
@@ -57,17 +58,22 @@ export class GitCliAdapter implements GitServicePort {
   }
 
   private parseGitOutput(output: string, isDiff: boolean): string[] {
-    const lines = output.split("\n").map((line) => line.trim()).filter(Boolean);
+    const lines = output.split("\n").map((line) => line.trim()).filter((line) => line.length > 0);
     const tsFiles: string[] = [];
 
     for (const line of lines) {
       let filePath = line;
       if (!isDiff) {
         // Format bei `git status --porcelain`: ` M src/foo.ts` oder `?? src/foo.ts`
-        filePath = line.replace(/^[\s\S]{1,2}\s+/, "").trim();
+        const statusMatch = line.match(/^[\s\S]{1,2}\s+(.+)$/);
+        filePath = statusMatch ? statusMatch[1].trim() : line;
       }
 
-      if (filePath.endsWith(".ts") && !filePath.endsWith(".spec.ts") && !filePath.endsWith(".d.ts")) {
+      const isTsFile = filePath.endsWith(".ts");
+      const isSpecFile = filePath.endsWith(".spec.ts");
+      const isDeclFile = filePath.endsWith(".d.ts");
+
+      if (isTsFile && !isSpecFile && !isDeclFile) {
         tsFiles.push(filePath);
       }
     }

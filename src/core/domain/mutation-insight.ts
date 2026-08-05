@@ -75,11 +75,6 @@ export interface VectorEmbeddingData {
   createdAt: string;
 }
 
-/**
- * Die zentrale, anreicherbare Insight-Entität.
- * Diese Struktur ist optimiert für die spätere Speicherung in Vektordatenbanken
- * (z. B. Qdrant, Pinecone, Chroma, pgvector) zur KI-basierten Fortbildungsanalyse.
- */
 export interface MutationInsightEntity {
   id: string;
   mutant: MutantDetailMetadata;
@@ -105,9 +100,6 @@ export interface RawMutantInsightInput {
   commitHash?: string;
 }
 
-/**
- * Mappt einen Mutator-Namen auf eine verständliche Kategorie.
- */
 export function mapMutatorCategory(mutatorName: string): MutatorCategory {
   const name = mutatorName.toLowerCase();
   if (name.includes("arithmetic") || name.includes("math")) return "Arithmetic & Math";
@@ -121,26 +113,20 @@ export function mapMutatorCategory(mutatorName: string): MutatorCategory {
   return "Unknown Category";
 }
 
-/**
- * Mappt einen Dateipfad auf die Architekturschicht.
- */
 export function mapFileCategory(filePath: string): FileCategory {
-  const path = filePath.toLowerCase();
-  if (path.includes("/domain/") || path.includes("\\domain\\")) return "Domain";
-  if (path.includes("/application/") || path.includes("\\application\\") || path.includes("use-case")) return "Application";
-  if (path.includes("/infrastructure/") || path.includes("\\infrastructure\\") || path.includes("adapter")) return "Infrastructure";
+  const path = filePath.toLowerCase().replace(/\\/g, "/");
+  if (path.includes("/domain/")) return "Domain";
+  if (path.includes("/application/") || path.includes("use-case")) return "Application";
+  if (path.includes("/infrastructure/") || path.includes("adapter")) return "Infrastructure";
   if (path.includes("/ui/") || path.includes("/components/")) return "UI";
   if (path.includes("/util") || path.includes("/helper")) return "Utility";
   return "Unknown";
 }
 
-/**
- * Erstellt eine strukturierte, vollvektorisierbare Insight-Entität aus rohen Mutanten-Daten.
- */
 export function buildMutationInsightEntity(input: RawMutantInsightInput): MutationInsightEntity {
   const mutatorCategory = mapMutatorCategory(input.mutatorName);
   const fileCategory = mapFileCategory(input.filePath);
-  const testsRan = input.testsRan || [];
+  const testsRan = Array.isArray(input.testsRan) ? input.testsRan : [];
 
   const coverageState: TestCoverageState =
     input.status === "NoCoverage" || testsRan.length === 0
@@ -167,8 +153,16 @@ export function buildMutationInsightEntity(input: RawMutantInsightInput): Mutati
   }
 
   const primarySkillGap = `${mutatorCategory} Assertions`;
-  const originalCode = input.sourceCodeSnippet || "// Quellcode-Zeile nicht direkt verfügbar";
+  const originalCode = input.sourceCodeSnippet !== undefined && input.sourceCodeSnippet !== ""
+    ? input.sourceCodeSnippet
+    : "// Quellcode-Zeile nicht direkt verfügbar";
   const diff = `- ${originalCode}\n+ ${originalCode} [Mutated: ${input.replacement}]`;
+
+  const authorName = input.authorName !== undefined && input.authorName !== "" ? input.authorName : "Unknown";
+  const authorEmail = input.authorEmail !== undefined && input.authorEmail !== "" ? input.authorEmail : "unknown@example.com";
+
+  const normalizedPath = input.filePath.replace(/\\/g, "/");
+  const moduleName = normalizedPath.includes("/") ? normalizedPath.split("/").pop()! : normalizedPath;
 
   const embeddingText = `
 [MUTANT INSIGHT RECORD]
@@ -183,7 +177,7 @@ Tests Ran: ${testsRan.join(", ") || "None"}
 Coverage Flaw: ${flawCategory}
 Primary Skill Gap: ${primarySkillGap}
 Severity: ${severity} (Risk Score: ${riskScore})
-Author: ${input.authorName || "Unknown"} <${input.authorEmail || "unknown@example.com"}>
+Author: ${authorName} <${authorEmail}>
 `.trim();
 
   return {
@@ -197,7 +191,7 @@ Author: ${input.authorName || "Unknown"} <${input.authorEmail || "unknown@exampl
     },
     codeContext: {
       filePath: input.filePath,
-      moduleName: input.filePath.split("/").pop() || input.filePath,
+      moduleName,
       fileCategory,
       line: input.line,
       column: input.column,

@@ -79,6 +79,17 @@ describe("RunTargetedMutationTestsUseCase", () => {
     expect(mockGitService.getChangedFiles).toHaveBeenCalled();
   });
 
+  it("nutzt getChangedFiles, wenn nur fromRevision ohne toRevision übergeben wird", async () => {
+    vi.mocked(mockGitService.getChangedFiles).mockResolvedValue(["src/foo.ts"]);
+    vi.mocked(mockRunUseCase.execute).mockResolvedValue(ok(mockReport));
+
+    const result = await useCase.execute({ fromRevision: "v1.0.0" });
+
+    expect(result.isOk).toBe(true);
+    expect(mockGitService.getChangedFilesBetween).not.toHaveBeenCalled();
+    expect(mockGitService.getChangedFiles).toHaveBeenCalledWith(undefined);
+  });
+
   it("gibt ein err-Result zurück, wenn getChangedFiles null zurückgibt", async () => {
     vi.mocked(mockGitService.getChangedFiles).mockResolvedValue(null as any);
 
