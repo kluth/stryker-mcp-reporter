@@ -1,5 +1,5 @@
 // src/core/application/suggest-mutant-fixes.use-case.ts
-import { MutantResult } from "stryker-mutator/api/core";
+import { MutantDetail } from "../domain/mutation-report.js";
 
 export interface MutantRemediationAdvice {
   mutantId: string;
@@ -17,17 +17,18 @@ export interface MutantRemediationAdvice {
 }
 
 export class SuggestMutantFixesUseCase {
-  public execute(mutants: MutantResult[]): MutantRemediationAdvice[] {
+  public execute(mutants: MutantDetail[]): MutantRemediationAdvice[] {
     const survivedOrNoCoverage = mutants.filter((m) => m.status === "Survived" || m.status === "NoCoverage");
 
     return survivedOrNoCoverage.map((m) => this.generateRemediation(m));
   }
 
-  private generateRemediation(mutant: MutantResult): MutantRemediationAdvice {
+  private generateRemediation(mutant: MutantDetail): MutantRemediationAdvice {
     const mutator = mutant.mutatorName || "UnknownMutator";
     const original = mutant.replacement ? "original code" : "";
     const replacement = mutant.replacement || "";
-    const startLine = mutant.location?.start?.line || 1;
+    const startLine = mutant.line || 1;
+    const startColumn = mutant.column || 1;
 
     let explanation = `Mutant survived at line ${startLine} using mutator '${mutator}'.`;
     let suggestedAssertion = `expect(result).toBeDefined();`;
@@ -49,11 +50,11 @@ export class SuggestMutantFixesUseCase {
 
     return {
       mutantId: mutant.id,
-      fileName: mutant.fileName,
+      fileName: mutant.filePath,
       mutatorName: mutator,
       originalCode: original,
       mutatedCode: replacement,
-      location: mutant.location || { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } },
+      location: { start: { line: startLine, column: startColumn }, end: { line: startLine, column: startColumn } },
       explanation,
       suggestedAssertion,
       boundaryTestSnippet,
