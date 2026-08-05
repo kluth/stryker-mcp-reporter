@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/kluth/stryker-mcp-reporter/compare/v1.7.0...v1.7.1) (2026-08-05)
+
+
+### Bug Fixes
+
+* **ci:** integrate @semantic-release/exec for automatic release announcement publishing to DEV.to, Hashnode, Discord and GitHub ([86e82bb](https://github.com/kluth/stryker-mcp-reporter/commit/86e82bba2cefdaba9bd6577eb8652f52f20af7a3))
+
 # [1.7.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.6.0...v1.7.0) (2026-08-05)
 
 
