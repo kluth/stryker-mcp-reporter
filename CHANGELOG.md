@@ -1,3 +1,15 @@
+# [1.9.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.8.3...v1.9.0) (2026-08-05)
+
+
+### Bug Fixes
+
+* **core:** update SuggestMutantFixesUseCase to use MutantDetail domain entity and pass tsc build ([d41e9a3](https://github.com/kluth/stryker-mcp-reporter/commit/d41e9a36cb6fefa26c370ee52e8cd6b48f8761de))
+
+
+### Features
+
+* add AI mutant remediation, trend tracker, Telegram alerts, preview dashboard and 48h anti-spam rate limiter ([bd1feea](https://github.com/kluth/stryker-mcp-reporter/commit/bd1feeabd41446f93f957e8b4bed672dd6d2d103))
+
 ## [1.8.3](https://github.com/kluth/stryker-mcp-reporter/compare/v1.8.2...v1.8.3) (2026-08-05)
 
 
