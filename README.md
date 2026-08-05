@@ -114,11 +114,14 @@ Füge folgende Konfiguration in die MCP-Einstellungen deines KI-Tools ein:
   "mcpServers": {
     "stryker-mutation-testing": {
       "command": "npx",
-      "args": ["-y", "stryker-mcp-server", "--stdio"]
+      "args": ["-y", "--silent", "stryker-mcp-reporter"]
     }
   }
 }
 ```
+
+> [!NOTE]  
+> **Hinweis für Windows-Nutzer:** Falls dein KI-Tool unter Windows `npx` nicht direkt ausführen kann (da `npx` auf Windows als `npx.cmd` vorliegt), verwende `"command": "cmd.exe"` mit `"args": ["/c", "npx", "-y", "--silent", "stryker-mcp-reporter"]` oder binde die lokale Datei direkt via `"command": "node"` ein.
 
 *Unterstützt in: Claude Desktop, Cursor IDE, Google Antigravity, Roo Code, Cline, Windsurf.*
 
