@@ -1,3 +1,10 @@
+## [1.8.3](https://github.com/kluth/stryker-mcp-reporter/compare/v1.8.2...v1.8.3) (2026-08-05)
+
+
+### Bug Fixes
+
+* **announcements:** prevent following 301 Hashnode redirects and log Hashnode Pro API policy clearly ([1b9e901](https://github.com/kluth/stryker-mcp-reporter/commit/1b9e9013eefb48675e131d4c42328fffdac3af54))
+
 ## [1.8.2](https://github.com/kluth/stryker-mcp-reporter/compare/v1.8.1...v1.8.2) (2026-08-05)
 
 
