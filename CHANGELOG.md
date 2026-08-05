@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/kluth/stryker-mcp-reporter/compare/v1.5.2...v1.5.3) (2026-08-05)
+
+
+### Bug Fixes
+
+* **bin:** add stryker-mcp-reporter executable alias to bin for npx invocation ([8dc965f](https://github.com/kluth/stryker-mcp-reporter/commit/8dc965f4fb296af4a24c8e2bd724a8558cc01003))
+
 ## [1.5.2](https://github.com/kluth/stryker-mcp-reporter/compare/v1.5.1...v1.5.2) (2026-08-05)
 
 
