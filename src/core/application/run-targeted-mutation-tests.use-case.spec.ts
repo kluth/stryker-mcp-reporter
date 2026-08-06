@@ -18,6 +18,7 @@ describe("RunTargetedMutationTestsUseCase", () => {
       getChangedFiles: vi.fn(),
       getChangedFilesBetween: vi.fn(),
       getChangedFilesForCommit: vi.fn(),
+      getChangedLineRanges: vi.fn(),
     };
     mockRunUseCase = {
       execute: vi.fn(),
@@ -88,6 +89,19 @@ describe("RunTargetedMutationTestsUseCase", () => {
 
     expect(result.isOk).toBe(true);
     expect(mockGitService.getChangedFiles).toHaveBeenCalledWith("main");
+  });
+
+  it("ermittelt geänderte Zeilenbereiche, wenn useLineRanges true ist", async () => {
+    vi.mocked(mockGitService.getChangedLineRanges).mockResolvedValue(["src/foo.ts:1-5"]);
+    vi.mocked(mockRunUseCase.execute).mockResolvedValue(ok(mockReport));
+
+    const result = await useCase.execute({ revision: "main", useLineRanges: true });
+
+    expect(result.isOk).toBe(true);
+    expect(mockGitService.getChangedLineRanges).toHaveBeenCalledWith("main");
+    expect(mockRunUseCase.execute).toHaveBeenCalledWith({
+      mutate: ["src/foo.ts:1-5"],
+    });
   });
 
   it("fällt auf getChangedFiles zurück wenn nur fromRevision ohne toRevision angegeben wird", async () => {

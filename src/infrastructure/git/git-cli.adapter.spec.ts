@@ -110,4 +110,42 @@ src/feature.ts
     const files = await adapter.getChangedFiles();
     expect(Array.isArray(files)).toBe(true);
   });
+
+  describe("getChangedLineRanges", () => {
+    it("extrahiert geänderte Zeilenbereiche", async () => {
+      const mockExec: ExecCommandFn = vi.fn().mockResolvedValue(`
+diff --git a/src/app.ts b/src/app.ts
++++ b/src/app.ts
+@@ -10,2 +10,4 @@
+@@ -20 +22 @@
+diff --git a/src/app.spec.ts b/src/app.spec.ts
++++ b/src/app.spec.ts
+@@ -5 +5 @@
+diff --git a/src/util.ts b/src/util.ts
++++ b/src/util.ts
+@@ -100,0 +105,2 @@
+      `);
+
+      const adapter = new GitCliAdapter(loggerMock, mockExec);
+      const ranges = await adapter.getChangedLineRanges("main");
+
+      expect(mockExec).toHaveBeenCalledWith("git", ["diff", "-U0", "main"]);
+      expect(ranges).toEqual([
+        "src/app.ts:10-13",
+        "src/app.ts:22-22",
+        "src/util.ts:105-106"
+      ]);
+    });
+
+    it("gibt Fehler ordnungsgemäß als leeres Array zurück", async () => {
+      const gitError = new Error("Git error");
+      const mockExec: ExecCommandFn = vi.fn().mockRejectedValue(gitError);
+      const adapter = new GitCliAdapter(loggerMock, mockExec);
+      
+      const ranges = await adapter.getChangedLineRanges();
+      
+      expect(ranges).toEqual([]);
+      expect(loggerMock.warn).toHaveBeenCalledWith("Konnte geänderte Zeilenbereiche nicht ermitteln:", gitError);
+    });
+  });
 });

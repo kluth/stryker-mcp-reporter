@@ -13,6 +13,8 @@ export interface TargetedRunOptions {
   fromRevision?: string;
   /** Ziel-Revision für einen Commit-Bereich (z. B. "v1.1.0" oder "HEAD") */
   toRevision?: string;
+  /** Gibt an, ob statt ganzer Dateien nur die geänderten Zeilen mutiert werden sollen */
+  useLineRanges?: boolean;
 }
 
 export class RunTargetedMutationTestsUseCase {
@@ -28,6 +30,8 @@ export class RunTargetedMutationTestsUseCase {
 
     if (typeof options === "string") {
       changedFiles = await this.gitService.getChangedFiles(options);
+    } else if (options?.useLineRanges) {
+      changedFiles = await this.gitService.getChangedLineRanges(options.revision);
     } else if (options?.commitSha) {
       changedFiles = await this.gitService.getChangedFilesForCommit(
         options.commitSha,

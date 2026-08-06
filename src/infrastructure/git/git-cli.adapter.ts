@@ -77,6 +77,24 @@ export class GitCliAdapter implements GitServicePort {
     }
   }
 
+  public async getChangedLineRanges(revisionOrBranch?: string): Promise<string[]> {
+    try {
+      const isDiff =
+        typeof revisionOrBranch === "string" &&
+        revisionOrBranch.trim().length > 0;
+      const args = isDiff
+        ? ["diff", "-U0", revisionOrBranch]
+        : ["diff", "-U0"];
+
+      const output = await this.execFn("git", args);
+      return this.parseDiffOutput(output);
+    } catch (error) {
+      const errObj = error instanceof Error ? error : new Error(String(error));
+      this.logger.warn("Konnte geänderte Zeilenbereiche nicht ermitteln:", errObj);
+      return [];
+    }
+  }
+
   private parseGitOutput(output: string, isDiff: boolean): string[] {
     const lines = output
       .split("\n")
@@ -102,5 +120,36 @@ export class GitCliAdapter implements GitServicePort {
     }
 
     return tsFiles;
+  }
+
+  private parseDiffOutput(output: string): string[] {
+    const lines = output.split("\n");
+    const results: string[] = [];
+    let currentFile = "";
+
+    for (const line of lines) {
+      if (line.startsWith("+++ b/")) {
+        currentFile = line.substring(6).trim();
+      } else if (line.startsWith("@@ ") && currentFile) {
+        if (!currentFile.endsWith(".ts") || currentFile.endsWith(".spec.ts") || currentFile.endsWith(".d.ts")) {
+          continue;
+        }
+
+        const match = line.match(/@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/);
+        if (match) {
+          const startLine = parseInt(match[1], 10);
+          const lineCount = match[2] ? parseInt(match[2], 10) : 1;
+          
+          if (lineCount > 0) {
+            const endLine = startLine + lineCount - 1;
+            results.push(`${currentFile}:${startLine}-${endLine}`);
+          } else {
+            results.push(`${currentFile}:${startLine}-${startLine}`);
+          }
+        }
+      }
+    }
+    
+    return results;
   }
 }

@@ -18,4 +18,10 @@ export interface GitServicePort {
    * Ermittelt geänderte Dateien eines einzelnen spezifischen Commits per SHA.
    */
   getChangedFilesForCommit(commitSha: string): Promise<string[]>;
+
+  /**
+   * Ermittelt geänderte Dateien inkl. der exakten geänderten Zeilenbereiche.
+   * Rückgabeformat z.B. ["src/foo.ts:10-15", "src/bar.ts:2-5"]
+   */
+  getChangedLineRanges(revisionOrBranch?: string): Promise<string[]>;
 }

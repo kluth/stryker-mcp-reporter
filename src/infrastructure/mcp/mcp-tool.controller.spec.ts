@@ -182,9 +182,6 @@ describe("McpToolController", () => {
         expect(result.content[0].text).toContain("target error");
         expect(runTargetedUseCase.execute).toHaveBeenCalledWith({
           commitSha: "123",
-          revision: undefined,
-          fromRevision: undefined,
-          toRevision: undefined,
         });
       });
 
@@ -203,7 +200,7 @@ describe("McpToolController", () => {
           {},
         );
         expect(result.content[0].text).toContain("70%");
-        expect(runTargetedUseCase.execute).toHaveBeenCalledWith("main");
+        expect(runTargetedUseCase.execute).toHaveBeenCalledWith({ revision: "main", useLineRanges: undefined });
       });
 
       it("should return N/A summary if targeted run succeeds but summary fails", async () => {

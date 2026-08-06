@@ -96,8 +96,11 @@ export class McpToolController {
               },
               toRevision: {
                 type: "string",
-                description:
-                  "Ziel-Revision für Commit-Bereich (z.B. 'v1.1.0' oder 'HEAD').",
+                description: "Die End-Revision (Git).",
+              },
+              useLineRanges: {
+                type: "boolean",
+                description: "Wenn true, werden nur die geänderten Zeilen statt der ganzen Dateien mutiert (Git Delta).",
               },
               baseBranch: {
                 type: "string",
@@ -289,31 +292,38 @@ export class McpToolController {
           fromRevision?: string;
           toRevision?: string;
           baseBranch?: string;
+          useLineRanges?: boolean;
         };
 
-        const hasSpecificOptions =
-          typeof rawArgs?.commitSha === "string" ||
-          typeof rawArgs?.revision === "string" ||
-          typeof rawArgs?.fromRevision === "string";
+        const commitSha = rawArgs.commitSha;
+        const fromRevision = rawArgs.fromRevision;
+        const toRevision = rawArgs.toRevision;
+        const baseBranch = rawArgs.baseBranch;
+        const useLineRanges = rawArgs.useLineRanges;
 
-        const targetOptions = hasSpecificOptions
-          ? {
-              commitSha: rawArgs?.commitSha,
-              revision: rawArgs?.revision,
-              fromRevision: rawArgs?.fromRevision,
-              toRevision: rawArgs?.toRevision,
-            }
-          : rawArgs?.baseBranch;
+        let targetedResult;
 
-        const runResult = await this.runTargetedUseCase.execute(targetOptions);
+        if (commitSha) {
+          targetedResult = await this.runTargetedUseCase.execute({ commitSha });
+        } else if (fromRevision && toRevision) {
+          targetedResult = await this.runTargetedUseCase.execute({
+            fromRevision,
+            toRevision,
+          });
+        } else {
+          targetedResult = await this.runTargetedUseCase.execute({
+            revision: rawArgs.revision || baseBranch,
+            useLineRanges,
+          });
+        }
 
-        if (!runResult.isOk) {
+        if (!targetedResult.isOk) {
           return {
             isError: true,
             content: [
               {
                 type: "text",
-                text: `Fehler beim Ausführen zielgerichteter Mutationstests: ${runResult.error.message}`,
+                text: `Fehler beim Ausführen zielgerichteter Mutationstests: ${targetedResult.error.message}`,
               },
             ],
           };
