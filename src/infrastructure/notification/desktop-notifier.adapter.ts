@@ -1,6 +1,6 @@
 // src/infrastructure/notification/desktop-notifier.adapter.ts
 import path from "path";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import notifier from "node-notifier";
 import type { Logger } from "@stryker-mutator/api/logging";
 import type {
@@ -13,20 +13,32 @@ export type AudioPlayerFn = (soundPath: string) => Promise<void>;
 export function defaultAudioPlayer(
   soundPath: string,
   platform: string = process.platform,
-  execFn: (cmd: string, cb: (err: Error | null) => void) => void = exec as any,
+  execFn: (
+    file: string,
+    args: string[],
+    cb: (error: Error | null) => void,
+  ) => void = execFile,
 ): Promise<void> {
   return new Promise((resolve) => {
-    let command: string;
+    let file: string;
+    let args: string[];
+
     if (platform === "win32") {
+      file = "powershell";
       const escapedPath = soundPath.replace(/'/g, "''");
-      command = `powershell -c "(New-Object System.Media.SoundPlayer '${escapedPath}').Play()"`;
+      args = [
+        "-c",
+        `(New-Object System.Media.SoundPlayer '${escapedPath}').Play()`,
+      ];
     } else if (platform === "darwin") {
-      command = `afplay "${soundPath}"`;
+      file = "afplay";
+      args = [soundPath];
     } else {
-      command = `aplay "${soundPath}" || paplay "${soundPath}"`;
+      file = "sh";
+      args = ["-c", `aplay "${soundPath}" || paplay "${soundPath}"`];
     }
 
-    execFn(command, () => {
+    execFn(file, args, () => {
       resolve();
     });
   });
@@ -41,7 +53,7 @@ export class DesktopNotifierAdapter implements NotificationServicePort {
 
   constructor(
     private readonly logger: Logger,
-    private readonly notifierService: any = notifier,
+    private readonly notifierService: typeof notifier = notifier,
     private readonly audioPlayer: AudioPlayerFn = defaultAudioPlayer,
   ) {}
 
@@ -49,7 +61,10 @@ export class DesktopNotifierAdapter implements NotificationServicePort {
     this.options = { ...this.options, ...options };
   }
 
-  public async notifyStatus(message: string, title: string = "Stryker MCP Control Server"): Promise<void> {
+  public async notifyStatus(
+    message: string,
+    title: string = "Stryker MCP Control Server",
+  ): Promise<void> {
     if (!this.options.enabled) return;
 
     await this.sendNotification({
@@ -60,7 +75,10 @@ export class DesktopNotifierAdapter implements NotificationServicePort {
     });
   }
 
-  public async notifyProgress(progressPercent: number, currentMutant?: string): Promise<void> {
+  public async notifyProgress(
+    progressPercent: number,
+    currentMutant?: string,
+  ): Promise<void> {
     if (!this.options.enabled) return;
 
     const message = currentMutant
@@ -75,7 +93,11 @@ export class DesktopNotifierAdapter implements NotificationServicePort {
     });
   }
 
-  public async notifyCompletion(score: number, killed: number, survived: number): Promise<void> {
+  public async notifyCompletion(
+    score: number,
+    killed: number,
+    survived: number,
+  ): Promise<void> {
     if (!this.options.enabled) return;
 
     const title = `🧬 Mutationstests Beendet (${score}% Score)`;
@@ -122,7 +144,9 @@ export class DesktopNotifierAdapter implements NotificationServicePort {
       try {
         await this.audioPlayer(soundPath);
       } catch (audioErr) {
-        this.logger.debug("Audio-Wiedergabe fehlgeschlagen:", audioErr as Error);
+        const errObj =
+          audioErr instanceof Error ? audioErr : new Error(String(audioErr));
+        this.logger.debug("Audio-Wiedergabe fehlgeschlagen:", errObj);
       }
     }
 
@@ -133,14 +157,24 @@ export class DesktopNotifierAdapter implements NotificationServicePort {
           sound: playSound ? soundPath : false,
         };
 
-        this.notifierService.notify(notificationPayload, (err: Error | null) => {
-          if (err) {
-            this.logger.debug("Desktop-Benachrichtigung konnte nicht gesendet werden:", err);
-          }
-          resolve();
-        });
+        this.notifierService.notify(
+          notificationPayload as any,
+          (err: Error | null) => {
+            if (err) {
+              this.logger.debug(
+                "Desktop-Benachrichtigung konnte nicht gesendet werden:",
+                err,
+              );
+            }
+            resolve();
+          },
+        );
       } catch (err) {
-        this.logger.debug("Unerwarteter Fehler beim Senden der Benachrichtigung:", err as Error);
+        const errObj = err instanceof Error ? err : new Error(String(err));
+        this.logger.debug(
+          "Unerwarteter Fehler beim Senden der Benachrichtigung:",
+          errObj,
+        );
         resolve();
       }
     });

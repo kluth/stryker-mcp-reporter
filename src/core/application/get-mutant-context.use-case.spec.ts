@@ -12,22 +12,33 @@ describe("GetMutantContextUseCase", () => {
         "src/test.ts": {
           source: sourceCode,
           mutants: [
-            { id: "42", status: "Survived", mutatorName: "ArithmeticOperator", replacement: "return a - b;", location: { start: { line: 2, column: 10 }, end: { line: 2, column: 15 } } },
+            {
+              id: "42",
+              status: "Survived",
+              mutatorName: "ArithmeticOperator",
+              replacement: "return a - b;",
+              location: {
+                start: { line: 2, column: 10 },
+                end: { line: 2, column: 15 },
+              },
+            },
           ],
         },
       },
     };
     stream.publish(mockReport);
-    
+
     const useCase = new GetMutantContextUseCase(stream);
     const result = useCase.execute("42");
-    
+
     expect(result.isOk).toBe(true);
     if (result.isOk) {
       expect(result.value.id).toBe("42");
       expect(result.value.originalCodeSnippet).toContain("return a + b;");
       expect(result.value.mutatedCodeSnippet).toContain("return a - b;");
-      expect(result.value.mutatedCodeSnippet).toContain("MUTATED CODE (ArithmeticOperator)");
+      expect(result.value.mutatedCodeSnippet).toContain(
+        "MUTATED CODE (ArithmeticOperator)",
+      );
     }
   });
 
@@ -41,10 +52,10 @@ describe("GetMutantContextUseCase", () => {
       },
     };
     stream.publish(mockReport);
-    
+
     const useCase = new GetMutantContextUseCase(stream);
     const result = useCase.execute("999");
-    
+
     expect(result.isOk).toBe(false);
     if (!result.isOk) {
       expect(result.error.message).toContain("nicht gefunden");

@@ -1,6 +1,10 @@
 // src/index.spec.ts
 import { describe, it, expect, vi } from "vitest";
-import { strykerPlugins, createMcpServerAdapter, startStandaloneServer } from "./index.js";
+import {
+  strykerPlugins,
+  createMcpServerAdapter,
+  startStandaloneServer,
+} from "./index.js";
 import { McpReporter } from "./infrastructure/stryker/mcp-reporter.js";
 import { McpServerAdapter } from "./infrastructure/mcp/mcp-server.adapter.js";
 import { PluginKind, type FactoryPlugin } from "@stryker-mutator/api/plugin";
@@ -27,7 +31,9 @@ describe("Plugin Index (Composition Root)", () => {
 
   it("sollte die Factory korrekt konfigurieren und eine Reporter-Instanz erzeugen", () => {
     const plugin = strykerPlugins[0] as FactoryPlugin<PluginKind.Reporter, any>;
-    const factory = plugin.factory as ((logger: Logger) => McpReporter) & { inject: string[] };
+    const factory = plugin.factory as ((logger: Logger) => McpReporter) & {
+      inject: string[];
+    };
 
     expect(factory.inject).toEqual(["logger"]);
 
@@ -42,14 +48,18 @@ describe("Plugin Index (Composition Root)", () => {
   });
 
   it("sollte den Standalone-Server mit Standard-Adapter erzeugen und starten können", async () => {
-    const startSpy = vi.spyOn(McpServerAdapter.prototype, "start").mockResolvedValue({ isOk: true, value: undefined } as any);
+    const startSpy = vi
+      .spyOn(McpServerAdapter.prototype, "start")
+      .mockResolvedValue({ isOk: true, value: undefined } as any);
     const result = await startStandaloneServer(loggerMock);
     expect(result.isOk).toBe(true);
     expect(startSpy).toHaveBeenCalled();
   });
 
   it("sollte den Standalone-Server im stdio Modus starten können", async () => {
-    const startStdioSpy = vi.spyOn(McpServerAdapter.prototype, "startStdio").mockResolvedValue({ isOk: true, value: undefined } as any);
+    const startStdioSpy = vi
+      .spyOn(McpServerAdapter.prototype, "startStdio")
+      .mockResolvedValue({ isOk: true, value: undefined } as any);
     const result = await startStandaloneServer(loggerMock, undefined, "stdio");
     expect(result.isOk).toBe(true);
     expect(startStdioSpy).toHaveBeenCalled();

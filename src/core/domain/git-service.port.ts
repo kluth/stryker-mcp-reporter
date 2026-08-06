@@ -9,7 +9,10 @@ export interface GitServicePort {
   /**
    * Ermittelt geänderte Dateien zwischen zwei spezifischen Git-Revisionen/Commits (z.B. v1.0.0..v1.1.0).
    */
-  getChangedFilesBetween(fromRevision: string, toRevision: string): Promise<string[]>;
+  getChangedFilesBetween(
+    fromRevision: string,
+    toRevision: string,
+  ): Promise<string[]>;
 
   /**
    * Ermittelt geänderte Dateien eines einzelnen spezifischen Commits per SHA.

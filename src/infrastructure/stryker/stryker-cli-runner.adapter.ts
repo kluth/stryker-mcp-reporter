@@ -1,7 +1,10 @@
 // src/infrastructure/stryker/stryker-cli-runner.adapter.ts
 import type { Logger } from "@stryker-mutator/api/logging";
 import type { PartialStrykerOptions } from "@stryker-mutator/api/core";
-import type { StrykerRunnerPort, StrykerRunOptions } from "../../core/domain/stryker-runner.port.js";
+import type {
+  StrykerRunnerPort,
+  StrykerRunOptions,
+} from "../../core/domain/stryker-runner.port.js";
 import type { MutationReport } from "../../core/domain/mutation-report.js";
 import { type Result, ok, err } from "../../core/domain/result.js";
 
@@ -10,7 +13,9 @@ interface StrykerInstance {
   runMutationTest(): Promise<unknown>;
 }
 
-export type StrykerFactory = (config?: PartialStrykerOptions) => StrykerInstance;
+export type StrykerFactory = (
+  config?: PartialStrykerOptions,
+) => StrykerInstance;
 
 export class StrykerCliRunnerAdapter implements StrykerRunnerPort {
   constructor(
@@ -18,7 +23,9 @@ export class StrykerCliRunnerAdapter implements StrykerRunnerPort {
     private readonly strykerFactory?: StrykerFactory,
   ) {}
 
-  public async run(options?: StrykerRunOptions): Promise<Result<MutationReport, Error>> {
+  public async run(
+    options?: StrykerRunOptions,
+  ): Promise<Result<MutationReport, Error>> {
     this.logger.info("Starte programmatischen Stryker Mutationstest-Lauf...");
 
     const strykerConfig: PartialStrykerOptions = {
@@ -43,6 +50,8 @@ export class StrykerCliRunnerAdapter implements StrykerRunnerPort {
     }
 
     try {
+      strykerConfig.reporters = ["json"];
+
       let strykerInstance: StrykerInstance;
 
       if (this.strykerFactory) {
@@ -52,16 +61,37 @@ export class StrykerCliRunnerAdapter implements StrykerRunnerPort {
         strykerInstance = new (Stryker as any)(strykerConfig);
       }
 
-      const rawResult = await strykerInstance.runMutationTest();
+      await strykerInstance.runMutationTest();
 
-      this.logger.info("Programmatischer Stryker Mutationstest-Lauf erfolgreich abgeschlossen.");
+      this.logger.info(
+        "Programmatischer Stryker Mutationstest-Lauf erfolgreich abgeschlossen.",
+      );
 
-      const report: MutationReport = (rawResult as MutationReport) || { files: {} };
+      const fs = await import("fs");
+      const path = await import("path");
+
+      let report: MutationReport = { files: {} };
+      try {
+        const reportPath = path.resolve(
+          process.cwd(),
+          "reports",
+          "mutation",
+          "mutation.json",
+        );
+        const fileContent = await fs.promises.readFile(reportPath, "utf-8");
+        report = JSON.parse(fileContent);
+      } catch (err) {
+        this.logger.warn("Konnte mutation.json nicht lesen.");
+      }
+
       return ok(report);
     } catch (error) {
-      this.logger.error("Fehler bei der Ausführung von Stryker Mutationstests:", error as Error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      return err(new Error(errorMessage));
+      const errObj = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(
+        "Fehler bei der Ausführung von Stryker Mutationstests:",
+        errObj,
+      );
+      return err(errObj);
     }
   }
 }

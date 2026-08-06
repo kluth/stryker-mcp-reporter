@@ -32,8 +32,11 @@ jobs:
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
 
-      - name: Compile TypeScript
+      - name: Build Bundle (tsup)
         run: npm run build
+
+      - name: Verify Bundle Size & Structure
+        run: npm pack --dry-run
 
       - name: Run Unit Tests (Vitest)
         run: npm run test

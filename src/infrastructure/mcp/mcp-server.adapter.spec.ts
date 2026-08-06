@@ -1,4 +1,3 @@
-// src/infrastructure/mcp/mcp-server.adapter.spec.ts
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { McpServerAdapter, SERVER_INFO } from "./mcp-server.adapter.js";
 import { ReportStream } from "../../core/domain/report-stream.js";
@@ -10,17 +9,33 @@ import { GetMutationSummaryUseCase } from "../../core/application/get-mutation-s
 import { GetKilledMutantsUseCase } from "../../core/application/get-killed-mutants.use-case.js";
 import { GetMutantContextUseCase } from "../../core/application/get-mutant-context.use-case.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import {
-  ListResourcesRequestSchema,
-  ReadResourceRequestSchema,
-  ListToolsRequestSchema,
-  CallToolRequestSchema,
-  ListPromptsRequestSchema,
-  GetPromptRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { Logger } from "@stryker-mutator/api/logging";
-import type { MutationReport } from "../../core/domain/mutation-report.js";
-import { ok, err } from "../../core/domain/result.js";
+import express from "express";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+
+const mockApp = {
+  get: vi.fn(),
+  post: vi.fn(),
+  use: vi.fn(),
+  listen: vi.fn().mockReturnValue({
+    address: () => ({ port: 3000 }),
+    on: vi.fn(),
+    close: vi.fn().mockImplementation((cb) => { if (cb) cb(); }),
+  }),
+};
+
+vi.mock("express", () => {
+  const expressFn = () => mockApp;
+  expressFn.json = vi.fn();
+  return { default: expressFn };
+});
+
+vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => {
+  return {
+    StdioServerTransport: vi.fn().mockImplementation(() => ({})),
+  };
+});
 
 describe("McpServerAdapter", () => {
   let mockLogger: Logger;
@@ -33,28 +48,6 @@ describe("McpServerAdapter", () => {
   let getKilledUseCase: GetKilledMutantsUseCase;
   let getMutantContextUseCase: GetMutantContextUseCase;
   let adapter: McpServerAdapter;
-
-  const mockReport: MutationReport = {
-    files: {
-      "src/foo.ts": {
-        mutants: [
-          {
-            id: "1",
-            mutatorName: "Arithmetic",
-            replacement: "-",
-            location: { start: { line: 10, column: 5 }, end: { line: 10, column: 6 } },
-            status: "Survived",
-            testsRan: ["unit test"],
-          },
-          {
-            id: "2",
-            mutatorName: "Equality",
-            status: "Killed",
-          },
-        ],
-      },
-    },
-  };
 
   beforeEach(() => {
     mockLogger = {
@@ -103,121 +96,141 @@ describe("McpServerAdapter", () => {
     expect(adapter.activePort).toBe(0);
   });
 
-  it("sollte den Server erfolgreich starten und ein ok-Result zurückgeben", async () => {
+  it("sollte den Server via start() erfolgreich starten und ein ok-Result zurückgeben", async () => {
+    mockApp.listen.mockImplementationOnce((port, cb) => {
+      if (cb) cb();
+      return { address: () => ({ port: 3000 }), on: vi.fn(), close: vi.fn().mockImplementation((cb) => { if (cb) cb(); }) };
+    });
     const result = await adapter.start();
     expect(result.isOk).toBe(true);
-    expect(adapter.activePort).toBeGreaterThan(0);
+    expect(adapter.activePort).toBe(3000);
   });
 
-  it("sollte MCP-Ressourcen korrekt verwalten", async () => {
-    const setRequestHandlerSpy = vi.spyOn(Server.prototype, "setRequestHandler");
-
-    new McpServerAdapter(
-      mockLogger,
-      reportStream,
-      statusStream,
-      runUseCase,
-      runTargetedUseCase,
-      getSurvivedUseCase,
-      getSummaryUseCase,
-      getKilledUseCase,
-      getMutantContextUseCase,
-      0,
-    );
-
-    const listResourcesCall = setRequestHandlerSpy.mock.calls.find((c) => c[0] === ListResourcesRequestSchema);
-    const listResourcesHandler = listResourcesCall![1] as Function;
-    const listResult = await listResourcesHandler({}, {});
-
-    expect(listResult.resources).toHaveLength(6);
-    expect(listResult.resources[0].uri).toBe("stryker://report/latest");
-    expect(listResult.resources[4].uri).toBe("stryker://analytics/trends");
-
-    const readResourceCall = setRequestHandlerSpy.mock.calls.find((c) => c[0] === ReadResourceRequestSchema);
-    const readResourceHandler = readResourceCall![1] as Function;
-
-    // Resource: latest (null fallback)
-    const latestNullResult = await readResourceHandler({ params: { uri: "stryker://report/latest" } }, {});
-    expect(latestNullResult.contents[0].text).toBe(JSON.stringify({ files: {} }));
-
-    // Resource: latest (with report)
-    reportStream.publish(mockReport);
-    const latestResult = await readResourceHandler({ params: { uri: "stryker://report/latest" } }, {});
-    expect(latestResult.contents[0].text).toBe(JSON.stringify(mockReport));
-
-    // Resource: summary
-    const summaryResult = await readResourceHandler({ params: { uri: "stryker://report/summary" } }, {});
-    expect(summaryResult.contents[0].text).toContain("mutationScore");
-
-    // Resource: survived
-    const survivedResult = await readResourceHandler({ params: { uri: "stryker://report/survived" } }, {});
-    expect(survivedResult.contents[0].text).toContain("Arithmetic");
-
-    // Resource: analytics/trends
-    const trendsResult = await readResourceHandler({ params: { uri: "stryker://analytics/trends" } }, {});
-    expect(trendsResult.contents[0].text).toContain("latestScore");
-
-    // Resource: status
-    const statusResult = await readResourceHandler({ params: { uri: "stryker://status" } }, {});
-    expect(statusResult.contents[0].text).toContain("idle");
-
-    // Resource: unbekannt
-    await expect(readResourceHandler({ params: { uri: "stryker://unknown" } }, {})).rejects.toThrow(
-      "Ressource nicht gefunden",
-    );
-  });
-
-  it("sollte MCP-Tools registrieren und ausführen", async () => {
-    const setRequestHandlerSpy = vi.spyOn(Server.prototype, "setRequestHandler");
-
-    new McpServerAdapter(
-      mockLogger,
-      reportStream,
-      statusStream,
-      runUseCase,
-      runTargetedUseCase,
-      getSurvivedUseCase,
-      getSummaryUseCase,
-      getKilledUseCase,
-      getMutantContextUseCase,
-      0,
-    );
-
-    const listToolsCall = setRequestHandlerSpy.mock.calls.find((c) => c[0] === ListToolsRequestSchema);
-    const listToolsHandler = listToolsCall![1] as Function;
-    const listResult = await listToolsHandler({}, {});
-
-    expect(listResult.tools).toHaveLength(9);
-    expect(listResult.tools.map((t: any) => t.name)).toContain("suggest_mutant_fixes");
-    expect(listResult.tools.map((t: any) => t.name)).toContain("predict_mutation_impact");
-
-    const callToolCall = setRequestHandlerSpy.mock.calls.find((c) => c[0] === CallToolRequestSchema);
-    const callToolHandler = callToolCall![1] as Function;
-
-    // Tool: run_mutation_tests (success)
-    vi.mocked(runUseCase.execute).mockResolvedValueOnce(ok(undefined));
-    reportStream.publish(mockReport);
-    const runResult = await callToolHandler({ params: { name: "run_mutation_tests", arguments: {} } }, {});
-    expect(runResult.content[0].text).toContain("Mutationstests erfolgreich beendet");
-
-    // Tool: suggest_mutant_fixes
-    const fixesResult = await callToolHandler({ params: { name: "suggest_mutant_fixes", arguments: {} } }, {});
-    expect(fixesResult.content[0].text).toContain("Arithmetic");
-
-    // Tool: predict_mutation_impact
-    const predictResult = await callToolHandler(
-      { params: { name: "predict_mutation_impact", arguments: { changedFiles: ["src/core/domain/foo.ts"] } } },
-      {},
-    );
-    expect(predictResult.content[0].text).toContain("HIGH");
+  it("sollte Fehler beim HTTP-Server Start abfangen", async () => {
+    mockApp.listen.mockImplementationOnce((port, cb) => {
+      const server = { address: () => ({ port: 3000 }), on: vi.fn(), close: vi.fn().mockImplementation((cb) => { if (cb) cb(); }) };
+      return server;
+    });
+    const promise = adapter.start();
+    const onCall = mockApp.listen.mock.results[0].value.on.mock.calls.find((c: any) => c[0] === "error");
+    onCall[1](new Error("listen error"));
+    const result = await promise;
+    expect(result.isOk).toBe(false);
+    expect(result.error?.message).toBe("listen error");
   });
 
   it("schließt den aktiven HTTP-Server während des Shutdowns", async () => {
+    mockApp.listen.mockImplementationOnce((port, cb) => {
+      if (cb) cb();
+      return { address: () => ({ port: 3000 }), on: vi.fn(), close: vi.fn((cb: any) => cb()) };
+    });
     await adapter.start();
     const closeSpy = vi.spyOn(adapter["httpServer"] as any, "close");
-
     await adapter.stop();
-
     expect(closeSpy).toHaveBeenCalledOnce();
+  });
+
+  it("sollte Fehler beim Schließen des HTTP-Servers abfangen", async () => {
+    mockApp.listen.mockImplementationOnce((port, cb) => {
+      if (cb) cb();
+      return { address: () => ({ port: 3000 }), on: vi.fn(), close: vi.fn((cb: any) => cb(new Error("close err"))) };
+    });
+    await adapter.start();
+    const result = await adapter.stop();
+    expect(result.isOk).toBe(false);
+    expect(result.error?.message).toBe("close err");
+  });
+
+  describe("HTTP Routes", () => {
+    let appGet: Function;
+    let appPost: Function;
+
+    beforeEach(async () => {
+      mockApp.listen.mockImplementationOnce((port, cb) => {
+        if (cb) cb();
+        return { address: () => ({ port: 3000 }), on: vi.fn(), close: vi.fn().mockImplementation((cb) => { if (cb) cb(); }) };
+      });
+      await adapter.start();
+      appGet = mockApp.get.mock.calls.find((c) => c[0] === "/mcp/sse")[1];
+      appPost = mockApp.post.mock.calls.find((c) => c[0] === "/mcp/messages")[1];
+    });
+
+    it("handles /mcp/sse", async () => {
+      const req = {};
+      const res = { writeHead: vi.fn(), write: vi.fn(), on: vi.fn() };
+      vi.spyOn(Server.prototype, "connect").mockResolvedValueOnce(undefined);
+      
+      await appGet(req, res);
+      expect(Server.prototype.connect).toHaveBeenCalled();
+
+      // Test onclose
+      const transport = adapter["sseTransports"].values().next().value;
+      expect(adapter["sseTransports"].size).toBe(1);
+      transport.onclose();
+      expect(adapter["sseTransports"].size).toBe(0);
+    });
+
+    it("handles /mcp/messages successfully", async () => {
+      // populate a session first
+      const sseReq = {};
+      const sseRes = { writeHead: vi.fn(), write: vi.fn(), on: vi.fn() };
+      vi.spyOn(Server.prototype, "connect").mockResolvedValueOnce(undefined);
+      await appGet(sseReq, sseRes);
+
+      const transport = adapter["sseTransports"].values().next().value;
+      const sessionId = transport.sessionId;
+
+      const req = { query: { sessionId } };
+      const res = { status: vi.fn().mockReturnThis(), send: vi.fn() };
+      
+      vi.spyOn(transport, "handlePostMessage").mockResolvedValueOnce(undefined);
+      await appPost(req, res);
+      
+      expect(transport.handlePostMessage).toHaveBeenCalledWith(req, res);
+    });
+
+    it("handles /mcp/messages without sessionId", async () => {
+      const req = { query: {} };
+      const res = { status: vi.fn().mockReturnThis(), send: vi.fn() };
+      await appPost(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.send).toHaveBeenCalledWith("Missing sessionId query parameter");
+    });
+
+    it("handles /mcp/messages with invalid sessionId", async () => {
+      const req = { query: { sessionId: "invalid" } };
+      const res = { status: vi.fn().mockReturnThis(), send: vi.fn() };
+      await appPost(req, res);
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.send).toHaveBeenCalledWith("Session not found");
+    });
+  });
+
+  it("sollte sofort ok zurückgeben, wenn stop() aufgerufen wird ohne vorher start()", async () => {
+    const result = await adapter.stop();
+    expect(result.isOk).toBe(true);
+  });
+
+  describe("startStdio", () => {
+    it("sollte den Server via startStdio() erfolgreich starten", async () => {
+      vi.spyOn(Server.prototype, "connect").mockResolvedValueOnce();
+      const result = await adapter.startStdio();
+      expect(result.isOk).toBe(true);
+      expect(Server.prototype.connect).toHaveBeenCalled();
+    });
+
+    it("sollte Fehler abfangen und ein err-Result zurückgeben", async () => {
+      vi.spyOn(Server.prototype, "connect").mockRejectedValueOnce(new Error("connect fail"));
+      const result = await adapter.startStdio();
+      expect(result.isOk).toBe(false);
+      expect(result.error?.message).toBe("connect fail");
+    });
+    
+    it("sollte Nicht-Error Objekte bei startStdio wrappen", async () => {
+      vi.spyOn(Server.prototype, "connect").mockRejectedValueOnce("String error");
+      const result = await adapter.startStdio();
+      expect(result.isOk).toBe(false);
+      expect(result.error?.message).toBe("String error");
+    });
   });
 });

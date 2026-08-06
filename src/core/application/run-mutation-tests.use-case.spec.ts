@@ -41,7 +41,12 @@ describe("RunMutationTestsUseCase", () => {
       notifyError: vi.fn(),
       configure: vi.fn(),
     };
-    useCase = new RunMutationTestsUseCase(reportStream, statusStream, mockRunner, mockNotifier);
+    useCase = new RunMutationTestsUseCase(
+      reportStream,
+      statusStream,
+      mockRunner,
+      mockNotifier,
+    );
   });
 
   it("führt Mutationstests erfolgreich aus, aktualisiert Status, publiziert Report und benachrichtigt Desktop", async () => {
@@ -57,7 +62,9 @@ describe("RunMutationTestsUseCase", () => {
     expect(statusStream.current().state).toBe("completed");
     expect(statusStream.current().error).toBeNull();
 
-    expect(mockNotifier.notifyStatus).toHaveBeenCalledWith("Starte Mutationstests...");
+    expect(mockNotifier.notifyStatus).toHaveBeenCalledWith(
+      "Starte Mutationstests...",
+    );
     expect(mockNotifier.notifyCompletion).toHaveBeenCalledWith(100, 1, 0);
   });
 
@@ -70,7 +77,9 @@ describe("RunMutationTestsUseCase", () => {
     expect(result.isOk).toBe(false);
     expect(result.error?.message).toBe("Stryker build failed");
     expect(statusStream.current().state).toBe("failed");
-    expect(mockNotifier.notifyError).toHaveBeenCalledWith("Stryker build failed");
+    expect(mockNotifier.notifyError).toHaveBeenCalledWith(
+      "Stryker build failed",
+    );
   });
 
   it("fängt unerwartete Exceptions in der Ausführung ab und benachrichtigt Desktop", async () => {
@@ -81,7 +90,9 @@ describe("RunMutationTestsUseCase", () => {
     expect(result.isOk).toBe(false);
     expect(result.error?.message).toBe("Unerwarteter Absturz");
     expect(statusStream.current().state).toBe("failed");
-    expect(mockNotifier.notifyError).toHaveBeenCalledWith("Unerwarteter Absturz");
+    expect(mockNotifier.notifyError).toHaveBeenCalledWith(
+      "Unerwarteter Absturz",
+    );
   });
 
   it("verhindert parallele Läufe, wenn bereits ein Lauf aktiv ist", async () => {
@@ -90,7 +101,9 @@ describe("RunMutationTestsUseCase", () => {
     const result = await useCase.execute();
 
     expect(result.isOk).toBe(false);
-    expect(result.error?.message).toBe("Ein Mutationstest-Lauf ist bereits aktiv.");
+    expect(result.error?.message).toBe(
+      "Ein Mutationstest-Lauf ist bereits aktiv.",
+    );
     expect(mockRunner.run).not.toHaveBeenCalled();
   });
 });

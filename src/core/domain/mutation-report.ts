@@ -69,7 +69,9 @@ export interface MutantDetail {
 /**
  * Berechnet detaillierte Zusammenfassungsstatistiken und den Mutationsscore aus einem MutationReport.
  */
-export function calculateMutationSummary(report: MutationReport): MutationSummary {
+export function calculateMutationSummary(
+  report: MutationReport,
+): MutationSummary {
   const summary: MutationSummary = {
     totalMutants: 0,
     killed: 0,
@@ -120,10 +122,13 @@ export function calculateMutationSummary(report: MutationReport): MutationSummar
   }
 
   const detected = summary.killed + summary.timeout;
-  const validMutants = summary.killed + summary.survived + summary.noCoverage + summary.timeout;
+  const validMutants =
+    summary.killed + summary.survived + summary.noCoverage + summary.timeout;
 
   if (validMutants > 0) {
-    summary.mutationScore = Number(((detected / validMutants) * 100).toFixed(2));
+    summary.mutationScore = Number(
+      ((detected / validMutants) * 100).toFixed(2),
+    );
   } else {
     summary.mutationScore = 100;
   }
@@ -145,7 +150,11 @@ export function extractSurvivedMutants(
   }
 
   for (const [filePath, fileResult] of Object.entries(report.files)) {
-    if (filePathFilter && filePath !== filePathFilter && !filePath.endsWith(filePathFilter)) {
+    if (
+      filePathFilter &&
+      filePath !== filePathFilter &&
+      !filePath.endsWith(filePathFilter)
+    ) {
       continue;
     }
 
@@ -155,8 +164,14 @@ export function extractSurvivedMutants(
 
     for (const mutant of fileResult.mutants) {
       if (mutant.status === "Survived") {
-        const id = typeof mutant.id === "string" && mutant.id !== "" ? mutant.id : "unknown";
-        const mutatorName = typeof mutant.mutatorName === "string" && mutant.mutatorName !== "" ? mutant.mutatorName : "Unknown";
+        const id =
+          typeof mutant.id === "string" && mutant.id !== ""
+            ? mutant.id
+            : "unknown";
+        const mutatorName =
+          typeof mutant.mutatorName === "string" && mutant.mutatorName !== ""
+            ? mutant.mutatorName
+            : "Unknown";
         const testsRan = Array.isArray(mutant.testsRan) ? mutant.testsRan : [];
 
         result.push({
@@ -190,7 +205,11 @@ export function extractKilledMutants(
   }
 
   for (const [filePath, fileResult] of Object.entries(report.files)) {
-    if (filePathFilter && filePath !== filePathFilter && !filePath.endsWith(filePathFilter)) {
+    if (
+      filePathFilter &&
+      filePath !== filePathFilter &&
+      !filePath.endsWith(filePathFilter)
+    ) {
       continue;
     }
 
@@ -200,8 +219,14 @@ export function extractKilledMutants(
 
     for (const mutant of fileResult.mutants) {
       if (mutant.status === "Killed") {
-        const id = typeof mutant.id === "string" && mutant.id !== "" ? mutant.id : "unknown";
-        const mutatorName = typeof mutant.mutatorName === "string" && mutant.mutatorName !== "" ? mutant.mutatorName : "Unknown";
+        const id =
+          typeof mutant.id === "string" && mutant.id !== ""
+            ? mutant.id
+            : "unknown";
+        const mutatorName =
+          typeof mutant.mutatorName === "string" && mutant.mutatorName !== ""
+            ? mutant.mutatorName
+            : "Unknown";
         const testsRan = Array.isArray(mutant.testsRan) ? mutant.testsRan : [];
 
         result.push({

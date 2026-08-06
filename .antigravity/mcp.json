@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "stryker-mutation-testing": {
+      "command": "node",
+      "args": [
+        "bin/stryker-mcp-server.js"
+      ]
+    }
+  }
+}

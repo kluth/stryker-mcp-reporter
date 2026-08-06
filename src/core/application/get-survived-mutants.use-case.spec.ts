@@ -16,7 +16,10 @@ describe("GetSurvivedMutantsUseCase", () => {
             id: "1",
             mutatorName: "Arithmetic",
             replacement: "-",
-            location: { start: { line: 5, column: 10 }, end: { line: 5, column: 11 } },
+            location: {
+              start: { line: 5, column: 10 },
+              end: { line: 5, column: 11 },
+            },
             status: "Survived",
             testsRan: ["test1"],
           },
@@ -39,7 +42,9 @@ describe("GetSurvivedMutantsUseCase", () => {
     const result = useCase.execute();
 
     expect(result.isOk).toBe(false);
-    expect(result.error?.message).toBe("Kein Mutation-Testing-Report verfügbar.");
+    expect(result.error?.message).toBe(
+      "Kein Mutation-Testing-Report verfügbar.",
+    );
   });
 
   it("extrahiert alle überlebenden Mutanten aus dem aktuellen Report", () => {

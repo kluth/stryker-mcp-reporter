@@ -1,6 +1,9 @@
 // src/core/application/get-survived-mutants.use-case.ts
 import type { ReportStream } from "../domain/report-stream.js";
-import { extractSurvivedMutants, type MutantDetail } from "../domain/mutation-report.js";
+import {
+  extractSurvivedMutants,
+  type MutantDetail,
+} from "../domain/mutation-report.js";
 import { type Result, ok, err } from "../domain/result.js";
 
 export class GetSurvivedMutantsUseCase {

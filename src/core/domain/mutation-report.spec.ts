@@ -19,7 +19,10 @@ describe("MutationReport Domain Model", () => {
             id: "1",
             mutatorName: "ArithmeticOperator",
             replacement: "-",
-            location: { start: { line: 1, column: 35 }, end: { line: 1, column: 36 } },
+            location: {
+              start: { line: 1, column: 35 },
+              end: { line: 1, column: 36 },
+            },
             status: "Killed",
             killedBy: ["add tests"],
           },
@@ -27,7 +30,10 @@ describe("MutationReport Domain Model", () => {
             id: "2",
             mutatorName: "EqualityOperator",
             replacement: "==",
-            location: { start: { line: 1, column: 10 }, end: { line: 1, column: 12 } },
+            location: {
+              start: { line: 1, column: 10 },
+              end: { line: 1, column: 12 },
+            },
             status: "Survived",
             testsRan: ["unit test 1"],
           },
@@ -35,14 +41,20 @@ describe("MutationReport Domain Model", () => {
             id: "3",
             mutatorName: "ConditionalExpression",
             replacement: "false",
-            location: { start: { line: 2, column: 5 }, end: { line: 2, column: 9 } },
+            location: {
+              start: { line: 2, column: 5 },
+              end: { line: 2, column: 9 },
+            },
             status: "NoCoverage",
           },
           {
             id: "4",
             mutatorName: "BlockStatement",
             replacement: "{}",
-            location: { start: { line: 3, column: 1 }, end: { line: 3, column: 2 } },
+            location: {
+              start: { line: 3, column: 1 },
+              end: { line: 3, column: 2 },
+            },
             status: "Timeout",
           },
         ],
@@ -55,7 +67,10 @@ describe("MutationReport Domain Model", () => {
             id: "5",
             mutatorName: "StringLiteral",
             replacement: '""',
-            location: { start: { line: 1, column: 1 }, end: { line: 1, column: 5 } },
+            location: {
+              start: { line: 1, column: 1 },
+              end: { line: 1, column: 5 },
+            },
             status: "Survived",
           },
           {
@@ -97,7 +112,8 @@ describe("MutationReport Domain Model", () => {
       expect(calculateMutationSummary(null as any).mutationScore).toBe(100);
       expect(calculateMutationSummary({ files: {} }).mutationScore).toBe(100);
       expect(
-        calculateMutationSummary({ files: { "a.ts": { mutants: undefined } } }).mutationScore,
+        calculateMutationSummary({ files: { "a.ts": { mutants: undefined } } })
+          .mutationScore,
       ).toBe(100);
     });
   });
@@ -112,7 +128,10 @@ describe("MutationReport Domain Model", () => {
     });
 
     it("filtert überlebende Mutanten nach spezifischem Dateipfad oder Suffix", () => {
-      const survivedExact = extractSurvivedMutants(sampleReport, "src/calculator.ts");
+      const survivedExact = extractSurvivedMutants(
+        sampleReport,
+        "src/calculator.ts",
+      );
       expect(survivedExact).toHaveLength(1);
       expect(survivedExact[0].id).toBe("2");
 
@@ -124,7 +143,9 @@ describe("MutationReport Domain Model", () => {
     it("handhabt null/undefined Reports oder fehlende mutants-Arrays sicher", () => {
       expect(extractSurvivedMutants(null as any)).toEqual([]);
       expect(extractSurvivedMutants({ files: {} })).toEqual([]);
-      expect(extractSurvivedMutants({ files: { "a.ts": {} as any } })).toEqual([]);
+      expect(extractSurvivedMutants({ files: { "a.ts": {} as any } })).toEqual(
+        [],
+      );
     });
 
     it("handhabt mutant ohne ID fallback", () => {

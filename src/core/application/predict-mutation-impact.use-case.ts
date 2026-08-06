@@ -13,14 +13,24 @@ export class PredictMutationImpactUseCase {
       let estimatedMutantCount = 5;
       let reason = "Routine file change.";
 
-      if (file.includes("use-case") || file.includes("domain") || file.includes("adapter")) {
+      if (
+        file.includes("use-case") ||
+        file.includes("domain") ||
+        file.includes("adapter")
+      ) {
         riskLevel = "HIGH";
         estimatedMutantCount = 25;
-        reason = "Core business or adapter logic contains complex branching and assertions.";
-      } else if (file.includes("config") || file.includes("util") || file.includes("helper")) {
+        reason =
+          "Core business or adapter logic contains complex branching and assertions.";
+      } else if (
+        file.includes("config") ||
+        file.includes("util") ||
+        file.includes("helper")
+      ) {
         riskLevel = "MEDIUM";
         estimatedMutantCount = 12;
-        reason = "Utility functions and configurations require boundary condition assertions.";
+        reason =
+          "Utility functions and configurations require boundary condition assertions.";
       }
 
       return {

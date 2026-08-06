@@ -9,8 +9,15 @@ export interface NotificationOptions {
 
 export interface NotificationServicePort {
   notifyStatus(message: string, title?: string): Promise<void>;
-  notifyProgress(progressPercent: number, currentMutant?: string): Promise<void>;
-  notifyCompletion(score: number, killed: number, survived: number): Promise<void>;
+  notifyProgress(
+    progressPercent: number,
+    currentMutant?: string,
+  ): Promise<void>;
+  notifyCompletion(
+    score: number,
+    killed: number,
+    survived: number,
+  ): Promise<void>;
   notifyError(errorMessage: string): Promise<void>;
   configure(options: NotificationOptions): void;
 }

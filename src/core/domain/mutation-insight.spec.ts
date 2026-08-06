@@ -14,16 +14,28 @@ describe("MutationInsight Entity Domain Model", () => {
     expect(mapMutatorCategory("EqualityOperator")).toBe("Equality & Logic");
     expect(mapMutatorCategory("logical_and")).toBe("Equality & Logic");
     expect(mapMutatorCategory("boolean_literal")).toBe("Equality & Logic");
-    expect(mapMutatorCategory("ConditionalExpression")).toBe("Control Flow & Conditionals");
-    expect(mapMutatorCategory("if_statement")).toBe("Control Flow & Conditionals");
-    expect(mapMutatorCategory("switch_case")).toBe("Control Flow & Conditionals");
+    expect(mapMutatorCategory("ConditionalExpression")).toBe(
+      "Control Flow & Conditionals",
+    );
+    expect(mapMutatorCategory("if_statement")).toBe(
+      "Control Flow & Conditionals",
+    );
+    expect(mapMutatorCategory("switch_case")).toBe(
+      "Control Flow & Conditionals",
+    );
     expect(mapMutatorCategory("StringLiteral")).toBe("String & Literals");
     expect(mapMutatorCategory("literal_value")).toBe("String & Literals");
     expect(mapMutatorCategory("BlockStatement")).toBe("Block & Structure");
     expect(mapMutatorCategory("statement_block")).toBe("Block & Structure");
-    expect(mapMutatorCategory("ExceptionFilter")).toBe("Exception & Error Handling");
-    expect(mapMutatorCategory("throw_error")).toBe("Exception & Error Handling");
-    expect(mapMutatorCategory("catch_block")).toBe("Exception & Error Handling");
+    expect(mapMutatorCategory("ExceptionFilter")).toBe(
+      "Exception & Error Handling",
+    );
+    expect(mapMutatorCategory("throw_error")).toBe(
+      "Exception & Error Handling",
+    );
+    expect(mapMutatorCategory("catch_block")).toBe(
+      "Exception & Error Handling",
+    );
     expect(mapMutatorCategory("ArrayDeclaration")).toBe("Array & Collection");
     expect(mapMutatorCategory("collection_items")).toBe("Array & Collection");
     expect(mapMutatorCategory("AsyncAwait")).toBe("Async & Promises");
@@ -38,8 +50,12 @@ describe("MutationInsight Entity Domain Model", () => {
     expect(mapFileCategory("src/application/service.ts")).toBe("Application");
     expect(mapFileCategory("src\\application\\service.ts")).toBe("Application");
     expect(mapFileCategory("src/use-case.ts")).toBe("Application");
-    expect(mapFileCategory("src/infrastructure/repo.ts")).toBe("Infrastructure");
-    expect(mapFileCategory("src\\infrastructure\\repo.ts")).toBe("Infrastructure");
+    expect(mapFileCategory("src/infrastructure/repo.ts")).toBe(
+      "Infrastructure",
+    );
+    expect(mapFileCategory("src\\infrastructure\\repo.ts")).toBe(
+      "Infrastructure",
+    );
     expect(mapFileCategory("src/git-adapter.ts")).toBe("Infrastructure");
     expect(mapFileCategory("src/ui/component.ts")).toBe("UI");
     expect(mapFileCategory("src/components/button.ts")).toBe("UI");
@@ -70,12 +86,18 @@ describe("MutationInsight Entity Domain Model", () => {
     expect(insight.mutant.mutatorCategory).toBe("Arithmetic & Math");
     expect(insight.codeContext.fileCategory).toBe("Domain");
     expect(insight.codeContext.moduleName).toBe("calculator.ts");
-    expect(insight.testCoverageContext.testCoverageState).toBe("TestsRanButFailedToAssert");
-    expect(insight.testCoverageContext.assertionFlawCategory).toBe("OverMocking / Weak Assertions");
+    expect(insight.testCoverageContext.testCoverageState).toBe(
+      "TestsRanButFailedToAssert",
+    );
+    expect(insight.testCoverageContext.assertionFlawCategory).toBe(
+      "OverMocking / Weak Assertions",
+    );
     expect(insight.educationalInsight.severity).toBe("Critical");
     expect(insight.educationalInsight.riskScore).toBe(95);
     expect(insight.gitDevContext.authorName).toBe("Alice Developer");
-    expect(insight.vectorEmbedding.embeddingText).toContain("Author: Alice Developer <dev@example.com>");
+    expect(insight.vectorEmbedding.embeddingText).toContain(
+      "Author: Alice Developer <dev@example.com>",
+    );
   });
 
   it("handhabt fehlende optionale Felder (sourceCodeSnippet, author, testsRan) mit Fallbacks", () => {
@@ -91,13 +113,19 @@ describe("MutationInsight Entity Domain Model", () => {
 
     const insight = buildMutationInsightEntity(input);
 
-    expect(insight.codeContext.originalCodeSnippet).toBe("// Quellcode-Zeile nicht direkt verfügbar");
+    expect(insight.codeContext.originalCodeSnippet).toBe(
+      "// Quellcode-Zeile nicht direkt verfügbar",
+    );
     expect(insight.codeContext.moduleName).toBe("simple.ts");
     expect(insight.testCoverageContext.testCoverageState).toBe("NoTests");
-    expect(insight.testCoverageContext.assertionFlawCategory).toBe("Uncovered Execution Path");
+    expect(insight.testCoverageContext.assertionFlawCategory).toBe(
+      "Uncovered Execution Path",
+    );
     expect(insight.educationalInsight.severity).toBe("Medium");
     expect(insight.educationalInsight.riskScore).toBe(50);
-    expect(insight.vectorEmbedding.embeddingText).toContain("Author: Unknown <unknown@example.com>");
+    expect(insight.vectorEmbedding.embeddingText).toContain(
+      "Author: Unknown <unknown@example.com>",
+    );
   });
 
   it("kategorisiert NoCoverage Mutanten korrekt mit Risikoscore 85", () => {

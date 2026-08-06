@@ -28,7 +28,9 @@ describe("GetMutationSummaryUseCase", () => {
     const result = useCase.execute();
 
     expect(result.isOk).toBe(false);
-    expect(result.error?.message).toBe("Kein Mutation-Testing-Report verfügbar.");
+    expect(result.error?.message).toBe(
+      "Kein Mutation-Testing-Report verfügbar.",
+    );
   });
 
   it("berechnet die Zusammenfassung für den geladenen Report", () => {

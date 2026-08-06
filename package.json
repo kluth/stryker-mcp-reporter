@@ -2,23 +2,27 @@
   "name": "stryker-mcp-reporter",
   "version": "1.9.0",
   "description": "Ein Stryker Reporter Plugin, das Mutation Testing Ergebnisse nativ über das Model Context Protocol (MCP) bereitstellt.",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "type": "module",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
   "bin": {
-    "stryker-mcp-server": "bin/stryker-mcp-server.js",
-    "stryker-mcp-reporter": "bin/stryker-mcp-server.js"
+    "stryker-mcp-server": "dist/cli.js",
+    "stryker-mcp-reporter": "dist/cli.js"
   },
   "files": [
-    "dist",
-    "bin",
-    "assets"
+    "dist"
   ],
   "scripts": {
-    "prebuild": "rimraf dist",
-    "build": "tsc",
-    "prepack": "npm run build",
+    "build": "tsup",
+    "prepublishOnly": "npm run build",
     "test": "vitest run",
     "test:e2e": "node e2e-test.js",
     "test:mutation": "stryker run"
@@ -27,17 +31,11 @@
     "node": ">=22.0.0"
   },
   "peerDependencies": {
-    "@stryker-mutator/api": "^8.0.0"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "@stryker-mutator/core": "^8.2.6",
-    "express": "^4.21.0",
-    "mutation-testing-report-schema": "^3.0.0",
-    "node-notifier": "^10.0.1",
-    "rxjs": "^7.8.1"
+    "@stryker-mutator/api": "^8.0.0",
+    "@stryker-mutator/core": "^8.2.6"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/exec": "^7.1.0",
     "@semantic-release/git": "^10.0.1",
@@ -46,11 +44,14 @@
     "@types/express": "^4.17.21",
     "@types/node": "^22.0.0",
     "@types/node-notifier": "^8.0.5",
-    "@vitest/coverage-v8": "^2.1.9",
-    "playwright": "^1.62.1",
+    "express": "^4.21.0",
+    "mutation-testing-report-schema": "^3.0.0",
+    "node-notifier": "^10.0.1",
     "rimraf": "^6.0.1",
+    "rxjs": "^7.8.1",
     "semantic-release": "^24.0.0",
-    "stryker-mcp-reporter": "^1.0.2",
+    "terser": "^5.49.2",
+    "tsup": "^8.5.1",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   },
@@ -73,6 +74,7 @@
   },
   "homepage": "https://github.com/kluth/stryker-mcp-reporter#readme",
   "allowScripts": {
-    "esbuild@0.21.5": true
+    "esbuild@0.21.5": true,
+    "esbuild@0.27.7": true
   }
 }

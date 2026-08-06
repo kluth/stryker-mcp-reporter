@@ -39,9 +39,12 @@ export class McpReporter implements Reporter {
       "🚀 MCP Server läuft auf Port 3000! Warte auf KI-Verbindungen (Beenden mit Strg+C).",
     );
 
-    // 3. Den Stryker-Lifecycle blockieren, damit der Server offen bleibt
-    return new Promise(() => {
-      // Dieses Promise wird nie resolved. Der Prozess bleibt am Leben.
-    });
+    // 3. Den Stryker-Lifecycle nur blockieren, wenn Daemon-Modus aktiv ist
+    if (process.env.MCP_DAEMON === "true") {
+      return new Promise(() => {
+        // Dieses Promise wird nie resolved. Der Prozess bleibt am Leben.
+      });
+    }
+    return Promise.resolve();
   }
 }

@@ -18,7 +18,9 @@ export interface MutantRemediationAdvice {
 
 export class SuggestMutantFixesUseCase {
   public execute(mutants: MutantDetail[]): MutantRemediationAdvice[] {
-    const survivedOrNoCoverage = mutants.filter((m) => m.status === "Survived" || m.status === "NoCoverage");
+    const survivedOrNoCoverage = mutants.filter(
+      (m) => m.status === "Survived" || m.status === "NoCoverage",
+    );
 
     return survivedOrNoCoverage.map((m) => this.generateRemediation(m));
   }
@@ -54,7 +56,10 @@ export class SuggestMutantFixesUseCase {
       mutatorName: mutator,
       originalCode: original,
       mutatedCode: replacement,
-      location: { start: { line: startLine, column: startColumn }, end: { line: startLine, column: startColumn } },
+      location: {
+        start: { line: startLine, column: startColumn },
+        end: { line: startLine, column: startColumn },
+      },
       explanation,
       suggestedAssertion,
       boundaryTestSnippet,

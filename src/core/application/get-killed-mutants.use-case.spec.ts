@@ -10,17 +10,33 @@ describe("GetKilledMutantsUseCase", () => {
       files: {
         "src/test.ts": {
           mutants: [
-            { id: "1", status: "Killed", mutatorName: "ArithmeticOperator", location: { start: { line: 1, column: 1 }, end: { line: 1, column: 5 } } },
-            { id: "2", status: "Survived", mutatorName: "StringLiteral", location: { start: { line: 2, column: 1 }, end: { line: 2, column: 5 } } },
+            {
+              id: "1",
+              status: "Killed",
+              mutatorName: "ArithmeticOperator",
+              location: {
+                start: { line: 1, column: 1 },
+                end: { line: 1, column: 5 },
+              },
+            },
+            {
+              id: "2",
+              status: "Survived",
+              mutatorName: "StringLiteral",
+              location: {
+                start: { line: 2, column: 1 },
+                end: { line: 2, column: 5 },
+              },
+            },
           ],
         },
       },
     };
     stream.publish(mockReport);
-    
+
     const useCase = new GetKilledMutantsUseCase(stream);
     const result = useCase.execute();
-    
+
     expect(result.isOk).toBe(true);
     if (result.isOk) {
       expect(result.value.length).toBe(1);
@@ -33,7 +49,7 @@ describe("GetKilledMutantsUseCase", () => {
     const stream = new ReportStream();
     const useCase = new GetKilledMutantsUseCase(stream);
     const result = useCase.execute();
-    
+
     expect(result.isOk).toBe(false);
     if (!result.isOk) {
       expect(result.error.message).toContain("Kein Mutationsbericht");

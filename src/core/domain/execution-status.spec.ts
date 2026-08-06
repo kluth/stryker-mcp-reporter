@@ -21,7 +21,10 @@ describe("ExecutionStatusStream Domain Model", () => {
     const current = statusStream.current();
 
     expect(current.state).toBe("running");
-    expect(current.progress).toEqual({ percentage: 10, message: "Starte Testlauf..." });
+    expect(current.progress).toEqual({
+      percentage: 10,
+      message: "Starte Testlauf...",
+    });
     expect(current.error).toBeNull();
   });
 

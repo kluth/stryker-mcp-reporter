@@ -5,7 +5,13 @@ import { MutationTrendTracker } from "./mutation-trend-tracker.js";
 describe("MutationTrendTracker", () => {
   it("should calculate score delta and trend direction accurately", () => {
     const tracker = new MutationTrendTracker([
-      { timestamp: "2026-08-01T10:00:00Z", mutationScore: 85.0, totalMutants: 100, killedMutants: 85, survivedMutants: 15 },
+      {
+        timestamp: "2026-08-01T10:00:00Z",
+        mutationScore: 85.0,
+        totalMutants: 100,
+        killedMutants: 85,
+        survivedMutants: 15,
+      },
     ]);
 
     tracker.recordRun({
@@ -24,7 +30,13 @@ describe("MutationTrendTracker", () => {
 
   it("should handle single run gracefully", () => {
     const tracker = new MutationTrendTracker([
-      { timestamp: "2026-08-05T10:00:00Z", mutationScore: 100, totalMutants: 50, killedMutants: 50, survivedMutants: 0 },
+      {
+        timestamp: "2026-08-05T10:00:00Z",
+        mutationScore: 100,
+        totalMutants: 50,
+        killedMutants: 50,
+        survivedMutants: 0,
+      },
     ]);
 
     const summary = tracker.getTrendSummary();

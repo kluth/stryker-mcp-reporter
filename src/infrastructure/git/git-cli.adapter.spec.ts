@@ -25,7 +25,7 @@ src/direct.ts
     const adapter = new GitCliAdapter(loggerMock, mockExec);
     const files = await adapter.getChangedFiles();
 
-    expect(mockExec).toHaveBeenCalledWith("git status --porcelain");
+    expect(mockExec).toHaveBeenCalledWith("git", ["status", "--porcelain"]);
     expect(files).toEqual(["src/index.ts", "src/app.ts", "src/direct.ts"]);
   });
 
@@ -35,7 +35,7 @@ src/direct.ts
     const adapter = new GitCliAdapter(loggerMock, mockExec);
     const files = await adapter.getChangedFiles("   ");
 
-    expect(mockExec).toHaveBeenCalledWith("git status --porcelain");
+    expect(mockExec).toHaveBeenCalledWith("git", ["status", "--porcelain"]);
     expect(files).toEqual(["src/foo.ts"]);
   });
 
@@ -49,7 +49,11 @@ package.json
     const adapter = new GitCliAdapter(loggerMock, mockExec);
     const files = await adapter.getChangedFiles("HEAD~1");
 
-    expect(mockExec).toHaveBeenCalledWith("git diff --name-only HEAD~1");
+    expect(mockExec).toHaveBeenCalledWith("git", [
+      "diff",
+      "--name-only",
+      "HEAD~1",
+    ]);
     expect(files).toEqual(["src/core/domain/mutation-report.ts"]);
   });
 
@@ -63,7 +67,11 @@ src/b.spec.ts
     const adapter = new GitCliAdapter(loggerMock, mockExec);
     const files = await adapter.getChangedFilesBetween("v1.0.0", "v1.1.0");
 
-    expect(mockExec).toHaveBeenCalledWith("git diff --name-only v1.0.0..v1.1.0");
+    expect(mockExec).toHaveBeenCalledWith("git", [
+      "diff",
+      "--name-only",
+      "v1.0.0..v1.1.0",
+    ]);
     expect(files).toEqual(["src/a.ts", "src/b.ts"]);
   });
 
@@ -75,7 +83,13 @@ src/feature.ts
     const adapter = new GitCliAdapter(loggerMock, mockExec);
     const files = await adapter.getChangedFilesForCommit("a9d1206");
 
-    expect(mockExec).toHaveBeenCalledWith("git diff-tree --no-commit-id --name-only -r a9d1206");
+    expect(mockExec).toHaveBeenCalledWith("git", [
+      "diff-tree",
+      "--no-commit-id",
+      "--name-only",
+      "-r",
+      "a9d1206",
+    ]);
     expect(files).toEqual(["src/feature.ts"]);
   });
 
@@ -84,7 +98,7 @@ src/feature.ts
     const mockExec: ExecCommandFn = vi.fn().mockRejectedValue(gitError);
 
     const adapter = new GitCliAdapter(loggerMock, mockExec);
-    
+
     expect(await adapter.getChangedFiles()).toEqual([]);
     expect(await adapter.getChangedFilesBetween("a", "b")).toEqual([]);
     expect(await adapter.getChangedFilesForCommit("c")).toEqual([]);

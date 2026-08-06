@@ -1,6 +1,9 @@
 // src/infrastructure/notification/desktop-notifier.adapter.spec.ts
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { DesktopNotifierAdapter, defaultAudioPlayer } from "./desktop-notifier.adapter.js";
+import {
+  DesktopNotifierAdapter,
+  defaultAudioPlayer,
+} from "./desktop-notifier.adapter.js";
 import type { Logger } from "@stryker-mutator/api/logging";
 
 describe("DesktopNotifierAdapter", () => {
@@ -22,7 +25,11 @@ describe("DesktopNotifierAdapter", () => {
 
     audioPlayerMock = vi.fn().mockResolvedValue(undefined);
 
-    adapter = new DesktopNotifierAdapter(loggerMock, notifierFnMock, audioPlayerMock);
+    adapter = new DesktopNotifierAdapter(
+      loggerMock,
+      notifierFnMock,
+      audioPlayerMock,
+    );
   });
 
   it("sendet Desktop-Benachrichtigung bei Statusänderungen mit Default-Titel", async () => {
@@ -36,7 +43,9 @@ describe("DesktopNotifierAdapter", () => {
       }),
       expect.any(Function),
     );
-    expect(audioPlayerMock).toHaveBeenCalledWith(expect.stringContaining("mutant_hunter.wav"));
+    expect(audioPlayerMock).toHaveBeenCalledWith(
+      expect.stringContaining("mutant_hunter.wav"),
+    );
   });
 
   it("sendet Desktop-Benachrichtigung bei Statusänderungen mit benutzerdefiniertem Titel", async () => {
@@ -85,7 +94,9 @@ describe("DesktopNotifierAdapter", () => {
       }),
       expect.any(Function),
     );
-    expect(audioPlayerMock).toHaveBeenCalledWith(expect.stringContaining("mutant_hunter.wav"));
+    expect(audioPlayerMock).toHaveBeenCalledWith(
+      expect.stringContaining("mutant_hunter.wav"),
+    );
   });
 
   it("sendet Fehlerbenachrichtigung als persistenten Overlay mit Sound", async () => {
@@ -123,7 +134,9 @@ describe("DesktopNotifierAdapter", () => {
 
     await adapter.notifyStatus("Test Custom Sound");
 
-    expect(audioPlayerMock).toHaveBeenCalledWith(expect.stringContaining("custom"));
+    expect(audioPlayerMock).toHaveBeenCalledWith(
+      expect.stringContaining("custom"),
+    );
   });
 
   it("fängt Fehler bei der Audio-Wiedergabe sicher ab und loggt sie", async () => {
@@ -132,7 +145,10 @@ describe("DesktopNotifierAdapter", () => {
 
     await adapter.notifyStatus("Audio Error Test");
 
-    expect(loggerMock.debug).toHaveBeenCalledWith("Audio-Wiedergabe fehlgeschlagen:", audioErr);
+    expect(loggerMock.debug).toHaveBeenCalledWith(
+      "Audio-Wiedergabe fehlgeschlagen:",
+      audioErr,
+    );
   });
 
   it("blockiert Benachrichtigungen, wenn enabled false ist", async () => {
@@ -194,23 +210,32 @@ describe("DesktopNotifierAdapter", () => {
   });
 
   it("prüft defaultAudioPlayer für win32, darwin und linux Plattformen", async () => {
-    const execMock = vi.fn((cmd: string, cb: Function) => cb(null));
+    const execMock = vi.fn((cmd: string, args: string[], cb: Function) =>
+      cb(null),
+    );
 
     await defaultAudioPlayer("test'path.wav", "win32", execMock as any);
     expect(execMock).toHaveBeenCalledWith(
-      expect.stringContaining("test''path.wav"),
+      expect.any(String),
+      expect.arrayContaining([expect.stringContaining("test''path.wav")]),
       expect.any(Function),
     );
 
     await defaultAudioPlayer("testpath.wav", "darwin", execMock as any);
     expect(execMock).toHaveBeenCalledWith(
-      expect.stringContaining('afplay "testpath.wav"'),
+      "afplay",
+      expect.arrayContaining([expect.stringContaining("testpath.wav")]),
       expect.any(Function),
     );
 
     await defaultAudioPlayer("testpath.wav", "linux", execMock as any);
     expect(execMock).toHaveBeenCalledWith(
-      expect.stringContaining('aplay "testpath.wav" || paplay "testpath.wav"'),
+      "sh",
+      expect.arrayContaining([
+        expect.stringContaining(
+          'aplay "testpath.wav" || paplay "testpath.wav"',
+        ),
+      ]),
       expect.any(Function),
     );
   });

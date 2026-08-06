@@ -1,5 +1,9 @@
 // src/index.ts
-import { declareFactoryPlugin, PluginKind, commonTokens } from "@stryker-mutator/api/plugin";
+import {
+  declareFactoryPlugin,
+  PluginKind,
+  commonTokens,
+} from "@stryker-mutator/api/plugin";
 import type { Logger } from "@stryker-mutator/api/logging";
 
 import { McpReporter } from "./infrastructure/stryker/mcp-reporter.js";
@@ -25,7 +29,10 @@ export const strykerPlugins = [
 /**
  * Erstellt die komplette Objektgraphen-Instanz für den MCP-Server.
  */
-export function createMcpServerAdapter(logger: Logger, port: number = 3000): McpServerAdapter {
+export function createMcpServerAdapter(
+  logger: Logger,
+  port: number = 3000,
+): McpServerAdapter {
   const reportStream = new ReportStream();
   const statusStream = new ExecutionStatusStream();
 
@@ -33,8 +40,16 @@ export function createMcpServerAdapter(logger: Logger, port: number = 3000): Mcp
   const gitService = new GitCliAdapter(logger);
   const notifierService = new DesktopNotifierAdapter(logger);
 
-  const runUseCase = new RunMutationTestsUseCase(reportStream, statusStream, strykerRunner, notifierService);
-  const runTargetedUseCase = new RunTargetedMutationTestsUseCase(gitService, runUseCase);
+  const runUseCase = new RunMutationTestsUseCase(
+    reportStream,
+    statusStream,
+    strykerRunner,
+    notifierService,
+  );
+  const runTargetedUseCase = new RunTargetedMutationTestsUseCase(
+    gitService,
+    runUseCase,
+  );
   const getSurvivedUseCase = new GetSurvivedMutantsUseCase(reportStream);
   const getSummaryUseCase = new GetMutationSummaryUseCase(reportStream);
   const getKilledUseCase = new GetKilledMutantsUseCase(reportStream);
@@ -67,8 +82,16 @@ function mcpReporterFactory(logger: Logger): McpReporter {
   const gitService = new GitCliAdapter(logger);
   const notifierService = new DesktopNotifierAdapter(logger);
 
-  const runUseCase = new RunMutationTestsUseCase(reportStream, statusStream, strykerRunner, notifierService);
-  const runTargetedUseCase = new RunTargetedMutationTestsUseCase(gitService, runUseCase);
+  const runUseCase = new RunMutationTestsUseCase(
+    reportStream,
+    statusStream,
+    strykerRunner,
+    notifierService,
+  );
+  const runTargetedUseCase = new RunTargetedMutationTestsUseCase(
+    gitService,
+    runUseCase,
+  );
   const getSurvivedUseCase = new GetSurvivedMutantsUseCase(reportStream);
   const getSummaryUseCase = new GetMutationSummaryUseCase(reportStream);
   const getKilledUseCase = new GetKilledMutantsUseCase(reportStream);

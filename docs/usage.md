@@ -1,89 +1,24 @@
-# Usage & AI Agent Integration
+# Usage & Features
 
-This guide explains how to connect `stryker-mcp-reporter` to your favorite AI development tools and details the tools and resources available via the MCP protocol.
+The Stryker MCP Reporter provides specific tools and prompts to seamlessly bridge Mutation Testing with LLM reasoning.
 
-## Connecting AI Agents
+## Tools
 
-You can connect your preferred AI development environment to `stryker-mcp-reporter` using either **STDIO** (direct spawning via CLI, recommended) or **SSE** (Server-Sent Events via HTTP).
+### 1. `run_mutation_tests`
+Executes Stryker in the specified project path.
+- **Parameters:**
+  - `mutate` (optional): Array of file patterns to mutate (e.g., `["src/core/**/*.ts"]`).
+  - `concurrency` (optional): Number of concurrent test runners.
+- **What it does:** Forces the JSON reporter, runs Stryker programmatically, and parses the resulting `mutation.json`. It keeps the results in memory.
 
-### Option A: STDIO Transport (Recommended)
+### 2. `get_risk_score`
+Calculates the risk of deploying the current codebase based on the latest mutation test run.
+- **What it does:** It groups surviving mutants by file and applies a risk weight. Files related to "auth", "security", "crypto", etc., receive a 10x multiplier on surviving mutants! It will output a Risk Level (LOW, MEDIUM, HIGH, CRITICAL).
 
-This is the recommended approach for local IDEs and AI tools.
+## Prompts
 
-#### 🐧 🍏 Linux & macOS (`npx`):
-```json
-{
-  "mcpServers": {
-    "stryker-mutation-testing": {
-      "command": "npx",
-      "args": ["-y", "--silent", "stryker-mcp-reporter"]
-    }
-  }
-}
-```
+### `why_is_this_bad`
+This is a core workflow feature. Once a mutation run has been completed, you can ask the AI to evaluate **why** a surviving mutant is bad.
 
-#### 🪟 Windows (`cmd.exe` Wrapper):
-*Note: On Windows, `npx` is a batch script (`npx.cmd`). Many AI tools start processes without a shell context, so wrapping it in `cmd.exe /c` ensures a clean startup and prevents `stdout` pollution.*
-
-```json
-{
-  "mcpServers": {
-    "stryker-mutation-testing": {
-      "command": "cmd.exe",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "--silent",
-        "stryker-mcp-reporter"
-      ]
-    }
-  }
-}
-```
-
-### IDE Specific Configurations
-
-- **Google Antigravity**: `.antigravity/mcp.json`
-- **Cursor IDE**: `.cursor/mcp.json`
-- **Cline**: `cline_mcp_settings.json`
-- **Roo Code**: `.roo/mcp.json`
-- **Windsurf IDE**: `mcp_config.json`
-- **Claude Desktop**: `claude_desktop_config.json`
-
-Add the JSON payload shown above into the respective configuration file for your tool.
-
----
-
-## MCP Interfaces
-
-The server exposes both Resources (for data retrieval) and Tools (for interactive execution).
-
-### 📦 Resources (Data Retrieval)
-
-| Resource URI | MimeType | Description |
-| :--- | :--- | :--- |
-| `stryker://report/latest` | `application/json` | The full Stryker Mutation Testing Report. |
-| `stryker://report/summary` | `application/json` | Compact summary of mutation metrics (Score, Killed, Survived). |
-| `stryker://report/survived` | `application/json` | List of all survived mutants, including path, line, mutator, and replacement code. |
-| `stryker://report/killed` | `application/json` | List of all successfully killed mutants (positive feedback). |
-| `stryker://analytics/trends` | `application/json` | Historical trend analysis of mutation scores. |
-| `stryker://status` | `application/json` | Current execution status (`idle`, `running`, `completed`, `failed`). |
-
-### 🛠️ Tools (Interactive Control)
-
-| Tool Name | Parameters | Description |
-| :--- | :--- | :--- |
-| `run_mutation_tests` | `mutate`, `concurrency`, `testRunner`, `configFile` | Starts a full or targeted mutation testing run. |
-| `run_targeted_mutation_tests` | `commitSha`, `revision`, `fromRevision`, `toRevision` | Detects changed TypeScript files via Git diff and tests only those files. |
-| `suggest_mutant_fixes` | `filePath` | Generates AI-assisted remediation advice and specific code assertions for survived mutants. |
-| `predict_mutation_impact` | `changedFiles` | Analyzes changed files and predicts mutant survival risk (`HIGH`, `MEDIUM`, `LOW`) in < 1s. |
-| `get_mutation_score` | - | Retrieves the current mutation score and summary. |
-| `get_survived_mutants` | `filePath` | Retrieves all survived mutants, including context and replacement code. |
-| `get_killed_mutants` | `filePath` | Retrieves all successfully killed mutants. |
-| `get_mutant_context` | `mutantId` | Retrieves the full source code context for a given mutant, including a side-by-side view of the original and mutated code. |
-| `configure_desktop_notifications` | `enabled`, `persistentOverlay`, `sound` | Configures native desktop notifications. |
-
-### 💡 AI Prompts
-
-- **`analyze_survived_mutants`**: Generates a structured AI instruction for detailed root-cause analysis of survived mutants and auto-generates missing unit tests following TDD standards.
+- **How it works:** The MCP server extracts the surviving mutants and the exact location in the code. It provides the **Original Code vs. Mutated Code** context directly to the LLM.
+- **Use Case:** "The mutant changed `score >= 50` to `true`. Why is this bad?" -> The AI will tell you that a CRITICAL risk level will always be assigned regardless of the actual score, potentially causing false alarms or broken security alerts in production.

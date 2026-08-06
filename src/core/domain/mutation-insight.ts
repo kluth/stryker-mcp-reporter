@@ -12,11 +12,13 @@ export type MutatorCategory =
   | "Async & Promises"
   | "Unknown Category";
 
-export type FileCategory = "Domain" | "Application" | "Infrastructure" | "UI" | "Utility" | "Unknown";
+export type FileCategory =
+  "Domain" | "Application" | "Infrastructure" | "UI" | "Utility" | "Unknown";
 
 export type SeverityLevel = "Low" | "Medium" | "High" | "Critical";
 
-export type TestCoverageState = "NoTests" | "TestsRanButFailedToAssert" | "PartialCoverage";
+export type TestCoverageState =
+  "NoTests" | "TestsRanButFailedToAssert" | "PartialCoverage";
 
 export interface MutantDetailMetadata {
   id: string;
@@ -102,28 +104,56 @@ export interface RawMutantInsightInput {
 
 export function mapMutatorCategory(mutatorName: string): MutatorCategory {
   const name = mutatorName.toLowerCase();
-  if (name.includes("arithmetic") || name.includes("math")) return "Arithmetic & Math";
-  if (name.includes("equality") || name.includes("logical") || name.includes("boolean")) return "Equality & Logic";
-  if (name.includes("conditional") || name.includes("if") || name.includes("switch")) return "Control Flow & Conditionals";
-  if (name.includes("string") || name.includes("literal")) return "String & Literals";
-  if (name.includes("exception") || name.includes("throw") || name.includes("catch")) return "Exception & Error Handling";
-  if (name.includes("block") || name.includes("statement")) return "Block & Structure";
-  if (name.includes("array") || name.includes("collection")) return "Array & Collection";
-  if (name.includes("async") || name.includes("promise") || name.includes("await")) return "Async & Promises";
+  if (name.includes("arithmetic") || name.includes("math"))
+    return "Arithmetic & Math";
+  if (
+    name.includes("equality") ||
+    name.includes("logical") ||
+    name.includes("boolean")
+  )
+    return "Equality & Logic";
+  if (
+    name.includes("conditional") ||
+    name.includes("if") ||
+    name.includes("switch")
+  )
+    return "Control Flow & Conditionals";
+  if (name.includes("string") || name.includes("literal"))
+    return "String & Literals";
+  if (
+    name.includes("exception") ||
+    name.includes("throw") ||
+    name.includes("catch")
+  )
+    return "Exception & Error Handling";
+  if (name.includes("block") || name.includes("statement"))
+    return "Block & Structure";
+  if (name.includes("array") || name.includes("collection"))
+    return "Array & Collection";
+  if (
+    name.includes("async") ||
+    name.includes("promise") ||
+    name.includes("await")
+  )
+    return "Async & Promises";
   return "Unknown Category";
 }
 
 export function mapFileCategory(filePath: string): FileCategory {
   const path = filePath.toLowerCase().replace(/\\/g, "/");
   if (path.includes("/domain/")) return "Domain";
-  if (path.includes("/application/") || path.includes("use-case")) return "Application";
-  if (path.includes("/infrastructure/") || path.includes("adapter")) return "Infrastructure";
+  if (path.includes("/application/") || path.includes("use-case"))
+    return "Application";
+  if (path.includes("/infrastructure/") || path.includes("adapter"))
+    return "Infrastructure";
   if (path.includes("/ui/") || path.includes("/components/")) return "UI";
   if (path.includes("/util") || path.includes("/helper")) return "Utility";
   return "Unknown";
 }
 
-export function buildMutationInsightEntity(input: RawMutantInsightInput): MutationInsightEntity {
+export function buildMutationInsightEntity(
+  input: RawMutantInsightInput,
+): MutationInsightEntity {
   const mutatorCategory = mapMutatorCategory(input.mutatorName);
   const fileCategory = mapFileCategory(input.filePath);
   const testsRan = Array.isArray(input.testsRan) ? input.testsRan : [];
@@ -153,16 +183,25 @@ export function buildMutationInsightEntity(input: RawMutantInsightInput): Mutati
   }
 
   const primarySkillGap = `${mutatorCategory} Assertions`;
-  const originalCode = input.sourceCodeSnippet !== undefined && input.sourceCodeSnippet !== ""
-    ? input.sourceCodeSnippet
-    : "// Quellcode-Zeile nicht direkt verfügbar";
+  const originalCode =
+    input.sourceCodeSnippet !== undefined && input.sourceCodeSnippet !== ""
+      ? input.sourceCodeSnippet
+      : "// Quellcode-Zeile nicht direkt verfügbar";
   const diff = `- ${originalCode}\n+ ${originalCode} [Mutated: ${input.replacement}]`;
 
-  const authorName = input.authorName !== undefined && input.authorName !== "" ? input.authorName : "Unknown";
-  const authorEmail = input.authorEmail !== undefined && input.authorEmail !== "" ? input.authorEmail : "unknown@example.com";
+  const authorName =
+    input.authorName !== undefined && input.authorName !== ""
+      ? input.authorName
+      : "Unknown";
+  const authorEmail =
+    input.authorEmail !== undefined && input.authorEmail !== ""
+      ? input.authorEmail
+      : "unknown@example.com";
 
   const normalizedPath = input.filePath.replace(/\\/g, "/");
-  const moduleName = normalizedPath.includes("/") ? normalizedPath.split("/").pop()! : normalizedPath;
+  const moduleName = normalizedPath.includes("/")
+    ? normalizedPath.split("/").pop()!
+    : normalizedPath;
 
   const embeddingText = `
 [MUTANT INSIGHT RECORD]

@@ -21,8 +21,7 @@ describe("McpReporter", () => {
     const dummyReport = { files: {} } as MutationTestResult;
 
     // Act
-    reporter.onMutationTestReportReady(dummyReport);
-    await new Promise((resolve) => process.nextTick(resolve));
+    await reporter.onMutationTestReportReady(dummyReport);
 
     // Assert (Strikte String-Prüfung tötet alle String-Mutanten)
     expect(useCaseMock.execute).toHaveBeenCalledWith(dummyReport);
@@ -45,8 +44,7 @@ describe("McpReporter", () => {
     const reporter = new McpReporter(loggerMock, useCaseMock, adapterMock);
 
     // Act
-    reporter.onMutationTestReportReady({} as MutationTestResult);
-    await new Promise((resolve) => process.nextTick(resolve));
+    await reporter.onMutationTestReportReady({} as MutationTestResult);
 
     // Assert
     expect(adapterMock.start).not.toHaveBeenCalled();
@@ -68,8 +66,7 @@ describe("McpReporter", () => {
     const reporter = new McpReporter(loggerMock, useCaseMock, adapterMock);
 
     // Act
-    reporter.onMutationTestReportReady({} as MutationTestResult);
-    await new Promise((resolve) => process.nextTick(resolve));
+    await reporter.onMutationTestReportReady({} as MutationTestResult);
 
     // Assert
     expect(loggerMock.error).toHaveBeenCalledWith(

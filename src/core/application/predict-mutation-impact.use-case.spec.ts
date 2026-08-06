@@ -6,7 +6,10 @@ describe("PredictMutationImpactUseCase", () => {
   const useCase = new PredictMutationImpactUseCase();
 
   it("should categorize core domain and use-case files as HIGH risk", () => {
-    const files = ["src/core/domain/mutation-report.ts", "src/core/application/run-mutation-tests.use-case.ts"];
+    const files = [
+      "src/core/domain/mutation-report.ts",
+      "src/core/application/run-mutation-tests.use-case.ts",
+    ];
     const results = useCase.execute(files);
     expect(results).toHaveLength(2);
     expect(results[0].riskLevel).toBe("HIGH");

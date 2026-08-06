@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { startStandaloneServer } from "../dist/index.js";
+import { startStandaloneServer } from "../src/index.js";
 
 const args = process.argv.slice(2);
 const isSse = args.includes("--sse");

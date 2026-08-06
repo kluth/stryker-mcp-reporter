@@ -1,46 +1,56 @@
 // src/infrastructure/git/git-cli.adapter.ts
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
 import type { Logger } from "@stryker-mutator/api/logging";
 import type { GitServicePort } from "../../core/domain/git-service.port.js";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
-export type ExecCommandFn = (command: string) => Promise<string>;
+export type ExecCommandFn = (
+  command: string,
+  args: string[],
+) => Promise<string>;
 
 export class GitCliAdapter implements GitServicePort {
   constructor(
     private readonly logger: Logger,
-    private readonly execFn: ExecCommandFn = async (cmd) => {
-      const { stdout } = await execAsync(cmd);
+    private readonly execFn: ExecCommandFn = async (cmd, args) => {
+      const { stdout } = await execFileAsync(cmd, args);
       return stdout;
     },
   ) {}
 
   public async getChangedFiles(revisionOrBranch?: string): Promise<string[]> {
     try {
-      const isDiff = typeof revisionOrBranch === "string" && revisionOrBranch.trim().length > 0;
-      const command = isDiff
-        ? `git diff --name-only ${revisionOrBranch}`
-        : "git status --porcelain";
+      const isDiff =
+        typeof revisionOrBranch === "string" &&
+        revisionOrBranch.trim().length > 0;
+      const args = isDiff
+        ? ["diff", "--name-only", revisionOrBranch]
+        : ["status", "--porcelain"];
 
-      const output = await this.execFn(command);
+      const output = await this.execFn("git", args);
       return this.parseGitOutput(output, isDiff);
     } catch (error) {
-      this.logger.warn("Konnte geänderte Git-Dateien nicht ermitteln:", error as Error);
+      const errObj = error instanceof Error ? error : new Error(String(error));
+      this.logger.warn("Konnte geänderte Git-Dateien nicht ermitteln:", errObj);
       return [];
     }
   }
 
-  public async getChangedFilesBetween(fromRevision: string, toRevision: string): Promise<string[]> {
+  public async getChangedFilesBetween(
+    fromRevision: string,
+    toRevision: string,
+  ): Promise<string[]> {
     try {
-      const command = `git diff --name-only ${fromRevision}..${toRevision}`;
-      const output = await this.execFn(command);
+      const args = ["diff", "--name-only", `${fromRevision}..${toRevision}`];
+      const output = await this.execFn("git", args);
       return this.parseGitOutput(output, true);
     } catch (error) {
+      const errObj = error instanceof Error ? error : new Error(String(error));
       this.logger.warn(
         `Konnte geänderte Git-Dateien zwischen ${fromRevision} und ${toRevision} nicht ermitteln:`,
-        error as Error,
+        errObj,
       );
       return [];
     }
@@ -48,17 +58,30 @@ export class GitCliAdapter implements GitServicePort {
 
   public async getChangedFilesForCommit(commitSha: string): Promise<string[]> {
     try {
-      const command = `git diff-tree --no-commit-id --name-only -r ${commitSha}`;
-      const output = await this.execFn(command);
+      const args = [
+        "diff-tree",
+        "--no-commit-id",
+        "--name-only",
+        "-r",
+        commitSha,
+      ];
+      const output = await this.execFn("git", args);
       return this.parseGitOutput(output, true);
     } catch (error) {
-      this.logger.warn(`Konnte geänderte Git-Dateien für Commit ${commitSha} nicht ermitteln:`, error as Error);
+      const errObj = error instanceof Error ? error : new Error(String(error));
+      this.logger.warn(
+        `Konnte geänderte Git-Dateien für Commit ${commitSha} nicht ermitteln:`,
+        errObj,
+      );
       return [];
     }
   }
 
   private parseGitOutput(output: string, isDiff: boolean): string[] {
-    const lines = output.split("\n").map((line) => line.trim()).filter((line) => line.length > 0);
+    const lines = output
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
     const tsFiles: string[] = [];
 
     for (const line of lines) {

@@ -21,22 +21,31 @@ export class RunTargetedMutationTestsUseCase {
     private readonly runMutationTestsUseCase: RunMutationTestsUseCase,
   ) {}
 
-  public async execute(options?: string | TargetedRunOptions): Promise<Result<MutationReport, Error>> {
+  public async execute(
+    options?: string | TargetedRunOptions,
+  ): Promise<Result<MutationReport, Error>> {
     let changedFiles: string[] = [];
 
     if (typeof options === "string") {
       changedFiles = await this.gitService.getChangedFiles(options);
     } else if (options?.commitSha) {
-      changedFiles = await this.gitService.getChangedFilesForCommit(options.commitSha);
+      changedFiles = await this.gitService.getChangedFilesForCommit(
+        options.commitSha,
+      );
     } else if (options?.fromRevision && options?.toRevision) {
-      changedFiles = await this.gitService.getChangedFilesBetween(options.fromRevision, options.toRevision);
+      changedFiles = await this.gitService.getChangedFilesBetween(
+        options.fromRevision,
+        options.toRevision,
+      );
     } else {
       changedFiles = await this.gitService.getChangedFiles(options?.revision);
     }
 
     if (!changedFiles || changedFiles.length === 0) {
       return err(
-        new Error("Keine geänderten TypeScript-Dateien für zielgerichteten Lauf gefunden."),
+        new Error(
+          "Keine geänderten TypeScript-Dateien für zielgerichteten Lauf gefunden.",
+        ),
       );
     }
 

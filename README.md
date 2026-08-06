@@ -351,7 +351,9 @@ Starte den MCP Server vorher im Hintergrund via `npx stryker-mcp-server --sse` u
 graph TD
     subgraph Infrastructure Layer ["Infrastruktur (Adapters)"]
         Express["Express Server (SSE / MCP)"]
-        McpAdapter["McpServerAdapter"]
+        McpResourceController["McpResourceController"]
+        McpToolController["McpToolController"]
+        McpPromptController["McpPromptController"]
         StrykerRunner["StrykerCliRunnerAdapter"]
         GitAdapter["GitCliAdapter"]
     end
@@ -371,11 +373,13 @@ graph TD
         Result["Result<T, E>"]
     end
 
-    Express --> McpAdapter
-    McpAdapter --> RunUC
-    McpAdapter --> RunTargetedUC
-    McpAdapter --> GetSurvivedUC
-    McpAdapter --> GetSummaryUC
+    Express --> McpResourceController
+    Express --> McpToolController
+    Express --> McpPromptController
+    McpToolController --> RunUC
+    McpToolController --> RunTargetedUC
+    McpToolController --> GetSurvivedUC
+    McpResourceController --> GetSummaryUC
     
     RunUC --> ReportStream
     RunUC --> StatusStream

@@ -1,5 +1,8 @@
 // src/infrastructure/notification/null-notification.adapter.ts
-import type { NotificationServicePort, NotificationOptions } from "../../core/domain/notification-service.port.js";
+import type {
+  NotificationServicePort,
+  NotificationOptions,
+} from "../../core/domain/notification-service.port.js";
 
 export class NullNotificationAdapter implements NotificationServicePort {
   public async notifyStatus(): Promise<void> {}

@@ -24,32 +24,44 @@ export class GetMutantContextUseCase {
     for (const [filePath, fileResult] of Object.entries(report.files)) {
       if (!fileResult.mutants) continue;
 
-      const mutant = fileResult.mutants.find(m => m.id === mutantId || m.id === String(mutantId));
-      
+      const mutant = fileResult.mutants.find(
+        (m) => m.id === mutantId || m.id === String(mutantId),
+      );
+
       if (mutant) {
         if (!fileResult.source) {
-          return err(new Error(`Quellcode für Datei ${filePath} nicht im Bericht enthalten.`));
+          return err(
+            new Error(
+              `Quellcode für Datei ${filePath} nicht im Bericht enthalten.`,
+            ),
+          );
         }
 
         const lines = fileResult.source.split("\n");
         const startLine = mutant.location?.start.line ?? 1;
         const endLine = mutant.location?.end.line ?? startLine;
-        
+
         // Context lines (3 lines before, 3 lines after)
         const contextStart = Math.max(0, startLine - 1 - 3);
         const contextEnd = Math.min(lines.length, endLine + 3);
-        
+
         const originalCodeLines = lines.slice(contextStart, contextEnd);
-        
+
         // Create mutated code snippet by replacing the specific lines
         const mutatedCodeLines = [...originalCodeLines];
-        const localStartIdx = (startLine - 1) - contextStart;
-        const localEndIdx = (endLine - 1) - contextStart;
-        
+        const localStartIdx = startLine - 1 - contextStart;
+        const localEndIdx = endLine - 1 - contextStart;
+
         if (localStartIdx >= 0 && localStartIdx < mutatedCodeLines.length) {
           // A very naive replacement: we just replace the whole lines involved
           // A better approach would replace exactly by column, but this is sufficient for context
-          mutatedCodeLines.splice(localStartIdx, localEndIdx - localStartIdx + 1, `// --- MUTATED CODE (${mutant.mutatorName}) ---`, mutant.replacement ?? "", "// -------------------");
+          mutatedCodeLines.splice(
+            localStartIdx,
+            localEndIdx - localStartIdx + 1,
+            `// --- MUTATED CODE (${mutant.mutatorName}) ---`,
+            mutant.replacement ?? "",
+            "// -------------------",
+          );
         }
 
         return ok({
@@ -59,7 +71,7 @@ export class GetMutantContextUseCase {
           originalCodeSnippet: originalCodeLines.join("\n"),
           mutatedCodeSnippet: mutatedCodeLines.join("\n"),
           startLine: startLine,
-          endLine: endLine
+          endLine: endLine,
         });
       }
     }
