@@ -17,6 +17,7 @@ import { GetMutantContextUseCase } from "../../core/application/get-mutant-conte
 import { SuggestMutantFixesUseCase } from "../../core/application/suggest-mutant-fixes.use-case.js";
 import { PredictMutationImpactUseCase } from "../../core/application/predict-mutation-impact.use-case.js";
 import { GenerateTestingCheatSheetUseCase } from "../../core/application/generate-testing-cheat-sheet.use-case.js";
+import { DetectEquivalentMutantsUseCase } from "../../core/application/detect-equivalent-mutants.use-case.js";
 import { MutationTrendTracker } from "../../core/domain/mutation-trend-tracker.js";
 import type { NotificationServicePort } from "../../core/domain/notification-service.port.js";
 import { NullNotificationAdapter } from "../notification/null-notification.adapter.js";
@@ -60,6 +61,7 @@ export class McpServerAdapter {
       this.logger,
     );
     const generateCheatSheetUseCase = new GenerateTestingCheatSheetUseCase();
+    const detectEquivalentUseCase = new DetectEquivalentMutantsUseCase();
     const trendTracker = new MutationTrendTracker();
 
     const resourceController = new McpResourceController(
@@ -86,6 +88,7 @@ export class McpServerAdapter {
       suggestFixesUseCase,
       predictImpactUseCase,
       generateCheatSheetUseCase,
+      detectEquivalentUseCase,
       this.notificationService,
     );
     toolController.register();

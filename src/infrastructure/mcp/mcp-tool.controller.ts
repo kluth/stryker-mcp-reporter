@@ -13,6 +13,7 @@ import type { GetMutantContextUseCase } from "../../core/application/get-mutant-
 import type { SuggestMutantFixesUseCase } from "../../core/application/suggest-mutant-fixes.use-case.js";
 import type { PredictMutationImpactUseCase } from "../../core/application/predict-mutation-impact.use-case.js";
 import type { GenerateTestingCheatSheetUseCase } from "../../core/application/generate-testing-cheat-sheet.use-case.js";
+import type { DetectEquivalentMutantsUseCase } from "../../core/application/detect-equivalent-mutants.use-case.js";
 import type { NotificationServicePort } from "../../core/domain/notification-service.port.js";
 
 function parseFilePath(args: unknown): string | undefined {
@@ -36,6 +37,7 @@ export class McpToolController {
     private readonly suggestFixesUseCase: SuggestMutantFixesUseCase,
     private readonly predictImpactUseCase: PredictMutationImpactUseCase,
     private readonly generateCheatSheetUseCase: GenerateTestingCheatSheetUseCase,
+    private readonly detectEquivalentUseCase: DetectEquivalentMutantsUseCase,
     private readonly notificationService: NotificationServicePort,
   ) {}
 
@@ -149,6 +151,19 @@ export class McpToolController {
               },
             },
           },
+        },
+        {
+          name: "detect_equivalent_mutants",
+          description: "Sucht in den überlebenden Mutanten nach semantisch äquivalenten Mutationen und schlägt Code zur Unterdrückung vor.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              filePath: {
+                type: "string",
+                description: "Optionaler Dateipfad-Filter (z.B. 'src/calculator.ts').",
+              }
+            }
+          }
         },
         {
           name: "get_mutation_score",
@@ -359,6 +374,22 @@ export class McpToolController {
             {
               type: "text",
               text: cheatSheet,
+            },
+          ],
+        };
+      }
+
+      if (name === "detect_equivalent_mutants") {
+        const filterPath = parseFilePath(args);
+        const survivedResult = this.getSurvivedUseCase.execute(filterPath);
+        const survivedMutants = survivedResult.isOk ? survivedResult.value : [];
+        const detected = this.detectEquivalentUseCase.execute(survivedMutants);
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(detected, null, 2),
             },
           ],
         };

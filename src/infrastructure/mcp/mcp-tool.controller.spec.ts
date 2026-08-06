@@ -15,6 +15,7 @@ import type { GetMutantContextUseCase } from "../../core/application/get-mutant-
 import type { SuggestMutantFixesUseCase } from "../../core/application/suggest-mutant-fixes.use-case.js";
 import type { PredictMutationImpactUseCase } from "../../core/application/predict-mutation-impact.use-case.js";
 import type { GenerateTestingCheatSheetUseCase } from "../../core/application/generate-testing-cheat-sheet.use-case.js";
+import type { DetectEquivalentMutantsUseCase } from "../../core/application/detect-equivalent-mutants.use-case.js";
 import type { NotificationServicePort } from "../../core/domain/notification-service.port.js";
 import { ok, err } from "../../core/domain/result.js";
 
@@ -30,6 +31,7 @@ describe("McpToolController", () => {
   let suggestFixesUseCase: SuggestMutantFixesUseCase;
   let predictImpactUseCase: PredictMutationImpactUseCase;
   let generateCheatSheetUseCase: GenerateTestingCheatSheetUseCase;
+  let detectEquivalentUseCase: DetectEquivalentMutantsUseCase;
   let notificationService: NotificationServicePort;
   let controller: McpToolController;
 
@@ -66,6 +68,9 @@ describe("McpToolController", () => {
     generateCheatSheetUseCase = {
       execute: vi.fn(),
     } as unknown as GenerateTestingCheatSheetUseCase;
+    detectEquivalentUseCase = {
+      execute: vi.fn(),
+    } as unknown as DetectEquivalentMutantsUseCase;
     notificationService = {
       configure: vi.fn(),
     } as unknown as NotificationServicePort;
@@ -82,6 +87,7 @@ describe("McpToolController", () => {
       suggestFixesUseCase,
       predictImpactUseCase,
       generateCheatSheetUseCase,
+      detectEquivalentUseCase,
       notificationService,
     );
   });
@@ -105,7 +111,7 @@ describe("McpToolController", () => {
         .mocked(mcpServer.setRequestHandler)
         .mock.calls.find((c) => c[0] === ListToolsRequestSchema);
       const result = await (listCall![1] as Function)({}, {});
-      expect(result.tools).toHaveLength(10);
+      expect(result.tools).toHaveLength(11);
     });
   });
 
@@ -425,6 +431,27 @@ describe("McpToolController", () => {
           {},
         );
         expect(result.content[0].text).toContain("Cheat Sheet Content");
+      });
+    });
+
+    describe("detect_equivalent_mutants", () => {
+      it("should return detected equivalent mutants", async () => {
+        vi.mocked(getSurvivedUseCase.execute).mockReturnValue(
+          ok([{ id: "1" } as any]),
+        );
+        vi.mocked(detectEquivalentUseCase.execute).mockReturnValue([
+          { mutantId: "1", isLikelyEquivalent: true, mutatorName: "Equality", filePath: "a.ts" }
+        ] as any);
+        const result = await callHandler(
+          {
+            params: {
+              name: "detect_equivalent_mutants",
+              arguments: {},
+            },
+          },
+          {},
+        );
+        expect(result.content[0].text).toContain('"isLikelyEquivalent": true');
       });
     });
 
