@@ -13,9 +13,10 @@ import type { RunTargetedMutationTestsUseCase } from "../../core/application/run
 import type { GetSurvivedMutantsUseCase } from "../../core/application/get-survived-mutants.use-case.js";
 import type { GetMutationSummaryUseCase } from "../../core/application/get-mutation-summary.use-case.js";
 import type { GetKilledMutantsUseCase } from "../../core/application/get-killed-mutants.use-case.js";
-import type { GetMutantContextUseCase } from "../../core/application/get-mutant-context.use-case.js";
+import { GetMutantContextUseCase } from "../../core/application/get-mutant-context.use-case.js";
 import { SuggestMutantFixesUseCase } from "../../core/application/suggest-mutant-fixes.use-case.js";
 import { PredictMutationImpactUseCase } from "../../core/application/predict-mutation-impact.use-case.js";
+import { GenerateTestingCheatSheetUseCase } from "../../core/application/generate-testing-cheat-sheet.use-case.js";
 import { MutationTrendTracker } from "../../core/domain/mutation-trend-tracker.js";
 import type { NotificationServicePort } from "../../core/domain/notification-service.port.js";
 import { NullNotificationAdapter } from "../notification/null-notification.adapter.js";
@@ -54,7 +55,11 @@ export class McpServerAdapter {
     });
 
     const suggestFixesUseCase = new SuggestMutantFixesUseCase();
-    const predictImpactUseCase = new PredictMutationImpactUseCase();
+    const predictImpactUseCase = new PredictMutationImpactUseCase(
+      this.repo,
+      this.logger,
+    );
+    const generateCheatSheetUseCase = new GenerateTestingCheatSheetUseCase();
     const trendTracker = new MutationTrendTracker();
 
     const resourceController = new McpResourceController(
@@ -80,6 +85,7 @@ export class McpServerAdapter {
       this.getMutantContextUseCase,
       suggestFixesUseCase,
       predictImpactUseCase,
+      generateCheatSheetUseCase,
       this.notificationService,
     );
     toolController.register();

@@ -14,6 +14,7 @@ import type { GetKilledMutantsUseCase } from "../../core/application/get-killed-
 import type { GetMutantContextUseCase } from "../../core/application/get-mutant-context.use-case.js";
 import type { SuggestMutantFixesUseCase } from "../../core/application/suggest-mutant-fixes.use-case.js";
 import type { PredictMutationImpactUseCase } from "../../core/application/predict-mutation-impact.use-case.js";
+import type { GenerateTestingCheatSheetUseCase } from "../../core/application/generate-testing-cheat-sheet.use-case.js";
 import type { NotificationServicePort } from "../../core/domain/notification-service.port.js";
 import { ok, err } from "../../core/domain/result.js";
 
@@ -28,6 +29,7 @@ describe("McpToolController", () => {
   let getMutantContextUseCase: GetMutantContextUseCase;
   let suggestFixesUseCase: SuggestMutantFixesUseCase;
   let predictImpactUseCase: PredictMutationImpactUseCase;
+  let generateCheatSheetUseCase: GenerateTestingCheatSheetUseCase;
   let notificationService: NotificationServicePort;
   let controller: McpToolController;
 
@@ -61,6 +63,9 @@ describe("McpToolController", () => {
     predictImpactUseCase = {
       execute: vi.fn(),
     } as unknown as PredictMutationImpactUseCase;
+    generateCheatSheetUseCase = {
+      execute: vi.fn(),
+    } as unknown as GenerateTestingCheatSheetUseCase;
     notificationService = {
       configure: vi.fn(),
     } as unknown as NotificationServicePort;
@@ -76,6 +81,7 @@ describe("McpToolController", () => {
       getMutantContextUseCase,
       suggestFixesUseCase,
       predictImpactUseCase,
+      generateCheatSheetUseCase,
       notificationService,
     );
   });
@@ -99,7 +105,7 @@ describe("McpToolController", () => {
         .mocked(mcpServer.setRequestHandler)
         .mock.calls.find((c) => c[0] === ListToolsRequestSchema);
       const result = await (listCall![1] as Function)({}, {});
-      expect(result.tools).toHaveLength(9);
+      expect(result.tools).toHaveLength(10);
     });
   });
 
@@ -398,6 +404,27 @@ describe("McpToolController", () => {
         );
         expect(result.isError).toBe(true);
         expect(result.content[0].text).toBe("ctx fail");
+      });
+    });
+
+    describe("generate_testing_cheat_sheet", () => {
+      it("should return generated cheat sheet", async () => {
+        vi.mocked(getSurvivedUseCase.execute).mockReturnValue(
+          ok([{ id: "1" } as any]),
+        );
+        vi.mocked(generateCheatSheetUseCase.execute).mockReturnValue(
+          "Cheat Sheet Content",
+        );
+        const result = await callHandler(
+          {
+            params: {
+              name: "generate_testing_cheat_sheet",
+              arguments: {},
+            },
+          },
+          {},
+        );
+        expect(result.content[0].text).toContain("Cheat Sheet Content");
       });
     });
 

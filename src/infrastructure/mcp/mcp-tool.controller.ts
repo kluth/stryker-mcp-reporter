@@ -12,6 +12,7 @@ import type { GetKilledMutantsUseCase } from "../../core/application/get-killed-
 import type { GetMutantContextUseCase } from "../../core/application/get-mutant-context.use-case.js";
 import type { SuggestMutantFixesUseCase } from "../../core/application/suggest-mutant-fixes.use-case.js";
 import type { PredictMutationImpactUseCase } from "../../core/application/predict-mutation-impact.use-case.js";
+import type { GenerateTestingCheatSheetUseCase } from "../../core/application/generate-testing-cheat-sheet.use-case.js";
 import type { NotificationServicePort } from "../../core/domain/notification-service.port.js";
 
 function parseFilePath(args: unknown): string | undefined {
@@ -34,6 +35,7 @@ export class McpToolController {
     private readonly getMutantContextUseCase: GetMutantContextUseCase,
     private readonly suggestFixesUseCase: SuggestMutantFixesUseCase,
     private readonly predictImpactUseCase: PredictMutationImpactUseCase,
+    private readonly generateCheatSheetUseCase: GenerateTestingCheatSheetUseCase,
     private readonly notificationService: NotificationServicePort,
   ) {}
 
@@ -131,6 +133,21 @@ export class McpToolController {
               },
             },
             required: ["changedFiles"],
+          },
+        },
+        {
+          name: "generate_testing_cheat_sheet",
+          description:
+            "Analysiert überlebende Mutanten und generiert ein Best-Practice Cheat Sheet mit typischen Anti-Pattern und Lösungsvorschlägen.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              filePath: {
+                type: "string",
+                description:
+                  "Optionaler Dateipfad-Filter für das Cheat Sheet (z.B. 'src/calculator.ts').",
+              },
+            },
           },
         },
         {
@@ -326,6 +343,22 @@ export class McpToolController {
             {
               type: "text",
               text: JSON.stringify(riskAnalysis, null, 2),
+            },
+          ],
+        };
+      }
+
+      if (name === "generate_testing_cheat_sheet") {
+        const filterPath = parseFilePath(args);
+        const survivedResult = this.getSurvivedUseCase.execute(filterPath);
+        const survivedMutants = survivedResult.isOk ? survivedResult.value : [];
+        const cheatSheet = this.generateCheatSheetUseCase.execute(survivedMutants);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: cheatSheet,
             },
           ],
         };
