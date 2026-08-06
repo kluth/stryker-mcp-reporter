@@ -8,6 +8,8 @@ import { RunMutationTestsUseCase } from "./core/application/run-mutation-tests.u
 import { RunTargetedMutationTestsUseCase } from "./core/application/run-targeted-mutation-tests.use-case.js";
 import { GetSurvivedMutantsUseCase } from "./core/application/get-survived-mutants.use-case.js";
 import { GetMutationSummaryUseCase } from "./core/application/get-mutation-summary.use-case.js";
+import { GetKilledMutantsUseCase } from "./core/application/get-killed-mutants.use-case.js";
+import { GetMutantContextUseCase } from "./core/application/get-mutant-context.use-case.js";
 import { McpServerAdapter } from "./infrastructure/mcp/mcp-server.adapter.js";
 import { StrykerCliRunnerAdapter } from "./infrastructure/stryker/stryker-cli-runner.adapter.js";
 import { GitCliAdapter } from "./infrastructure/git/git-cli.adapter.js";
@@ -35,6 +37,8 @@ export function createMcpServerAdapter(logger: Logger, port: number = 3000): Mcp
   const runTargetedUseCase = new RunTargetedMutationTestsUseCase(gitService, runUseCase);
   const getSurvivedUseCase = new GetSurvivedMutantsUseCase(reportStream);
   const getSummaryUseCase = new GetMutationSummaryUseCase(reportStream);
+  const getKilledUseCase = new GetKilledMutantsUseCase(reportStream);
+  const getMutantContextUseCase = new GetMutantContextUseCase(reportStream);
 
   return new McpServerAdapter(
     logger,
@@ -44,6 +48,8 @@ export function createMcpServerAdapter(logger: Logger, port: number = 3000): Mcp
     runTargetedUseCase,
     getSurvivedUseCase,
     getSummaryUseCase,
+    getKilledUseCase,
+    getMutantContextUseCase,
     port,
     notifierService,
   );
@@ -65,6 +71,8 @@ function mcpReporterFactory(logger: Logger): McpReporter {
   const runTargetedUseCase = new RunTargetedMutationTestsUseCase(gitService, runUseCase);
   const getSurvivedUseCase = new GetSurvivedMutantsUseCase(reportStream);
   const getSummaryUseCase = new GetMutationSummaryUseCase(reportStream);
+  const getKilledUseCase = new GetKilledMutantsUseCase(reportStream);
+  const getMutantContextUseCase = new GetMutantContextUseCase(reportStream);
 
   const serverAdapter = new McpServerAdapter(
     logger,
@@ -74,6 +82,8 @@ function mcpReporterFactory(logger: Logger): McpReporter {
     runTargetedUseCase,
     getSurvivedUseCase,
     getSummaryUseCase,
+    getKilledUseCase,
+    getMutantContextUseCase,
     3000,
     notifierService,
   );

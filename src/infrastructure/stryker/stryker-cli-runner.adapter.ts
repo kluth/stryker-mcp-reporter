@@ -21,7 +21,10 @@ export class StrykerCliRunnerAdapter implements StrykerRunnerPort {
   public async run(options?: StrykerRunOptions): Promise<Result<MutationReport, Error>> {
     this.logger.info("Starte programmatischen Stryker Mutationstest-Lauf...");
 
-    const strykerConfig: PartialStrykerOptions = {};
+    const strykerConfig: PartialStrykerOptions = {
+      logLevel: "off" as any,
+      reporters: [],
+    };
 
     if (options?.mutate && options.mutate.length > 0) {
       strykerConfig.mutate = options.mutate;

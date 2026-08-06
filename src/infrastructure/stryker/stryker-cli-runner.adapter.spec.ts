@@ -71,9 +71,10 @@ describe("StrykerCliRunnerAdapter", () => {
     expect(mockStrykerFactory).toHaveBeenCalledWith({
       mutate: ["src/app.ts"],
       concurrency: 4,
-      reporters: ["json", "clear-text"],
       testRunner: "vitest",
       configFile: "stryker.config.mjs",
+      logLevel: "off",
+      reporters: ["json", "clear-text"],
     });
   });
 
@@ -90,7 +91,10 @@ describe("StrykerCliRunnerAdapter", () => {
       reporters: [],
     });
 
-    expect(mockStrykerFactory).toHaveBeenCalledWith({});
+    expect(mockStrykerFactory).toHaveBeenCalledWith({
+      logLevel: "off",
+      reporters: [],
+    });
   });
 
   it("nutzt den dynamischen Import von @stryker-mutator/core wenn keine Factory übergeben wird", async () => {

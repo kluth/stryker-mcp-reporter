@@ -175,3 +175,48 @@ export function extractSurvivedMutants(
 
   return result;
 }
+
+/**
+ * Extrahiert alle getöteten Mutanten (Killed) inkl. Pfad, Position und Ersetzung.
+ */
+export function extractKilledMutants(
+  report: MutationReport,
+  filePathFilter?: string,
+): MutantDetail[] {
+  const result: MutantDetail[] = [];
+
+  if (!report || !report.files) {
+    return result;
+  }
+
+  for (const [filePath, fileResult] of Object.entries(report.files)) {
+    if (filePathFilter && filePath !== filePathFilter && !filePath.endsWith(filePathFilter)) {
+      continue;
+    }
+
+    if (!fileResult || !Array.isArray(fileResult.mutants)) {
+      continue;
+    }
+
+    for (const mutant of fileResult.mutants) {
+      if (mutant.status === "Killed") {
+        const id = typeof mutant.id === "string" && mutant.id !== "" ? mutant.id : "unknown";
+        const mutatorName = typeof mutant.mutatorName === "string" && mutant.mutatorName !== "" ? mutant.mutatorName : "Unknown";
+        const testsRan = Array.isArray(mutant.testsRan) ? mutant.testsRan : [];
+
+        result.push({
+          id,
+          filePath,
+          mutatorName,
+          replacement: mutant.replacement ?? "",
+          line: mutant.location?.start?.line ?? 1,
+          column: mutant.location?.start?.column ?? 1,
+          status: "Killed",
+          testsRan,
+        });
+      }
+    }
+  }
+
+  return result;
+}

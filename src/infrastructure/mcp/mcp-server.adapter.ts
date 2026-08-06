@@ -20,6 +20,8 @@ import type { RunMutationTestsUseCase } from "../../core/application/run-mutatio
 import type { RunTargetedMutationTestsUseCase } from "../../core/application/run-targeted-mutation-tests.use-case.js";
 import type { GetSurvivedMutantsUseCase } from "../../core/application/get-survived-mutants.use-case.js";
 import type { GetMutationSummaryUseCase } from "../../core/application/get-mutation-summary.use-case.js";
+import type { GetKilledMutantsUseCase } from "../../core/application/get-killed-mutants.use-case.js";
+import type { GetMutantContextUseCase } from "../../core/application/get-mutant-context.use-case.js";
 import { SuggestMutantFixesUseCase } from "../../core/application/suggest-mutant-fixes.use-case.js";
 import { PredictMutationImpactUseCase } from "../../core/application/predict-mutation-impact.use-case.js";
 import { MutationTrendTracker } from "../../core/domain/mutation-trend-tracker.js";
@@ -51,6 +53,8 @@ export class McpServerAdapter {
     private readonly runTargetedUseCase: RunTargetedMutationTestsUseCase,
     private readonly getSurvivedUseCase: GetSurvivedMutantsUseCase,
     private readonly getSummaryUseCase: GetMutationSummaryUseCase,
+    private readonly getKilledUseCase: GetKilledMutantsUseCase,
+    private readonly getMutantContextUseCase: GetMutantContextUseCase,
     private readonly port: number = 3000,
     private readonly notificationService: NotificationServicePort = new NullNotificationAdapter(),
   ) {
@@ -76,6 +80,7 @@ export class McpServerAdapter {
     try {
       const transport = new StdioServerTransport();
       await this.mcpServer.connect(transport);
+      this.logger.info("MCP Server successfully started and listening on STDIO. Ready to receive commands.");
       return ok(undefined);
     } catch (error) {
       return err(error as Error);
@@ -167,6 +172,12 @@ export class McpServerAdapter {
           description: "Liste aller überlebenden Mutanten inkl. Pfad, Zeile, Mutator und Ersetzung.",
         },
         {
+          uri: "stryker://report/killed",
+          name: "Killed Mutants List",
+          mimeType: "application/json",
+          description: "Liste aller getöteten Mutanten (positiv bewertet).",
+        },
+        {
           uri: "stryker://analytics/trends",
           name: "Mutation Testing Score Trends",
           mimeType: "application/json",
@@ -183,6 +194,7 @@ export class McpServerAdapter {
 
     this.mcpServer.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       const uri = request.params.uri;
+      this.logger.info(`[MCP] Resource Request received: ${uri}`);
 
       if (uri === "stryker://report/latest") {
         const report = this.reportStream.current();
@@ -219,6 +231,23 @@ export class McpServerAdapter {
         const text = survivedResult.isOk
           ? JSON.stringify(survivedResult.value, null, 2)
           : JSON.stringify({ error: survivedResult.error.message });
+
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text,
+            },
+          ],
+        };
+      }
+
+      if (uri === "stryker://report/killed") {
+        const killedResult = this.getKilledUseCase.execute();
+        const text = killedResult.isOk
+          ? JSON.stringify(killedResult.value, null, 2)
+          : JSON.stringify({ error: killedResult.error.message });
 
         return {
           contents: [
@@ -378,6 +407,33 @@ export class McpServerAdapter {
           },
         },
         {
+          name: "get_killed_mutants",
+          description: "Liefert alle erfolgreich getöteten Mutanten.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              filePath: {
+                type: "string",
+                description: "Optionaler Dateipfad-Filter (z.B. 'src/calculator.ts').",
+              },
+            },
+          },
+        },
+        {
+          name: "get_mutant_context",
+          description: "Liefert den Quellcode-Kontext für einen bestimmten Mutanten inkl. Original- und mutiertem Code.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              mutantId: {
+                type: "string",
+                description: "Die ID des Mutanten (z.B. '42').",
+              },
+            },
+            required: ["mutantId"],
+          },
+        },
+        {
           name: "configure_desktop_notifications",
           description: "Konfiguriert die nativen Desktop-Benachrichtigungen (Aktivieren, Ton, Persistenter Status).",
           inputSchema: {
@@ -403,6 +459,7 @@ export class McpServerAdapter {
 
     this.mcpServer.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
+      this.logger.info(`[MCP] Tool Execution requested: ${name}`);
 
       if (name === "run_mutation_tests") {
         const options = args as { mutate?: string[]; concurrency?: number; testRunner?: string; configFile?: string };
@@ -547,6 +604,53 @@ export class McpServerAdapter {
             {
               type: "text",
               text: JSON.stringify(survivedResult.value, null, 2),
+            },
+          ],
+        };
+      }
+
+      if (name === "get_killed_mutants") {
+        const filterPath = parseFilePath(args);
+        const killedResult = this.getKilledUseCase.execute(filterPath);
+        if (!killedResult.isOk) {
+          return {
+            isError: true,
+            content: [{ type: "text", text: killedResult.error.message }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(killedResult.value, null, 2),
+            },
+          ],
+        };
+      }
+
+      if (name === "get_mutant_context") {
+        const mutantId = (args as { mutantId?: string })?.mutantId;
+        if (!mutantId) {
+          return {
+            isError: true,
+            content: [{ type: "text", text: "mutantId ist erforderlich." }],
+          };
+        }
+
+        const contextResult = this.getMutantContextUseCase.execute(mutantId);
+        if (!contextResult.isOk) {
+          return {
+            isError: true,
+            content: [{ type: "text", text: contextResult.error.message }],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(contextResult.value, null, 2),
             },
           ],
         };

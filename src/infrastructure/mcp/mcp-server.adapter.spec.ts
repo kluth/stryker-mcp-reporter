@@ -7,6 +7,8 @@ import { RunMutationTestsUseCase } from "../../core/application/run-mutation-tes
 import { RunTargetedMutationTestsUseCase } from "../../core/application/run-targeted-mutation-tests.use-case.js";
 import { GetSurvivedMutantsUseCase } from "../../core/application/get-survived-mutants.use-case.js";
 import { GetMutationSummaryUseCase } from "../../core/application/get-mutation-summary.use-case.js";
+import { GetKilledMutantsUseCase } from "../../core/application/get-killed-mutants.use-case.js";
+import { GetMutantContextUseCase } from "../../core/application/get-mutant-context.use-case.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   ListResourcesRequestSchema,
@@ -28,6 +30,8 @@ describe("McpServerAdapter", () => {
   let runTargetedUseCase: RunTargetedMutationTestsUseCase;
   let getSurvivedUseCase: GetSurvivedMutantsUseCase;
   let getSummaryUseCase: GetMutationSummaryUseCase;
+  let getKilledUseCase: GetKilledMutantsUseCase;
+  let getMutantContextUseCase: GetMutantContextUseCase;
   let adapter: McpServerAdapter;
 
   const mockReport: MutationReport = {
@@ -68,6 +72,8 @@ describe("McpServerAdapter", () => {
     runTargetedUseCase = { execute: vi.fn() } as unknown as RunTargetedMutationTestsUseCase;
     getSurvivedUseCase = new GetSurvivedMutantsUseCase(reportStream);
     getSummaryUseCase = new GetMutationSummaryUseCase(reportStream);
+    getKilledUseCase = new GetKilledMutantsUseCase(reportStream);
+    getMutantContextUseCase = new GetMutantContextUseCase(reportStream);
 
     adapter = new McpServerAdapter(
       mockLogger,
@@ -77,6 +83,8 @@ describe("McpServerAdapter", () => {
       runTargetedUseCase,
       getSurvivedUseCase,
       getSummaryUseCase,
+      getKilledUseCase,
+      getMutantContextUseCase,
       0,
     );
   });
@@ -112,6 +120,8 @@ describe("McpServerAdapter", () => {
       runTargetedUseCase,
       getSurvivedUseCase,
       getSummaryUseCase,
+      getKilledUseCase,
+      getMutantContextUseCase,
       0,
     );
 
@@ -119,9 +129,9 @@ describe("McpServerAdapter", () => {
     const listResourcesHandler = listResourcesCall![1] as Function;
     const listResult = await listResourcesHandler({}, {});
 
-    expect(listResult.resources).toHaveLength(5);
+    expect(listResult.resources).toHaveLength(6);
     expect(listResult.resources[0].uri).toBe("stryker://report/latest");
-    expect(listResult.resources[3].uri).toBe("stryker://analytics/trends");
+    expect(listResult.resources[4].uri).toBe("stryker://analytics/trends");
 
     const readResourceCall = setRequestHandlerSpy.mock.calls.find((c) => c[0] === ReadResourceRequestSchema);
     const readResourceHandler = readResourceCall![1] as Function;
@@ -168,6 +178,8 @@ describe("McpServerAdapter", () => {
       runTargetedUseCase,
       getSurvivedUseCase,
       getSummaryUseCase,
+      getKilledUseCase,
+      getMutantContextUseCase,
       0,
     );
 
@@ -175,7 +187,7 @@ describe("McpServerAdapter", () => {
     const listToolsHandler = listToolsCall![1] as Function;
     const listResult = await listToolsHandler({}, {});
 
-    expect(listResult.tools).toHaveLength(7);
+    expect(listResult.tools).toHaveLength(9);
     expect(listResult.tools.map((t: any) => t.name)).toContain("suggest_mutant_fixes");
     expect(listResult.tools.map((t: any) => t.name)).toContain("predict_mutation_impact");
 
