@@ -36,11 +36,23 @@ export interface Thresholds {
   low?: number;
 }
 
+export interface TestDefinition {
+  id: string;
+  name: string;
+  location?: Location;
+}
+
+export interface TestFile {
+  source?: string;
+  tests: TestDefinition[];
+}
+
 export interface MutationReport {
   schemaVersion?: string;
   thresholds?: Thresholds;
   projectRoot?: string;
   files: Record<string, FileResult>;
+  testFiles?: Record<string, TestFile>;
 }
 
 export interface MutationSummary {
@@ -63,6 +75,8 @@ export interface MutantDetail {
   line: number;
   column: number;
   status: MutantStatus;
+  coveredBy?: string[];
+  killedBy?: string[];
   testsRan: string[];
 }
 
@@ -182,6 +196,8 @@ export function extractSurvivedMutants(
           line: mutant.location?.start?.line ?? 1,
           column: mutant.location?.start?.column ?? 1,
           status: "Survived",
+          coveredBy: mutant.coveredBy,
+          killedBy: mutant.killedBy,
           testsRan,
         });
       }
@@ -237,6 +253,8 @@ export function extractKilledMutants(
           line: mutant.location?.start?.line ?? 1,
           column: mutant.location?.start?.column ?? 1,
           status: "Killed",
+          coveredBy: mutant.coveredBy,
+          killedBy: mutant.killedBy,
           testsRan,
         });
       }
