@@ -1,3 +1,16 @@
+# [1.10.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.9.0...v1.10.0) (2026-08-06)
+
+
+### Bug Fixes
+
+* **stryker:** allow bin folder in sandbox for bundle build ([8bb9398](https://github.com/kluth/stryker-mcp-reporter/commit/8bb9398477c5b5bba40dd3ad7a41acb47c5eb2ae))
+
+
+### Features
+
+* Add killed mutants and context tools ([e4bae57](https://github.com/kluth/stryker-mcp-reporter/commit/e4bae576b226af0deeaab9d58733e1495ddf4214))
+* migrate to zero-dependency standalone bundle ([313eb21](https://github.com/kluth/stryker-mcp-reporter/commit/313eb2157ba6bf351b72eae47c350ac06d67c1ca))
+
 # [1.9.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.8.3...v1.9.0) (2026-08-05)
 
 
