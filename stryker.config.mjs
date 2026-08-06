@@ -11,7 +11,7 @@ const config = {
   mutator: {
     excludedMutations: ["StringLiteral"]
   },
-  ignorePatterns: ["**/*.js"],
+  ignorePatterns: ["**/*.js", "!bin/**/*.js"],
   mutate: [
     "src/**/*.ts",
     "!src/**/*.spec.ts"
