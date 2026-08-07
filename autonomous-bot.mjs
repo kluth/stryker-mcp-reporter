@@ -64,25 +64,25 @@ async function main() {
     runCommand(`git checkout -b ${branchName}`);
 
     // 2. TDD & Code schreiben
-    const code = \`
-export class \${className}UseCase {
+    const code = `
+export class ${className}UseCase {
   execute(data: any): boolean {
-    // TODO: Implement \${featureName}
+    // TODO: Implement ${featureName}
     return true;
   }
 }
-\`;
-    const spec = \`
+`;
+    const spec = `
 import { describe, it, expect } from 'vitest';
-import { \${className}UseCase } from './\${featureName}.use-case';
+import { ${className}UseCase } from './${featureName}.use-case';
 
-describe('\${className}UseCase', () => {
-  it('should execute \${featureName} successfully', () => {
-    const useCase = new \${className}UseCase();
+describe('${className}UseCase', () => {
+  it('should execute ${featureName} successfully', () => {
+    const useCase = new ${className}UseCase();
     expect(useCase.execute({})).toBe(true);
   });
 });
-\`;
+`;
     fs.writeFileSync(tsPath, code.trim());
     fs.writeFileSync(specPath, spec.trim());
     console.log(\`✅ Feature-Dateien erstellt: \${tsPath}\`);
