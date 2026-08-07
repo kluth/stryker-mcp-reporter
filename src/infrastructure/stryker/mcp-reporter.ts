@@ -26,25 +26,52 @@ export class McpReporter implements Reporter {
       return;
     }
 
-    // 2. Outbound-Adapter (Express/MCP) starten
-    const serverResult = await this.serverAdapter.start();
-    if (!serverResult.isOk) {
-      this.log.error(
-        `MCP-Server konnte nicht gestartet werden: ${serverResult.error.message}`,
-      );
-      return;
+    try {
+      let commitMessage = "Unknown Commit";
+      try {
+        const { execSync } = await import("child_process");
+        commitMessage = execSync("git log -1 --pretty=%B", { encoding: "utf-8" }).trim();
+      } catch (e) {
+        // ignore
+      }
+
+      const { ExportBlamedMutationReportUseCase } = await import("../../core/application/export-blamed-mutation-report.use-case.js");
+      const fakeGitService = {
+        getBlame: async () => "Unknown Author",
+        getBranches: async () => ["main"],
+        commit: async () => {},
+        push: async () => {},
+        status: async () => "clean",
+      } as any;
+      const exportBlamedReportUseCase = new ExportBlamedMutationReportUseCase(fakeGitService);
+      const res = await exportBlamedReportUseCase.execute(report, commitMessage);
+      if (!res.isOk) {
+        this.log.error(`Failed to export blamed history report: ${res.error}`);
+      }
+    } catch (e) {
+      this.log.error(`Failed to export blamed history report: ${e}`);
     }
 
-    this.log.info(
-      "🚀 MCP Server läuft auf Port 3000! Warte auf KI-Verbindungen (Beenden mit Strg+C).",
-    );
-
-    // 3. Den Stryker-Lifecycle nur blockieren, wenn Daemon-Modus aktiv ist
+    // 3. Den Stryker-Lifecycle nur blockieren und Server starten, wenn Daemon-Modus aktiv ist
     if (process.env.MCP_DAEMON === "true") {
+      // 2. Outbound-Adapter (Express/MCP) starten
+      const serverResult = await this.serverAdapter.start();
+      if (!serverResult.isOk) {
+        this.log.error(
+          `MCP-Server konnte nicht gestartet werden: ${serverResult.error.message}`,
+        );
+        return;
+      }
+
+      this.log.info(
+        "🚀 MCP Server läuft auf Port 3000! Warte auf KI-Verbindungen (Beenden mit Strg+C).",
+      );
+
       return new Promise(() => {
         // Dieses Promise wird nie resolved. Der Prozess bleibt am Leben.
       });
     }
+
     return Promise.resolve();
   }
 }
