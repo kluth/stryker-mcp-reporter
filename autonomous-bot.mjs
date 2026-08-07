@@ -6,8 +6,6 @@ import * as path from 'path';
 const INTERVAL_MINUTES = 5;
 const TOTAL_HOURS = 8;
 const FEATURES = [
-  "generate-csv-report",
-  "send-slack-notification",
   "send-teams-notification",
   "upload-to-s3",
   "upload-to-gcs",
