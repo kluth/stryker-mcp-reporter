@@ -6,7 +6,6 @@ import * as path from 'path';
 const INTERVAL_MINUTES = 5;
 const TOTAL_HOURS = 8;
 const FEATURES = [
-  "send-teams-notification",
   "upload-to-s3",
   "upload-to-gcs",
   "integrate-jira",
@@ -112,7 +111,7 @@ describe('${className}UseCase', () => {
     console.log(`🎉 Iteration ${i} abgeschlossen! Schlafe für ${INTERVAL_MINUTES} Minuten...`);
     
     if (i < MAX_ITERATIONS) {
-      await sleep(SLEEP_MS);
+      await sleep(INTERVAL_MINUTES * 60 * 1000);
     }
   }
 
