@@ -6,7 +6,6 @@ import * as path from 'path';
 const INTERVAL_MINUTES = 5;
 const TOTAL_HOURS = 8;
 const FEATURES = [
-  "upload-to-s3",
   "upload-to-gcs",
   "integrate-jira",
   "integrate-github-issues",
@@ -103,7 +102,7 @@ describe('${className}UseCase', () => {
     // 7. Screenshots & Docs
     runCommand(`node take-screenshots.mjs`);
     runCommand(`git add docs/*.png`);
-    runCommand(`git commit -m "docs: update screenshots for ${featureName}"`);
+    runCommand(`git commit --allow-empty -m "docs: update screenshots for ${featureName}"`);
 
     // 8. Sync
     runCommand(`git push origin main`);
