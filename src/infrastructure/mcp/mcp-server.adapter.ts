@@ -56,10 +56,7 @@ export class McpServerAdapter {
     });
 
     const suggestFixesUseCase = new SuggestMutantFixesUseCase();
-    const predictImpactUseCase = new PredictMutationImpactUseCase(
-      this.repo,
-      this.logger,
-    );
+    const predictImpactUseCase = new PredictMutationImpactUseCase();
     const generateCheatSheetUseCase = new GenerateTestingCheatSheetUseCase();
     const detectEquivalentUseCase = new DetectEquivalentMutantsUseCase();
     const trendTracker = new MutationTrendTracker();
