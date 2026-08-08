@@ -33,11 +33,44 @@ describe("GenerateTestingCheatSheetUseCase", () => {
   it("should generate cheat sheet for String mutator", () => {
     const useCase = new GenerateTestingCheatSheetUseCase();
     const mutants: MutantDetail[] = [
-      { id: "1", mutatorName: "StringLiteral", status: "NoCoverage", filePath: "file2.ts", replacement: "\"\"" }
+      { id: "1", mutatorName: "StringOnly", status: "NoCoverage", filePath: "file2.ts", replacement: "\"\"" }
     ];
     const result = useCase.execute(mutants);
-    expect(result).toContain("## StringLiteral (Survived 1 times)");
+    expect(result).toContain("## StringOnly (Survived 1 times)");
     expect(result).toContain("Missing assertions on specific output strings");
+  });
+
+  it("should limit examples to 3 per mutator", () => {
+    const useCase = new GenerateTestingCheatSheetUseCase();
+    const mutants: MutantDetail[] = [
+      { id: "1", mutatorName: "Equality", status: "Survived", filePath: "f1.ts", line: 1 },
+      { id: "2", mutatorName: "Equality", status: "Survived", filePath: "f2.ts", line: 2 },
+      { id: "3", mutatorName: "Equality", status: "Survived", filePath: "f3.ts", line: 3 },
+      { id: "4", mutatorName: "Equality", status: "Survived", filePath: "f4.ts", line: 4 }
+    ];
+    const result = useCase.execute(mutants);
+    expect(result).toContain("f1.ts");
+    expect(result).toContain("f3.ts");
+    expect(result).not.toContain("f4.ts");
+  });
+
+  it("should fallback to 'unknown' line and 'none' replacement if missing", () => {
+    const useCase = new GenerateTestingCheatSheetUseCase();
+    const mutants: MutantDetail[] = [
+      { id: "1", mutatorName: "Equality", status: "Survived", filePath: "f1.ts", replacement: undefined, line: undefined }
+    ];
+    const result = useCase.execute(mutants);
+    expect(result).toContain("at line unknown");
+    expect(result).toContain("mutated to `none`");
+  });
+
+  it("should trim the resulting cheat sheet string", () => {
+    const useCase = new GenerateTestingCheatSheetUseCase();
+    const mutants: MutantDetail[] = [
+      { id: "1", mutatorName: "Equality", status: "Survived", filePath: "f1.ts" }
+    ];
+    const result = useCase.execute(mutants);
+    expect(result.endsWith("\n")).toBe(false);
   });
 
   it("should generate cheat sheet for Boolean mutator", () => {
