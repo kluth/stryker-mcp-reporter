@@ -17,6 +17,25 @@ describe("DetectEquivalentMutantsUseCase", () => {
     expect(result[0].suggestedSuppressionComment).toContain("@stryker-disable-next-line EqualityOperator");
   });
 
+  it("should flag UpdateOperator mutated to ++x or --x as likely equivalent", () => {
+    const useCase = new DetectEquivalentMutantsUseCase();
+    const mutants: MutantDetail[] = [
+      { id: "1", status: "Survived", mutatorName: "UpdateOperator", replacement: "++x", filePath: "foo.ts" },
+      { id: "2", status: "Survived", mutatorName: "UpdateOperator", replacement: "--x", filePath: "foo.ts" }
+    ];
+    
+    const result = useCase.execute(mutants);
+    
+    expect(result).toHaveLength(2);
+    expect(result[0].isLikelyEquivalent).toBe(true);
+    expect(result[0].reason).toContain("Pre-increment/decrement");
+    expect(result[0].suggestedSuppressionComment).toContain("@stryker-disable-next-line UpdateOperator");
+
+    expect(result[1].isLikelyEquivalent).toBe(true);
+    expect(result[1].reason).toContain("Pre-increment/decrement");
+    expect(result[1].suggestedSuppressionComment).toContain("@stryker-disable-next-line UpdateOperator");
+  });
+
   it("should not flag other mutators as equivalent by default", () => {
     const useCase = new DetectEquivalentMutantsUseCase();
     const mutants: MutantDetail[] = [

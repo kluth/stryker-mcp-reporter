@@ -16,6 +16,7 @@ import type { SuggestMutantFixesUseCase } from "../../core/application/suggest-m
 import type { PredictMutationImpactUseCase } from "../../core/application/predict-mutation-impact.use-case.js";
 import type { GenerateTestingCheatSheetUseCase } from "../../core/application/generate-testing-cheat-sheet.use-case.js";
 import type { DetectEquivalentMutantsUseCase } from "../../core/application/detect-equivalent-mutants.use-case.js";
+import type { ExecuteMutantKillUseCase } from "../../core/application/execute-mutant-kill.use-case.js";
 import type { NotificationServicePort } from "../../core/domain/notification-service.port.js";
 import { ok, err } from "../../core/domain/result.js";
 
@@ -32,6 +33,7 @@ describe("McpToolController", () => {
   let predictImpactUseCase: PredictMutationImpactUseCase;
   let generateCheatSheetUseCase: GenerateTestingCheatSheetUseCase;
   let detectEquivalentUseCase: DetectEquivalentMutantsUseCase;
+  let executeMutantKillUseCase: ExecuteMutantKillUseCase;
   let notificationService: NotificationServicePort;
   let controller: McpToolController;
 
@@ -71,6 +73,9 @@ describe("McpToolController", () => {
     detectEquivalentUseCase = {
       execute: vi.fn(),
     } as unknown as DetectEquivalentMutantsUseCase;
+    executeMutantKillUseCase = {
+      execute: vi.fn(),
+    } as unknown as ExecuteMutantKillUseCase;
     notificationService = {
       configure: vi.fn(),
     } as unknown as NotificationServicePort;
@@ -88,6 +93,7 @@ describe("McpToolController", () => {
       predictImpactUseCase,
       generateCheatSheetUseCase,
       detectEquivalentUseCase,
+      executeMutantKillUseCase,
       notificationService,
     );
   });
@@ -111,7 +117,7 @@ describe("McpToolController", () => {
         .mocked(mcpServer.setRequestHandler)
         .mock.calls.find((c) => c[0] === ListToolsRequestSchema);
       const result = await (listCall![1] as Function)({}, {});
-      expect(result.tools).toHaveLength(11);
+      expect(result.tools).toHaveLength(12);
     });
   });
 

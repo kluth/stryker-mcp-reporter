@@ -14,6 +14,7 @@ import type { SuggestMutantFixesUseCase } from "../../core/application/suggest-m
 import type { PredictMutationImpactUseCase } from "../../core/application/predict-mutation-impact.use-case.js";
 import type { GenerateTestingCheatSheetUseCase } from "../../core/application/generate-testing-cheat-sheet.use-case.js";
 import type { DetectEquivalentMutantsUseCase } from "../../core/application/detect-equivalent-mutants.use-case.js";
+import type { ExecuteMutantKillUseCase } from "../../core/application/execute-mutant-kill.use-case.js";
 import type { NotificationServicePort } from "../../core/domain/notification-service.port.js";
 
 function parseFilePath(args: unknown): string | undefined {
@@ -38,6 +39,7 @@ export class McpToolController {
     private readonly predictImpactUseCase: PredictMutationImpactUseCase,
     private readonly generateCheatSheetUseCase: GenerateTestingCheatSheetUseCase,
     private readonly detectEquivalentUseCase: DetectEquivalentMutantsUseCase,
+    private readonly executeMutantKillUseCase: ExecuteMutantKillUseCase,
     private readonly notificationService: NotificationServicePort,
   ) {}
 
@@ -166,6 +168,20 @@ export class McpToolController {
                 description: "Optionaler Dateipfad-Filter (z.B. 'src/calculator.ts').",
               }
             }
+          }
+        },
+        {
+          name: "execute_mutant_kill",
+          description: "Erstellt ein Test-Gerüst (Scaffold) für einen bestimmten überlebenden Mutanten, um diesen gezielt zu töten.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              mutantId: {
+                type: "string",
+                description: "Die ID des Mutanten (z.B. '42').",
+              }
+            },
+            required: ["mutantId"]
           }
         },
         {
@@ -400,6 +416,35 @@ export class McpToolController {
             {
               type: "text",
               text: JSON.stringify(detected, null, 2),
+            },
+          ],
+        };
+      }
+
+      if (name === "execute_mutant_kill") {
+        const mutantId = (args as { mutantId?: string })?.mutantId;
+        if (!mutantId) {
+          return {
+            isError: true,
+            content: [{ type: "text", text: "mutantId ist erforderlich." }],
+          };
+        }
+
+        const contextResult = this.getMutantContextUseCase.execute(mutantId);
+        if (!contextResult.isOk) {
+          return {
+            isError: true,
+            content: [{ type: "text", text: contextResult.error.message }],
+          };
+        }
+
+        const scaffold = this.executeMutantKillUseCase.execute(contextResult.value);
+        
+        return {
+          content: [
+            {
+              type: "text",
+              text: scaffold.suggestedTestScaffold,
             },
           ],
         };
