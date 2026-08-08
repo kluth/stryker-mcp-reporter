@@ -1,5 +1,4 @@
 import express from "express";
-import path from "path";
 import type { Server as HttpServer } from "http";
 import type { AddressInfo } from "net";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -22,6 +21,7 @@ import { DetectEquivalentMutantsUseCase } from "../../core/application/detect-eq
 import { MutationTrendTracker } from "../../core/domain/mutation-trend-tracker.js";
 import type { NotificationServicePort } from "../../core/domain/notification-service.port.js";
 import { NullNotificationAdapter } from "../notification/null-notification.adapter.js";
+import type { DatabaseAdapter } from "../db/database.adapter.js";
 import { type Result, ok, err } from "../../core/domain/result.js";
 
 import { McpResourceController } from "./mcp-resource.controller.js";
@@ -47,6 +47,7 @@ export class McpServerAdapter {
     private readonly getMutantContextUseCase: GetMutantContextUseCase,
     private readonly port: number = 3000,
     private readonly notificationService: NotificationServicePort = new NullNotificationAdapter(),
+    private readonly db: DatabaseAdapter | null = null,
   ) {
     this.mcpServer = new Server(SERVER_INFO, {
       capabilities: {
@@ -121,7 +122,7 @@ export class McpServerAdapter {
 
   public async start(): Promise<Result<void, Error>> {
     const app = express();
-    app.use(express.static(path.join(process.cwd(), "public")));
+    app.use(express.static("public"));
 
     app.get("/mcp/sse", async (_req, res) => {
       const transport = new SSEServerTransport("/mcp/messages", res);
@@ -148,6 +149,116 @@ export class McpServerAdapter {
       }
 
       await transport.handlePostMessage(req, res);
+    });
+
+    // --- API ROUTES FOR FRONTEND ---
+    app.get("/api/project-info", (_req, res) => {
+      res.json({ name: "Stryker MCP Reporter", cwd: process.cwd() });
+    });
+
+    app.get("/api/status", (_req, res) => {
+      res.json({ status: "COMPLETED", message: "Ready" });
+    });
+
+    app.get("/api/latest-report", (_req, res) => {
+      const report = this.reportStream.current();
+      const summaryResult = this.getSummaryUseCase.execute();
+      if (report && summaryResult.isOk) {
+        res.json({
+          summary: summaryResult.value,
+          files: report.files
+        });
+      } else {
+        res.status(404).json({ error: "No report available" });
+      }
+    });
+
+    app.get("/api/report", (_req, res) => {
+      const report = this.reportStream.current();
+      if (report) {
+        res.json(report);
+      } else {
+        res.status(404).json({ error: "No report available" });
+      }
+    });
+
+    app.get("/api/survived", (_req, res) => {
+      const survivedResult = this.getSurvivedUseCase.execute();
+      if (survivedResult.isOk) {
+        res.json(survivedResult.value);
+      } else {
+        res.status(404).json({ error: "No data" });
+      }
+    });
+
+    app.get("/api/history/reports", (_req, res) => {
+      if (!this.db) {
+        res.json([]);
+        return;
+      }
+      try {
+        const runs = this.db.getRuns();
+        res.json(runs);
+      } catch (e) {
+        this.logger.error("Failed to fetch history:", e);
+        res.status(500).json({ error: "Failed to fetch history" });
+      }
+    });
+
+    app.get("/api/history/cheat-sheets", (_req, res) => {
+      res.json([]);
+    });
+
+    app.get("/api/branches", (_req, res) => {
+      res.json(["main"]);
+    });
+
+    app.get("/api/leaderboard", (_req, res) => {
+      if (!this.db) {
+        res.json([]);
+        return;
+      }
+      try {
+        const runs = this.db.getRuns();
+        if (runs.length === 0) {
+          res.json([]);
+          return;
+        }
+        
+        // Let's analyze all mutants from all runs, or just the latest run?
+        // Usually leaderboard aggregates over all runs, but since this is a simple dashboard,
+        // let's just group mutants by blame_author and calculate stats
+        const allRuns = runs.map((r: any) => r.id);
+        const statsByAuthor = new Map<string, { author: string, killed: number, survived: number, score: number }>();
+        
+        for (const runId of allRuns) {
+          const mutants = this.db.getMutantsForRun(runId);
+          for (const m of mutants) {
+            const author = m.blame_author || "Unknown";
+            if (!statsByAuthor.has(author)) {
+              statsByAuthor.set(author, { author, killed: 0, survived: 0, score: 0 });
+            }
+            const stats = statsByAuthor.get(author)!;
+            if (m.status === "Killed") stats.killed++;
+            if (m.status === "Survived") stats.survived++;
+          }
+        }
+        
+        const leaderboard = Array.from(statsByAuthor.values()).map(s => {
+          const total = s.killed + s.survived;
+          s.score = total > 0 ? (s.killed / total) * 100 : 0;
+          return s;
+        }).sort((a, b) => b.score - a.score);
+        
+        res.json(leaderboard);
+      } catch (e) {
+        this.logger.error("Failed to fetch leaderboard:", e);
+        res.status(500).json({ error: "Failed to fetch leaderboard" });
+      }
+    });
+
+    app.get("/api/insights", (_req, res) => {
+      res.json({ recommendations: [], logs: [], predictionMap: [] });
     });
 
     return new Promise((resolve) => {

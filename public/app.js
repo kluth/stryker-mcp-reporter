@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/api/history/reports'),
         fetch('/api/branches').catch(() => ({ ok: false }))
       ]);
-      const files = await res.json();
+      const runs = await res.json();
       
       let branches = ["main"];
       if (branchRes && branchRes.ok) {
@@ -438,63 +438,34 @@ document.addEventListener('DOMContentLoaded', () => {
       container.innerHTML = '';
       if (filterBar) container.appendChild(filterBar);
       
-      if (!files || files.length === 0) {
+      if (!runs || runs.length === 0) {
         container.insertAdjacentHTML('beforeend', '<div class="p-sm text-on-surface-variant">No history found.</div>');
         return;
       }
       
       // Load details for each report and group them
       const grouped = {};
-      const fileSubset = files.slice(0, 30); // limit to 30 for performance
-      const reportsData = await Promise.all(fileSubset.map(async (filename) => {
-        try {
-          const detailRes = await fetch(`/api/history/reports/${filename}`);
-          return { filename, report: await detailRes.json() };
-        } catch(e) { return null; }
-      }));
       
-      reportsData.forEach(item => {
-        if (!item) return;
-        const { filename, report } = item;
-        let killed = 0;
-        let total = 0;
-        let score = 0;
-        if (report.summary && report.summary.mutationScore) {
-           score = report.summary.mutationScore;
-           killed = report.summary.killed;
-           total = report.summary.total;
-        } else {
-           const filesObj = report.files || {};
-           for (const f of Object.values(filesObj)) {
-             const mutants = f.mutants || [];
-             for (const m of mutants) {
-               if (['Killed', 'Survived', 'NoCoverage', 'Timeout'].includes(m.status)) {
-                  total++;
-                  if (m.status === 'Killed' || m.status === 'Timeout') killed++;
-               }
-             }
-           }
-           score = total > 0 ? (killed / total) * 100 : 0;
-        }
+      runs.forEach(r => {
+        let killed = r.killed || 0;
+        let total = r.total || 0;
+        let score = r.mutation_score || 0;
         
-        const dateMatch = filename.match(/(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)/);
         let displayDate = 'Unknown Date';
-        let shortHash = filename.substring(0, 6);
-        if (dateMatch) {
-          const isoStr = dateMatch[1].replace(/T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z/, 'T$1:$2:$3.$4Z');
-          const d = new Date(isoStr);
-          displayDate = !isNaN(d.getTime()) ? d.toLocaleString() : dateMatch[1];
-          shortHash = dateMatch[1].substring(dateMatch[1].length - 10, dateMatch[1].length - 4);
+        if (r.timestamp) {
+          const d = new Date(r.timestamp);
+          displayDate = !isNaN(d.getTime()) ? d.toLocaleString() : r.timestamp;
         }
         
-        const commitMsg = report.commitMessage || 'local';
-        const branch = report.branch || 'main';
+        let shortHash = r.id ? r.id.substring(0, 7) : 'Unknown';
+        const commitMsg = r.id || 'local';
+        const branch = 'main';
         
         if (!grouped[branch]) grouped[branch] = {};
         if (!grouped[branch][commitMsg]) grouped[branch][commitMsg] = [];
         
         grouped[branch][commitMsg].push({
-          filename, shortHash, displayDate, killed, total, score
+          id: r.id, shortHash, displayDate, killed, total, score
         });
       });
       
@@ -508,9 +479,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="flex flex-col gap-sm">
         `;
         
-        for (const [commitMsg, runs] of Object.entries(commits)) {
+        for (const [commitMsg, commitRuns] of Object.entries(commits)) {
           // Aggregate stats for the commit
-          const avgScore = runs.reduce((acc, r) => acc + r.score, 0) / runs.length;
+          const avgScore = commitRuns.reduce((acc, r) => acc + r.score, 0) / commitRuns.length;
           
           const groupId = 'group-' + Math.random().toString(36).substring(2, 9);
           
@@ -522,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   <span class="material-symbols-outlined text-on-surface-variant">commit</span>
                   <span class="font-code-md text-code-md text-on-surface font-bold truncate max-w-md" title="${commitMsg}">${commitMsg}</span>
                   <span class="bg-primary/10 text-primary border border-primary/20 px-2 py-[2px] rounded text-code-sm font-code-sm">
-                    ${runs.length} Run(s)
+                    ${commitRuns.length} Run(s)
                   </span>
                 </div>
                 <div class="flex items-center gap-xl text-right pr-sm">
@@ -538,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div id="${groupId}" class="hidden p-sm bg-black/20 border-t border-white/5 flex flex-col gap-xs">
           `;
           
-          runs.forEach(r => {
+          commitRuns.forEach(r => {
             const isImprovement = r.score >= 80;
             const statusHTML = isImprovement 
               ? `<div class="bg-primary/10 border border-primary/30 px-sm py-xs rounded font-label-caps text-label-caps text-primary flex items-center gap-xs shadow-[0_0_15px_rgba(78,222,163,0.1)]">
@@ -549,14 +520,14 @@ document.addEventListener('DOMContentLoaded', () => {
                  </div>`;
                  
             branchHTML += `
-              <div class="p-sm flex items-center justify-between hover:bg-white/5 rounded transition-colors">
+              <div class="p-sm flex items-center justify-between hover:bg-white/5 rounded transition-colors" data-testid="history-row-${r.id}">
                 <div class="flex items-center gap-lg">
                   <div>
                     <div class="flex items-center gap-sm mb-xs">
                       <span class="font-code-md text-code-md text-on-surface font-bold">#${r.shortHash}</span>
                     </div>
                     <div class="font-code-sm text-code-sm text-on-surface-variant flex items-center gap-md">
-                      <span class="flex items-center gap-xs" title="${r.filename}"><span class="material-symbols-outlined text-[14px]">schedule</span> ${r.displayDate}</span>
+                      <span class="flex items-center gap-xs"><span class="material-symbols-outlined text-[14px]">schedule</span> ${r.displayDate}</span>
                     </div>
                   </div>
                 </div>
@@ -709,18 +680,20 @@ document.addEventListener('DOMContentLoaded', () => {
           ? `<span class="material-symbols-outlined text-primary text-[20px]" data-testid="rank-icon-1">military_tech</span>`
           : (i === 1 ? `<span class="material-symbols-outlined text-tertiary text-[20px]" data-testid="rank-icon-2">military_tech</span>` : `#${i+1}`);
         
+        const total = m.killed + m.survived;
+        
         container.insertAdjacentHTML('beforeend', `
           <div class="grid grid-cols-12 gap-sm p-sm items-center hover:bg-white/5 rounded-lg border border-transparent hover:border-white/10 transition-colors group cursor-pointer" data-testid="leaderboard-row-${i}">
             <div class="col-span-5 flex items-center gap-md">
               <span class="w-8 text-center text-on-surface-variant font-bold">${rankHTML}</span>
               <span class="material-symbols-outlined text-primary" data-icon="bug_report">bug_report</span>
-              <span class="font-bold text-on-surface truncate">${m.name}</span>
+              <span class="font-bold text-on-surface truncate">${m.author}</span>
             </div>
             <div class="col-span-3 text-center text-on-surface-variant group-hover:text-primary transition-colors">
               ${m.killed}
             </div>
             <div class="col-span-2 text-center text-on-surface-variant group-hover:text-primary transition-colors">
-              ${m.total}
+              ${total}
             </div>
             <div class="col-span-2 text-right">
               <div class="inline-flex items-center gap-xs">

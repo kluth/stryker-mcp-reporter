@@ -20,6 +20,7 @@ import { GitCliAdapter } from "./infrastructure/git/git-cli.adapter.js";
 import { DesktopNotifierAdapter } from "./infrastructure/notification/desktop-notifier.adapter.js";
 import { ReportStream } from "./core/domain/report-stream.js";
 import { ExecutionStatusStream } from "./core/domain/execution-status.js";
+import { DatabaseAdapter } from "./infrastructure/db/database.adapter.js";
 import type { Result } from "./core/domain/result.js";
 
 export const strykerPlugins = [
@@ -35,6 +36,7 @@ export function createMcpServerAdapter(
 ): McpServerAdapter {
   const reportStream = new ReportStream();
   const statusStream = new ExecutionStatusStream();
+  const db = new DatabaseAdapter();
 
   const strykerRunner = new StrykerCliRunnerAdapter(logger);
   const gitService = new GitCliAdapter(logger);
@@ -67,6 +69,7 @@ export function createMcpServerAdapter(
     getMutantContextUseCase,
     port,
     notifierService,
+    db,
   );
 }
 
@@ -76,6 +79,7 @@ export function createMcpServerAdapter(
 function mcpReporterFactory(logger: Logger): McpReporter {
   const reportStream = new ReportStream();
   const statusStream = new ExecutionStatusStream();
+  const db = new DatabaseAdapter();
 
   const publishUseCase = new PublishReportUseCase(reportStream);
   const strykerRunner = new StrykerCliRunnerAdapter(logger);
@@ -109,9 +113,10 @@ function mcpReporterFactory(logger: Logger): McpReporter {
     getMutantContextUseCase,
     3000,
     notifierService,
+    db,
   );
 
-  return new McpReporter(logger, publishUseCase, serverAdapter);
+  return new McpReporter(logger, publishUseCase, serverAdapter, db);
 }
 
 mcpReporterFactory.inject = [commonTokens.logger] as ["logger"];
