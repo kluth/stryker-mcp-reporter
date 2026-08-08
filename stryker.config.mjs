@@ -2,11 +2,11 @@
 /** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
 const config = {
   packageManager: "npm",
-  reporters: ["html", "clear-text", "progress"],
+  reporters: ["html", "clear-text", "progress", "mcp", "json"],
   testRunner: "vitest",
   testRunnerNodeArgs: ["--experimental-vm-modules"],
   coverageAnalysis: "perTest",
-  plugins: ["@stryker-mutator/vitest-runner", "stryker-mcp-reporter"],
+  plugins: ["@stryker-mutator/vitest-runner", "./dist/index.mjs"],
   buildCommand: "npm run build",
   mutator: {
     excludedMutations: ["StringLiteral"]
@@ -14,7 +14,8 @@ const config = {
   ignorePatterns: ["**/*.js", "!bin/**/*.js"],
   mutate: [
     "src/**/*.ts",
-    "!src/**/*.spec.ts"
+    "!src/**/*.spec.ts",
+    "!src/**/*.d.ts"
   ]
 };
 export default config;
