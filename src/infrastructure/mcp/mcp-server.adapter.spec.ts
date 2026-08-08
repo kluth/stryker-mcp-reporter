@@ -28,6 +28,7 @@ const mockApp = {
 vi.mock("express", () => {
   const expressFn = () => mockApp;
   expressFn.json = vi.fn();
+  expressFn.static = vi.fn();
   return { default: expressFn };
 });
 
