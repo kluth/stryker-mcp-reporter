@@ -1,0 +1,493 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Stryker Sentinel - AI Insights</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+// @ts-nocheck
+
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface": "#131314",
+                      "tertiary-fixed-dim": "#ffb95f",
+                      "surface-container-lowest": "#0e0e0f",
+                      "secondary": "#ffb2b7",
+                      "on-tertiary-fixed-variant": "#653e00",
+                      "surface-dim": "#131314",
+                      "on-surface": "#e5e2e3",
+                      "on-secondary": "#67001b",
+                      "outline-variant": "#3c4a42",
+                      "on-secondary-fixed-variant": "#92002a",
+                      "surface-variant": "#353436",
+                      "on-tertiary": "#472a00",
+                      "on-surface-variant": "#bbcabf",
+                      "secondary-container": "#b50036",
+                      "surface-tint": "#4edea3",
+                      "inverse-primary": "#006c49",
+                      "on-secondary-fixed": "#40000d",
+                      "surface-container-high": "#2a2a2b",
+                      "on-secondary-container": "#ffc2c4",
+                      "inverse-on-surface": "#313031",
+                      "secondary-fixed-dim": "#ffb2b7",
+                      "error-container": "#93000a",
+                      "on-error": "#690005",
+                      "surface-container-highest": "#353436",
+                      "on-background": "#e5e2e3",
+                      "on-tertiary-container": "#523200",
+                      "surface-container": "#201f20",
+                      "primary-fixed-dim": "#4edea3",
+                      "tertiary-fixed": "#ffddb8",
+                      "primary-fixed": "#6ffbbe",
+                      "on-tertiary-fixed": "#2a1700",
+                      "tertiary-container": "#e29100",
+                      "inverse-surface": "#e5e2e3",
+                      "primary": "#4edea3",
+                      "on-primary-container": "#00422b",
+                      "tertiary": "#ffb95f",
+                      "error": "#ffb4ab",
+                      "on-primary": "#003824",
+                      "on-error-container": "#ffdad6",
+                      "outline": "#86948a",
+                      "on-primary-fixed": "#002113",
+                      "surface-container-low": "#1c1b1c",
+                      "primary-container": "#10b981",
+                      "background": "#131314",
+                      "surface-bright": "#3a393a",
+                      "secondary-fixed": "#ffdadb",
+                      "on-primary-fixed-variant": "#005236"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "md": "16px",
+                      "sm": "8px",
+                      "lg": "24px",
+                      "gutter": "20px",
+                      "unit": "4px",
+                      "xs": "4px",
+                      "margin": "32px",
+                      "xl": "40px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "code-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "code-md": [
+                              "JetBrains Mono"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "code-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "code-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.1em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      
+</script>
+<style>
+        .glass-panel {
+            background: rgba(23, 23, 26, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .code-highlight {
+            background: rgba(78, 222, 163, 0.1);
+            border-left: 2px solid #4edea3;
+        }
+        .code-error {
+            background: rgba(255, 178, 183, 0.1);
+            border-left: 2px solid #ffb2b7;
+        }
+        .glowing-pip {
+            box-shadow: 0 0 8px currentColor;
+        }
+        
+        /* Scrollbar styling for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex overflow-hidden">
+<!-- SideNavBar -->
+<nav class="bg-surface-container/60 backdrop-blur-xl docked left-0 h-full w-64 border-r border-white/10 shadow-2xl flex flex-col h-screen fixed left-0 top-0 z-40">
+<div class="p-lg border-b border-white/10">
+<h1 class="font-display text-headline-md font-bold text-primary truncate flex items-center gap-sm">
+<span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings: 'FILL' 1;">security</span>
+                Stryker Sentinel
+            </h1>
+<p class="font-code-sm text-code-sm text-on-surface-variant mt-xs" id="stryker-version">Mutation Engine v4.2</p>
+</div>
+<div class="p-md">
+<button class="w-full bg-primary text-on-primary font-headline-md text-code-md py-sm px-md rounded-DEFAULT flex items-center justify-center gap-sm hover:bg-primary-fixed transition-colors shadow-[0_0_15px_rgba(78,222,163,0.3)]">
+<span class="material-symbols-outlined" aria-hidden="true">add</span>
+                New Analysis
+            </button>
+</div>
+<ul class="flex-1 overflow-y-auto py-sm px-sm space-y-1">
+<li class="">
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors" href="index.html">
+<span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
+                    Dashboard
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors" href="explorer.html">
+<span class="material-symbols-outlined" aria-hidden="true">folder_open</span>
+                    File Explorer
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors" href="history.html">
+<span class="material-symbols-outlined" aria-hidden="true">history</span>
+                    History
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors" href="leaderboard.html">
+<span class="material-symbols-outlined" aria-hidden="true">leaderboard</span>
+                    Leaderboard
+                </a>
+</li>
+<li class="">
+<a class="flex items-center gap-md px-lg py-sm text-primary bg-primary/10 border-r-2 border-primary" href="insights.html">
+<span class="material-symbols-outlined" aria-hidden="true" style="font-variation-settings: 'FILL' 1;">psychology</span>
+                    AI Insights
+                </a>
+</li>
+</ul>
+<div class="mt-auto border-t border-white/10 p-sm">
+<ul class="space-y-1">
+<li class="">
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" aria-hidden="true">settings</span>
+                        Settings
+                    </a>
+</li>
+<li class="">
+<a class="flex items-center gap-md px-lg py-sm text-on-surface-variant hover:text-on-surface hover:bg-white/5 transition-colors" href="#">
+<span class="material-symbols-outlined" aria-hidden="true">help_outline</span>
+                        Support
+                    </a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 ml-64 flex flex-col h-screen overflow-hidden">
+<!-- TopNavBar -->
+<header class="bg-surface-dim/40 backdrop-blur-md docked top-0 w-full border-b border-white/10 flat no shadows flex justify-between items-center px-lg py-sm z-30 transition-all duration-300">
+
+<div class="flex items-center gap-md">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]" aria-hidden="true">search</span>
+<input class="bg-black/30 border border-white/10 rounded-DEFAULT py-xs pl-[32px] pr-sm text-code-sm font-code-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-48 transition-all placeholder:text-on-surface-variant/50" placeholder="Search insights..." type="text">
+</div>
+<button class="border border-white/20 text-on-surface font-label-caps text-label-caps py-xs px-sm rounded-DEFAULT hover:bg-white/10 transition-colors">Export Analysis</button>
+
+<div class="flex items-center gap-xs ml-sm border-l border-white/10 pl-sm">
+
+
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 overflow-y-auto p-lg relative">
+<!-- Background Grid Effect -->
+<div class="absolute inset-0 pointer-events-none" style="background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 24px 24px;"></div>
+<div class="max-w-7xl mx-auto space-y-gutter relative z-10">
+<!-- 1. AI Summary Header -->
+<section class="glass-panel rounded-xl p-lg flex items-start gap-lg relative overflow-hidden">
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+<div class="w-16 h-16 rounded-full bg-surface-container-high border border-primary/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(78,222,163,0.2)]">
+<span class="material-symbols-outlined text-[32px] text-primary" aria-hidden="true" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<div class="flex-1">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-sm flex items-center gap-sm">
+                            Sentinel Analysis Complete
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-code-sm text-code-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary glowing-pip"></span>
+                                Active
+                            </span>
+</h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+                            AI engine identified <strong class="text-error">12 high-risk</strong> surviving mutants across core authentication modules. Historical patterns indicate an 84% probability of these causing silent data corruption in production environments if left unaddressed.
+                        </p>
+</div>
+<div class="shrink-0 text-right">
+<div class="font-code-sm text-code-sm text-on-surface-variant uppercase tracking-wider mb-xs">Overall Confidence</div>
+<div class="font-display text-display text-primary">94%</div>
+</div>
+</section>
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Left Column (8 cols) -->
+<div class="col-span-12 lg:col-span-8 space-y-gutter">
+<!-- 2. Mutation Risk Analysis -->
+<section class="glass-panel rounded-xl p-md flex flex-col h-[400px]">
+<div class="flex items-center justify-between mb-md pb-sm border-b border-white/10">
+<h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-error" aria-hidden="true">warning</span>
+                                    High Risk Mutants
+                                </h3>
+<span class="font-code-sm text-code-sm bg-surface-container-high px-2 py-1 rounded border border-white/10 text-on-surface-variant">Sorted by: AI Threat Score</span>
+</div>
+<div class="flex-1 overflow-y-auto pr-sm space-y-sm">
+<!-- Mutant Item 1 -->
+<div class="bg-surface-container/40 border border-white/5 rounded-lg p-sm hover:border-white/20 transition-colors">
+<div class="flex items-start justify-between mb-sm">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-error text-[18px]" aria-hidden="true">pest_control</span>
+<code class="font-code-md text-code-md text-error">ConditionalExpressionMutator</code>
+</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant">Threat Score: <span class="text-error font-bold">98</span></div>
+</div>
+<div class="bg-[#0A0A0B] rounded border border-white/10 p-sm mb-sm font-code-sm text-code-sm overflow-x-auto whitespace-pre">
+<span class="text-on-surface-variant/50">auth.service.ts: 142</span>
+<span class="text-error line-through">- if (user.role === 'admin' &amp;&amp; !user.isLocked) {</span>
+<span class="text-primary">+ if (user.role === 'admin' || !user.isLocked) {</span>
+</div>
+<div class="flex gap-sm items-start bg-error/5 border border-error/10 p-sm rounded">
+<span class="material-symbols-outlined text-error text-[16px] mt-0.5" aria-hidden="true">smart_toy</span>
+<p class="font-body-md text-[13px] leading-snug text-on-surface-variant">
+<strong class="text-on-surface">AI Analysis:</strong> This mutation alters the authentication logic, allowing any unlocked user to bypass the admin role check. Likely to cause severe privilege escalation.
+                                        </p>
+</div>
+</div>
+<!-- Mutant Item 2 -->
+<div class="bg-surface-container/40 border border-white/5 rounded-lg p-sm hover:border-white/20 transition-colors">
+<div class="flex items-start justify-between mb-sm">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-tertiary text-[18px]" aria-hidden="true">pest_control</span>
+<code class="font-code-md text-code-md text-tertiary">ArithmeticOperatorMutator</code>
+</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant">Threat Score: <span class="text-tertiary font-bold">85</span></div>
+</div>
+<div class="bg-[#0A0A0B] rounded border border-white/10 p-sm mb-sm font-code-sm text-code-sm overflow-x-auto whitespace-pre">
+<span class="text-on-surface-variant/50">billing.calc.ts: 45</span>
+<span class="text-error line-through">- const total = basePrice * (1 + taxRate);</span>
+<span class="text-primary">+ const total = basePrice / (1 + taxRate);</span>
+</div>
+<div class="flex gap-sm items-start bg-tertiary/5 border border-tertiary/10 p-sm rounded">
+<span class="material-symbols-outlined text-tertiary text-[16px] mt-0.5" aria-hidden="true">smart_toy</span>
+<p class="font-body-md text-[13px] leading-snug text-on-surface-variant">
+<strong class="text-on-surface">AI Analysis:</strong> Replaces multiplication with division in billing calculation. Will result in massive undercharging of clients leading to revenue loss. Tests lack coverage for varying tax rates.
+                                        </p>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Auto-Fix Recommendations -->
+<section class="glass-panel rounded-xl p-md">
+<div class="flex items-center justify-between mb-md pb-sm border-b border-white/10">
+<h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary" aria-hidden="true">build</span>
+                                    Auto-Fix Recommendations
+                                </h3>
+</div>
+<div id="insights-fix-container" class="grid grid-cols-1 md:grid-cols-2 gap-sm">
+<!-- Fix 1 -->
+<div class="bg-surface-container-high border border-white/10 rounded p-sm">
+<div class="font-code-md text-code-md text-on-surface mb-xs flex justify-between">
+<span class="">Add test case for admin bypass</span>
+<span class="text-primary">+1.2% Cov</span>
+</div>
+<p class="font-body-md text-[12px] text-on-surface-variant mb-sm line-clamp-2">Generates a test specifically ensuring `isLocked` flag does not override role requirements in `auth.service.ts`.</p>
+<button class="w-full bg-surface-bright hover:bg-primary/20 hover:text-primary hover:border-primary border border-white/10 text-on-surface font-code-sm text-code-sm py-xs rounded transition-colors flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[16px]" aria-hidden="true">auto_fix_high</span>
+                                        Apply Fix
+                                    </button>
+</div>
+<!-- Fix 2 -->
+<div class="bg-surface-container-high border border-white/10 rounded p-sm">
+<div class="font-code-md text-code-md text-on-surface mb-xs flex justify-between">
+<span class="">Enhance boundary assertions</span>
+<span class="text-primary">+0.8% Cov</span>
+</div>
+<p class="font-body-md text-[12px] text-on-surface-variant mb-sm line-clamp-2">Adds boundary value analysis for tax rate edge cases (0%, 100%) in `billing.calc.spec.ts`.</p>
+<button class="w-full bg-surface-bright hover:bg-primary/20 hover:text-primary hover:border-primary border border-white/10 text-on-surface font-code-sm text-code-sm py-xs rounded transition-colors flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[16px]" aria-hidden="true">auto_fix_high</span>
+                                        Apply Fix
+                                    </button>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column (4 cols) -->
+<div class="col-span-12 lg:col-span-4 space-y-gutter flex flex-col">
+<!-- 3. Predictive Coverage Map -->
+<section class="glass-panel rounded-xl p-md flex-1">
+<div class="flex items-center justify-between mb-sm pb-sm border-b border-white/10">
+<h3 class="font-headline-md text-headline-md text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-tertiary" aria-hidden="true">radar</span>
+                                    Prediction Map
+                                </h3>
+</div>
+<p class="font-body-md text-[12px] text-on-surface-variant mb-sm">AI forecasted vulnerable areas based on recent commit velocity and complexity.</p>
+<!-- Simulated Heatmap Grid -->
+<div class="grid grid-cols-4 gap-1 h-[200px] mb-sm">
+<!-- Row 1 -->
+<div class="bg-error/80 rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer">
+<div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<div class="bg-error/60 rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<div class="bg-surface-container-highest rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<div class="bg-primary/20 rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<!-- Row 2 -->
+<div class="bg-error/90 rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer">
+<span class="absolute top-1 right-1 w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
+</div>
+<div class="bg-tertiary/60 rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<div class="bg-primary/40 rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<div class="bg-primary/60 rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<!-- Row 3 -->
+<div class="bg-surface-container-highest rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<div class="bg-tertiary/40 rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<div class="bg-primary/80 rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<div class="bg-primary/90 rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<!-- Row 4 -->
+<div class="bg-surface-container-highest rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<div class="bg-surface-container-highest rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<div class="bg-primary/30 rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+<div class="bg-primary/50 rounded-sm hover:ring-1 ring-white/50 relative group cursor-pointer"></div>
+</div>
+<div class="flex justify-between font-code-sm text-[10px] text-on-surface-variant uppercase">
+<span class="flex items-center gap-1"><span class="w-2 h-2 bg-error rounded-sm"></span> High Risk</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 bg-primary rounded-sm"></span> Safe</span>
+</div>
+</section>
+<!-- 5. LLM Reasoning Log -->
+<section class="glass-panel rounded-xl flex flex-col h-[250px] overflow-hidden border-primary/20 shadow-[0_0_15px_rgba(78,222,163,0.05)]">
+<div class="bg-surface-container-lowest px-sm py-xs border-b border-white/10 flex items-center justify-between">
+<div class="font-code-sm text-code-sm text-on-surface-variant flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]" aria-hidden="true">terminal</span>
+                                    stryker-llm-engine.log
+                                </div>
+<div class="flex gap-1">
+<span class="w-2 h-2 rounded-full bg-surface-variant"></span>
+<span class="w-2 h-2 rounded-full bg-surface-variant"></span>
+<span class="w-2 h-2 rounded-full bg-primary glowing-pip"></span>
+</div>
+</div>
+<div class="p-sm font-code-sm text-[11px] text-on-surface-variant font-mono flex-1 overflow-y-auto bg-[#050505] leading-relaxed">
+<div class="text-primary mb-1">&gt; Initializing AST context analysis... [OK]</div>
+<div class="mb-1">Analyzing mutant #8942 (ConditionalExpression)</div>
+<div class="mb-1 text-on-surface/50">Fetching historical defect data for 'auth.service.ts'...</div>
+<div class="mb-1">Cross-referencing token 'isLocked' against known CVE patterns.</div>
+<div class="mb-1 text-tertiary">Warning: Token semantic proximity to 'privilege_escalation' detected (Score: 0.89).</div>
+<div class="mb-1 text-primary">&gt; Generating hypothesis...</div>
+<div class="mb-1 text-on-surface">"If this conditional is inverted, test suite passes, but logical flow permits unauthorized access."</div>
+<div class="text-error font-bold">&gt; Classification: CRITICAL_VULNERABILITY</div>
+<div class="mt-2 animate-pulse text-primary/50">_</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+
+<script src="app.js"></script>
+
+
+
+</body></html>
