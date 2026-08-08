@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path";
 import type { Server as HttpServer } from "http";
 import type { AddressInfo } from "net";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -120,6 +121,7 @@ export class McpServerAdapter {
 
   public async start(): Promise<Result<void, Error>> {
     const app = express();
+    app.use(express.static(path.join(process.cwd(), "public")));
 
     app.get("/mcp/sse", async (_req, res) => {
       const transport = new SSEServerTransport("/mcp/messages", res);
