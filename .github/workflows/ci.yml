@@ -13,22 +13,19 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x, 24.x, 26.x]
+        node-version: [20.x, 22.x]
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install Dependencies (Tabula Rasa)
-        run: |
-          rm -f package-lock.json
-          npm cache clean --force
-          npm install --no-audit --no-fund
+      - name: Install Dependencies
+        run: npm ci
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
 
@@ -57,14 +54,14 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Erforderlich für die Commit-Analyse von Semantic Release
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
-          node-version: "26.x"
+          node-version: "22.x"
 
       - name: Install Dependencies
         run: npm install --no-audit --no-fund
@@ -95,14 +92,14 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
-          node-version: "26.x"
+          node-version: "22.x"
 
       - name: Install Dependencies
         run: npm install --no-audit --no-fund
