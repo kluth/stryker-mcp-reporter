@@ -1,3 +1,19 @@
+# [1.12.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.11.0...v1.12.0) (2026-08-09)
+
+
+### Bug Fixes
+
+* resolve CJS/ESM interop in e2e tests ([3bd8b93](https://github.com/kluth/stryker-mcp-reporter/commit/3bd8b9371f2dd5001647db01d27e61affb90524d))
+* resolve TS errors in database.adapter and missing types for better-sqlite3 ([03cff58](https://github.com/kluth/stryker-mcp-reporter/commit/03cff587b52f5aeed0211f2428bdc57196a29ffd))
+* serve public webapp directory on MCP express server ([73fe00c](https://github.com/kluth/stryker-mcp-reporter/commit/73fe00cab20a44a9d9605701099c90c581d2fb3f))
+* use correct stryker incremental flag in CI ([7405fb1](https://github.com/kluth/stryker-mcp-reporter/commit/7405fb1bf9fda658a88a8ea8231d8a201853ed15))
+
+
+### Features
+
+* integrate SQLite database for runs and history ([530f5a7](https://github.com/kluth/stryker-mcp-reporter/commit/530f5a73d8b3bad289c427ca864c6d4283c26555))
+* **ui:** add E2E data-testids and improve a11y across dashboard ([a9a289b](https://github.com/kluth/stryker-mcp-reporter/commit/a9a289b43a416266f7f319b7da0d3c604c98bc90))
+
 # [1.11.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.10.0...v1.11.0) (2026-08-08)
 
 
