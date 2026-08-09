@@ -1,5 +1,6 @@
 // e2e-test.js
-import { createMcpServerAdapter } from "./dist/index.js";
+import pkg from "./dist/index.js";
+const { createMcpServerAdapter } = pkg;
 
 const dummyLogger = {
   info: (msg) => console.log("[LOGGER INFO]", msg),
