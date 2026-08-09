@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.12.0...v1.13.0) (2026-08-09)
+
+
+### Features
+
+* enforce McCabe complexity and max-lines with ESLint hook ([330a951](https://github.com/kluth/stryker-mcp-reporter/commit/330a9513ec1bdee56d5c9229e2349e8157f3776d))
+
 # [1.12.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.11.0...v1.12.0) (2026-08-09)
 
 
