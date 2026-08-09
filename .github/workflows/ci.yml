@@ -44,7 +44,7 @@ jobs:
         run: npm run test:e2e
 
       - name: Run Incremental Mutation Testing (Stryker)
-        run: npx stryker run --since
+        run: npx stryker run --incremental
         env:
           STRYKER_DASHBOARD_API_KEY: "" # local only
 
