@@ -1,0 +1,11 @@
+{
+  "task-verification": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "node scripts/verify.js",
+        "timeout": 600
+      }
+    ]
+  }
+}

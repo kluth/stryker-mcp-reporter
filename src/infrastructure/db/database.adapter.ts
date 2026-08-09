@@ -24,7 +24,7 @@ export class DatabaseAdapter {
       try {
         loadVss(this.db as any);
         this.initVectorTables();
-      } catch(e) {
+      } catch(e: any) {
         console.warn("Could not load sqlite-vss extension, vector features will be disabled.", e.message);
       }
     }
@@ -76,7 +76,7 @@ export class DatabaseAdapter {
           insight_vector(384)
         );
       `);
-    } catch(e) {
+    } catch(e: any) {
       console.warn("Could not create VSS tables", e.message);
     }
   }
@@ -104,7 +104,7 @@ export class DatabaseAdapter {
           INSERT INTO fts_insights(rowid, mutant_id, file_path, insight_text) VALUES (new.rowid, new.mutant_id, new.file_path, new.insight_text);
         END;
       `);
-    } catch(e) {
+    } catch(e: any) {
       console.warn("Could not create FTS5 tables", e);
     }
   }
@@ -168,7 +168,7 @@ export class DatabaseAdapter {
           `).run(row.rowid, JSON.stringify(embedding));
         }
       }
-    } catch(e) {
+    } catch(e: any) {
       console.warn("Failed to save insight text or vector", e);
     }
   }
@@ -190,7 +190,7 @@ export class DatabaseAdapter {
         LIMIT ?
       `).all(sanitized, limit);
       return rows;
-    } catch(e) {
+    } catch(e: any) {
       console.warn("FTS search failed", e);
       return [];
     }
@@ -207,7 +207,7 @@ export class DatabaseAdapter {
         LIMIT ?
       `).all(JSON.stringify(embedding), limit);
       return rows;
-    } catch(e) {
+    } catch(e: any) {
       console.warn("VSS search failed", e);
       return [];
     }
