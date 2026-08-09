@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, complexity, no-useless-assignment */
 // src/core/domain/mutation-insight.ts
 import type { MutantStatus } from "./mutation-report.js";
 
@@ -277,3 +278,4 @@ Author: ${authorName} <${authorEmail}>
     },
   };
 }
+

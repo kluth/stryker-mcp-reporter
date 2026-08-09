@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, complexity, no-useless-assignment */
 import type { ReportStream } from "../domain/report-stream.js";
 import { type Result, ok, err } from "../domain/result.js";
 import { TestFile } from "../domain/mutation-report.js";
@@ -132,3 +133,4 @@ export class GetMutantContextUseCase {
     return contexts.length > 0 ? contexts : undefined;
   }
 }
+

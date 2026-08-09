@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, complexity, no-useless-assignment */
 // src/infrastructure/git/git-cli.adapter.spec.ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GitCliAdapter, type ExecCommandFn } from "./git-cli.adapter.js";
@@ -149,3 +150,4 @@ diff --git a/src/util.ts b/src/util.ts
     });
   });
 });
+

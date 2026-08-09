@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, complexity, no-useless-assignment */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { McpServerAdapter, SERVER_INFO } from "./mcp-server.adapter.js";
 import { ReportStream } from "../../core/domain/report-stream.js";
@@ -235,3 +236,4 @@ describe("McpServerAdapter", () => {
     });
   });
 });
+

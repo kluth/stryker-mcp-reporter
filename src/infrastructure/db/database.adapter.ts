@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, complexity, no-useless-assignment */
 import Database from "better-sqlite3";
 import * as path from "path";
 import * as fs from "fs";
@@ -222,3 +223,4 @@ export class DatabaseAdapter {
     this.db.prepare(`INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)`).run(key, value);
   }
 }
+

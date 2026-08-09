@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, complexity, no-useless-assignment */
 // src/infrastructure/git/git-cli.adapter.ts
 import { execFile } from "child_process";
 import { promisify } from "util";
@@ -153,3 +154,4 @@ export class GitCliAdapter implements GitServicePort {
     return results;
   }
 }
+

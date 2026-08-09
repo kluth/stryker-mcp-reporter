@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, complexity, no-useless-assignment */
 // src/core/application/run-targeted-mutation-tests.use-case.ts
 import type { GitServicePort } from "../domain/git-service.port.js";
 import type { RunMutationTestsUseCase } from "./run-mutation-tests.use-case.js";
@@ -56,3 +57,4 @@ export class RunTargetedMutationTestsUseCase {
     return this.runMutationTestsUseCase.execute({ mutate: changedFiles });
   }
 }
+

@@ -17,6 +17,9 @@ try {
     // Das Skript wird in .agents/ ausgeführt, daher cwd eine Ebene höher setzen:
     execSync('npm run test', { stdio: 'pipe', cwd: '..' });
     
+    // Prüfe die Code-Komplexität (McCabe Score) und LOC (< 150)
+    execSync('npx eslint "src/**/*.ts"', { stdio: 'pipe', cwd: '..' });
+
     // Ebenfalls sicherstellen, dass die GitHub Pipeline auf grün steht
     // gh run watch blockiert solange eine Pipeline läuft und gibt != 0 zurück, falls sie failed
     execSync('gh run watch --exit-status', { stdio: 'pipe', cwd: '..' });

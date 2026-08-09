@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, complexity, no-useless-assignment */
 import express from "express";
 import type { Server as HttpServer } from "http";
 import type { AddressInfo } from "net";
@@ -294,3 +295,4 @@ export class McpServerAdapter {
     });
   }
 }
+

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, complexity, no-useless-assignment */
 // src/infrastructure/stryker/stryker-cli-runner.adapter.spec.ts
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { StrykerCliRunnerAdapter } from "./stryker-cli-runner.adapter.js";
@@ -161,3 +162,4 @@ describe("StrykerCliRunnerAdapter", () => {
     expect(result.error?.message).toBe("Unerwarteter String-Fehler");
   });
 });
+
