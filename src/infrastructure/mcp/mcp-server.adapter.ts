@@ -6,7 +6,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { Logger } from "@stryker-mutator/api/logging";
-
+import { timingSafeEqual } from "crypto";
 import type { ReportStream } from "../../core/domain/report-stream.js";
 import type { ExecutionStatusStream } from "../../core/domain/execution-status.js";
 import type { RunMutationTestsUseCase } from "../../core/application/run-mutation-tests.use-case.js";
@@ -64,7 +64,7 @@ export class McpServerAdapter {
       },
     });
 
-    const suggestFixesUseCase = new SuggestMutantFixesUseCase();
+    const suggestFixesUseCase = new SuggestMutantFixesUseCase(this.getMutantContextUseCase);
     const predictImpactUseCase = new PredictMutationImpactUseCase();
     const generateCheatSheetUseCase = new GenerateTestingCheatSheetUseCase();
     const detectEquivalentUseCase = new DetectEquivalentMutantsUseCase();
@@ -133,6 +133,35 @@ export class McpServerAdapter {
   public async start(): Promise<Result<void, Error>> {
     const app = express();
     app.use(express.static("public"));
+
+    // Security: Origin check
+    app.use((req, res, next) => {
+      const origin = req.headers.origin;
+      const allowedOrigins = process.env.STRYKER_MCP_ALLOWED_ORIGINS ? process.env.STRYKER_MCP_ALLOWED_ORIGINS.split(",") : [];
+      if (origin && allowedOrigins.length > 0 && !allowedOrigins.includes(origin)) {
+        res.status(403).send("Origin not allowed");
+        return;
+      }
+      next();
+    });
+
+    // Security: Token auth
+    app.use((req, res, next) => {
+      const expectedToken = process.env.STRYKER_MCP_TOKEN;
+      if (expectedToken) {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          res.status(401).send("Unauthorized");
+          return;
+        }
+        const token = authHeader.split(" ")[1];
+        if (token.length !== expectedToken.length || !timingSafeEqual(Buffer.from(token), Buffer.from(expectedToken))) {
+          res.status(401).send("Unauthorized");
+          return;
+        }
+      }
+      next();
+    });
 
     app.get("/mcp/sse", async (_req, res) => {
       const transport = new SSEServerTransport("/mcp/messages", res);
@@ -272,8 +301,8 @@ export class McpServerAdapter {
     });
 
     return new Promise((resolve) => {
-      this.httpServer = app.listen(this.port, () => {
-        this.logger.info(`MCP Server started on port ${this.activePort}`);
+      this.httpServer = app.listen(this.port, '127.0.0.1', () => {
+        this.logger.info(`MCP Server started on port ${this.activePort} (bound to localhost)`);
         resolve(ok(undefined));
       });
 

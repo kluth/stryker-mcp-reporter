@@ -4,7 +4,6 @@
 
 [![npm version](https://img.shields.io/npm/v/stryker-mcp-reporter?style=for-the-badge&color=CB3837&logo=npm)](https://www.npmjs.com/package/stryker-mcp-reporter)
 [![Node version](https://img.shields.io/badge/node-%3E%3D22.0.0-339933?style=for-the-badge&logo=nodedotjs)](https://nodejs.org/)
-[![Mutation Score](https://img.shields.io/badge/Mutation%20Score-100%25-brightgreen?style=for-the-badge&logo=stryker)](https://stryker-mutator.io/)
 [![Architecture](https://img.shields.io/badge/Architecture-Hexagonal%20%2F%20DDD-blueviolet?style=for-the-badge)](#-software-engineering--architektur-highlights)
 [![GitHub Discussions](https://img.shields.io/badge/GitHub-Discussions-007EC6?style=for-the-badge&logo=github)](https://github.com/kluth/stryker-mcp-reporter/discussions)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
@@ -54,13 +53,7 @@ Stryker mutiert deinen Quellcode (z. B. verwandelt es `>` in `>=`, löscht Rück
 ![Mutation Score Trend Analytics](assets/images/real_step3_trend_analytics.png)
 *Verfolgt den historischen Verlauf von Mutation-Scores über mehrere Testläufe hinweg, berechnet Score-Deltas (+5.7% Steigerung) und visualisiert die Trend-Richtung.*
 
-### 🛡️ 7. 48-Stunden Anti-Spam Rate Limiter Engine
-![48h Anti Spam Rate Limiter](assets/images/real_step4_antispam_limit.png)
-*Verhindert Spam bei schnellen Release-Zyklen. Sofern innerhalb von 48 Stunden ein neues Release veröffentlicht wird, fängt die Engine doppelte Social-Media-Posts automatisch ab.*
 
-### 🖼️ 8. Multi-Platform Release Announcement Dashboard (`preview.html`)
-![Release Announcement Dashboard Preview](assets/images/real_step5_announcement_dash.png)
-*Interaktives HTML-Dashboard (`dist/announcements/preview.html`) zur visuellen Vorschau aller automatischen Veröffentlichungen (GitHub Discussions, DEV.to, Telegram, Discord).*
 
 ---
 
@@ -73,8 +66,6 @@ Stryker mutiert deinen Quellcode (z. B. verwandelt es `>` in `>=`, löscht Rück
 * 🎯 **Targeted Git-Diff Executions**: Mit `run_targeted_mutation_tests` werden nur die in Git geänderten TypeScript-Dateien getestet – **spart bis zu 90% Laufzeit!**
 * 💾 **SQLite Caching & History**: Speichert Testergebnisse, Trends und Historie sicher in einer lokalen SQLite Datenbank für pfeilschnellen Abruf und Langzeit-Analysen.
 * 📈 **Score Trend Tracking**: Greife über `stryker://analytics/trends` auf den historischen Score-Verlauf und Score-Deltas zu.
-* 🛡️ **48-Stunden Anti-Spam Engine**: Schützt Entwickler-Kanäle automatisch vor Spam bei frequentierten Release-Zyklen.
-* ✈️ **Multi-Plattform Release Broadcasting**: Veröffentlicht Releases automatisch auf GitHub Discussions, DEV.to, Telegram & Discord (mit `preview.html` Vorschau).
 * 📦 **Live MCP Resources**: Greife über URIs wie `stryker://report/survived` oder `stryker://status` direkt auf Testdaten zu.
 * 📌 **Persistente Desktop Overlays**: Endgültige Testergebnisse (Completion/Error) bleiben auf dem Bildschirm fixiert, bis sie aktiv vom Entwickler weggeklickt werden.
 * 🔊 **Dezenter Mutant Hunter Cyber-Sound**: Beinhaltet einen frei nutzbaren, synthetisierten Cyber-Chime (`assets/sounds/mutant_hunter.wav`), der das Ende der Mutantenjagd ankündigt.

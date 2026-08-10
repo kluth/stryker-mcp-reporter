@@ -16,10 +16,14 @@ export interface MutantRemediationAdvice {
   boundaryTestSnippet: string;
 }
 
+import { GetMutantContextUseCase } from "./get-mutant-context.use-case.js";
+
 export class SuggestMutantFixesUseCase {
+  constructor(private readonly getMutantContextUseCase?: GetMutantContextUseCase) {}
+
   public async execute(
     mutants: MutantDetail[],
-    profile?: "local" | "cloud" | "regex"
+    profile: "local" | "cloud" | "regex" = "regex"
   ): Promise<MutantRemediationAdvice[]> {
     const survivedOrNoCoverage = mutants.filter(
       (m) => m.status === "Survived" || m.status === "NoCoverage",
@@ -37,7 +41,8 @@ export class SuggestMutantFixesUseCase {
     profile?: "local" | "cloud" | "regex"
   ): Promise<MutantRemediationAdvice> {
     const mutator = mutant.mutatorName || "UnknownMutator";
-    const original = mutant.replacement ? "original code" : "";
+    const contextResult = this.getMutantContextUseCase ? await this.getMutantContextUseCase.execute(mutant.id) : null;
+    const original = contextResult?.isOk ? contextResult.value.originalCode : "Code unavailable";
     const replacement = mutant.replacement || "";
     const startLine = mutant.line || 1;
     const startColumn = mutant.column || 1;
@@ -47,14 +52,14 @@ export class SuggestMutantFixesUseCase {
     let boundaryTestSnippet = `it('should handle boundary condition for ${mutator} at line ${startLine}', () => {\n  // Add boundary test assertion\n});`;
 
     // Try Local LLM (Ollama) if profile is local or undefined (fallback chain)
-    if (profile === "local" || profile === undefined) {
+    if (profile === "local") {
       try {
         const ollamaRes = await fetch("http://localhost:11434/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "qwen2.5-coder", // Defaulting to a good local coder model
-            prompt: `You are an expert TS developer. Fix this surviving mutant. Mutator: ${mutator}. Code mutated to: ${replacement}. Suggest an assertion. Reply in short exact JSON format { "explanation": "...", "suggestedAssertion": "...", "boundaryTestSnippet": "..." } only.`,
+            prompt: `You are an expert TS developer. Fix this surviving mutant. Mutator: ${mutator}. Original Code: ${original}. Code mutated to: ${replacement}. Suggest an assertion. Reply in short exact JSON format { "explanation": "...", "suggestedAssertion": "...", "boundaryTestSnippet": "..." } only.`,
             stream: false,
             format: "json"
           }),
@@ -82,8 +87,8 @@ export class SuggestMutantFixesUseCase {
       }
     }
 
-    // Cloud LLM fallback if profile is cloud or local failed
-    if (profile === "cloud" || profile === undefined) {
+    // Cloud LLM fallback if profile is cloud
+    if (profile === "cloud") {
       if (process.env.OPENAI_API_KEY) {
         try {
           const cloudRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -94,7 +99,7 @@ export class SuggestMutantFixesUseCase {
             },
             body: JSON.stringify({
               model: "gpt-4o-mini",
-              messages: [{ role: "user", content: `You are an expert TS developer. Fix this surviving mutant. Mutator: ${mutator}. Code mutated to: ${replacement}. Suggest an assertion. Reply in short exact JSON format { "explanation": "...", "suggestedAssertion": "...", "boundaryTestSnippet": "..." } only.` }],
+              messages: [{ role: "user", content: `You are an expert TS developer. Fix this surviving mutant. Mutator: ${mutator}. Original Code: ${original}. Code mutated to: ${replacement}. Suggest an assertion. Reply in short exact JSON format { "explanation": "...", "suggestedAssertion": "...", "boundaryTestSnippet": "..." } only.` }],
               response_format: { type: "json_object" }
             }),
           });
