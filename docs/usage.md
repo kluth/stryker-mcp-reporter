@@ -15,6 +15,10 @@ Executes Stryker in the specified project path.
 Calculates the risk of deploying the current codebase based on the latest mutation test run.
 - **What it does:** It groups surviving mutants by file and applies a risk weight. Files related to "auth", "security", "crypto", etc., receive a 10x multiplier on surviving mutants! It will output a Risk Level (LOW, MEDIUM, HIGH, CRITICAL).
 
+### 3. `suggest_mutant_fixes` (Hybrid Auto-Remediation Profiling)
+Provides precise code suggestions to kill surviving mutants.
+- **What it does:** Uses a hybrid approach combining static analysis and dynamic test profiling to craft highly accurate, contextual remediation code for surviving mutants. It outputs ready-to-use assertions and boundary tests for the AI agent to implement.
+
 ## Prompts
 
 ### `why_is_this_bad`

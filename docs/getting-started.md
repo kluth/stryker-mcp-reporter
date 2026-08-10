@@ -23,8 +23,10 @@ Stryker mutates your source code (e.g., changes `>` to `>=`, deletes return valu
 
 - ⚡ **Interactive Mutation Testing**: AI agents can trigger, observe, and evaluate mutation tests via MCP.
 - 🤖 **AI Mutant Auto-Remediation**: Generates tailored unit test assertions for surviving mutants.
+- 🛠️ **Hybrid Auto-Remediation Profiling**: Combines static analysis and dynamic profiling to make AI repair suggestions even more precise.
 - 🔮 **Git-Diff Risk Prediction**: Analyzes changed files and predicts mutation risk in < 1s.
 - 🎯 **Targeted Git-Diff Executions**: Tests only modified files.
+- 💾 **SQLite Caching & History**: Saves test results, trends, and history securely in a local SQLite database.
 - 📈 **Score Trend Tracking**: Access historical score trends and deltas.
 - 🛡️ **48-Hour Anti-Spam Engine**: Protects developer channels from spam during frequent releases.
 - ✈️ **Multi-Platform Broadcasting**: Auto-publishes releases to GitHub Discussions, DEV.to, Telegram, and Discord.

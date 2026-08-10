@@ -68,8 +68,10 @@ Stryker mutiert deinen Quellcode (z. B. verwandelt es `>` in `>=`, löscht Rück
 
 * ⚡ **Interaktives Mutation Testing**: KI-Agenten können Mutationstests gezielt per MCP-Tool-Call anstoßen, beobachten und auswerten.
 * 🤖 **AI Mutant Auto-Remediation**: `suggest_mutant_fixes` generiert maßgeschneiderte Unit-Test Assertions für überlebte Mutanten.
+* 🛠️ **Hybrid Auto-Remediation Profiling**: Kombiniert statische Analyse und dynamisches Profiling, um KI-Reparaturvorschläge für überlebende Mutanten noch präziser zu machen.
 * 🔮 **Git-Diff Risikoprognose**: `predict_mutation_impact` prognostiziert in < 1s das Mutationsrisiko geänderter Quellcodedateien.
 * 🎯 **Targeted Git-Diff Executions**: Mit `run_targeted_mutation_tests` werden nur die in Git geänderten TypeScript-Dateien getestet – **spart bis zu 90% Laufzeit!**
+* 💾 **SQLite Caching & History**: Speichert Testergebnisse, Trends und Historie sicher in einer lokalen SQLite Datenbank für pfeilschnellen Abruf und Langzeit-Analysen.
 * 📈 **Score Trend Tracking**: Greife über `stryker://analytics/trends` auf den historischen Score-Verlauf und Score-Deltas zu.
 * 🛡️ **48-Stunden Anti-Spam Engine**: Schützt Entwickler-Kanäle automatisch vor Spam bei frequentierten Release-Zyklen.
 * ✈️ **Multi-Plattform Release Broadcasting**: Veröffentlicht Releases automatisch auf GitHub Discussions, DEV.to, Telegram & Discord (mit `preview.html` Vorschau).
