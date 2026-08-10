@@ -1,7 +1,7 @@
 const fs = require('fs');
 const readline = require('readline');
+const path = require('path');
 
-// The hooks receive context on stdin
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -15,12 +15,37 @@ rl.on('line', (line) => {
 });
 
 rl.on('close', () => {
-  // Output expected by PostInvocation/Stop hook
-  console.log(JSON.stringify({
-    injectSteps: [
-      {
-        ephemeralMessage: "Evaluating ADRs with architecture and security agents..."
-      }
-    ]
-  }));
+  try {
+    const payload = JSON.parse(inputData);
+    const cmd = payload?.toolCall?.args?.CommandLine || "";
+    
+    if (cmd.includes("git commit")) {
+      console.log(JSON.stringify({
+        injectSteps: [
+          {
+            toolCall: {
+              name: "invoke_subagent",
+              args: {
+                Subagents: [
+                  {
+                    TypeName: "architecture_expert",
+                    Role: "Architecture Reviewer",
+                    Prompt: "A new ADR was just created in docs/adrs/. Please review it for architectural soundness and reply with your assessment."
+                  },
+                  {
+                    TypeName: "security_expert",
+                    Role: "Security Reviewer",
+                    Prompt: "A new ADR was just created in docs/adrs/. Please review it for security implications and reply with your assessment."
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }));
+      return;
+    }
+  } catch(e) {}
+
+  console.log(JSON.stringify({}));
 });

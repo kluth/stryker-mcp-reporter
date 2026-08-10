@@ -10,21 +10,31 @@
   },
   "adr-creation": {
     "enabled": true,
-    "PostInvocation": [
+    "PostToolUse": [
       {
-        "type": "command",
-        "command": "node scripts/create-adrs.js",
-        "timeout": 60
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/create-adrs.js",
+            "timeout": 60
+          }
+        ]
       }
     ]
   },
   "adr-evaluation": {
     "enabled": true,
-    "PostInvocation": [
+    "PostToolUse": [
       {
-        "type": "command",
-        "command": "node scripts/evaluate-adrs.js",
-        "timeout": 60
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/evaluate-adrs.js",
+            "timeout": 60
+          }
+        ]
       }
     ]
   }
