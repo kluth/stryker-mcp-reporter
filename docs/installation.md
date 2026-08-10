@@ -11,7 +11,7 @@
 Clone this repository and install dependencies:
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/kluth/stryker-mcp-reporter.git
 cd stryker-mcp-reporter
 npm install
 npm run build
