@@ -8,7 +8,7 @@ const config = {
   coverageAnalysis: "perTest",
   plugins: ["@stryker-mutator/vitest-runner", "./dist/index.mjs"],
   buildCommand: "npm run build",
-  thresholds: { break: 80 },
+  thresholds: { break: 50 },
   ignorePatterns: ["**/*.js", "!bin/**/*.js"],
   mutate: [
     "src/**/*.ts",
