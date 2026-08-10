@@ -7,5 +7,25 @@
         "timeout": 600
       }
     ]
+  },
+  "adr-creation": {
+    "enabled": true,
+    "PostInvocation": [
+      {
+        "type": "command",
+        "command": "node scripts/create-adrs.js",
+        "timeout": 60
+      }
+    ]
+  },
+  "adr-evaluation": {
+    "enabled": true,
+    "PostInvocation": [
+      {
+        "type": "command",
+        "command": "node scripts/evaluate-adrs.js",
+        "timeout": 60
+      }
+    ]
   }
 }
