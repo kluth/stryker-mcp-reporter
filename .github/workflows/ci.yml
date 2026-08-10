@@ -162,6 +162,9 @@ jobs:
             ${{ runner.os }}-stryker-main
             ${{ runner.os }}-stryker-
 
+      - name: Build Plugin
+        run: npm run build
+
       - name: Run Incremental Mutation Testing (Stryker)
         run: npx stryker run --incremental
         env:
