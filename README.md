@@ -175,7 +175,7 @@ Wähle die passende Konfiguration für dein Betriebssystem aus:
     "stryker-mutation-testing": {
       "command": "node",
       "args": [
-        "C:\\Users\\DEIN_BENUTZER\\Projects\\stryker-mcp-reporter\\bin\\stryker-mcp-server.js"
+        "C:\\Users\\DEIN_BENUTZER\\Projects\\stryker-mcp-reporter\\dist\\cli.js"
       ]
     }
   }

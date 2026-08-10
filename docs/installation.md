@@ -28,7 +28,7 @@ To use this with Claude Desktop or another MCP-compatible AI agent, add the serv
     "stryker-mcp": {
       "command": "node",
       "args": [
-        "C:/path/to/stryker-mcp-reporter/bin/stryker-mcp-server.js",
+        "C:/path/to/stryker-mcp-reporter/dist/cli.js",
         "--stdio"
       ]
     }
