@@ -16,6 +16,7 @@ import { MutationTrendTracker } from "../../core/domain/mutation-trend-tracker.j
 import { ok, err } from "../../core/domain/result.js";
 import type { TrackTestFlakinessUseCase } from "../../core/application/track-test-flakiness.use-case.js";
 import type { DatabaseAdapter } from "../../infrastructure/db/database.adapter.js";
+import type { AnalyzeCoverageGapUseCase } from "../../core/application/analyze-coverage-gap.use-case.js";
 
 describe("McpResourceController", () => {
   let mcpServer: Server;
@@ -28,6 +29,7 @@ describe("McpResourceController", () => {
   let trendTracker: MutationTrendTracker;
   let trackTestFlakinessUseCase: TrackTestFlakinessUseCase;
   let db: DatabaseAdapter;
+  let analyzeCoverageGapUseCase: AnalyzeCoverageGapUseCase;
   let controller: McpResourceController;
 
   beforeEach(() => {
@@ -59,6 +61,9 @@ describe("McpResourceController", () => {
       saveFlakyMutant: vi.fn(),
       getFlakyMutants: vi.fn(),
     } as unknown as DatabaseAdapter;
+    analyzeCoverageGapUseCase = {
+      execute: vi.fn().mockReturnValue(ok([])),
+    } as unknown as AnalyzeCoverageGapUseCase;
 
     controller = new McpResourceController(
       mcpServer,
@@ -71,6 +76,7 @@ describe("McpResourceController", () => {
       trendTracker,
       trackTestFlakinessUseCase,
       db,
+      analyzeCoverageGapUseCase,
     );
   });
 
@@ -95,7 +101,7 @@ describe("McpResourceController", () => {
       const handler = listCall![1] as Function;
 
       const result = await handler({}, {});
-      expect(result.resources).toHaveLength(7);
+      expect(result.resources).toHaveLength(8);
       expect(result.resources.map((r: any) => r.uri)).toEqual([
         "stryker://report/latest",
         "stryker://report/summary",
@@ -103,6 +109,7 @@ describe("McpResourceController", () => {
         "stryker://report/killed",
         "stryker://analytics/trends",
         "stryker://analytics/flaky-mutants",
+        "stryker://analytics/coverage-fake-hotspots",
         "stryker://status",
       ]);
     });

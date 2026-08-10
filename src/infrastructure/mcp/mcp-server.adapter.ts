@@ -25,6 +25,7 @@ import { NullNotificationAdapter } from "../notification/null-notification.adapt
 import type { DatabaseAdapter } from "../db/database.adapter.js";
 import { type Result, ok, err } from "../../core/domain/result.js";
 import type { TrackTestFlakinessUseCase } from "../../core/application/track-test-flakiness.use-case.js";
+import type { AnalyzeCoverageGapUseCase } from "../../core/application/analyze-coverage-gap.use-case.js";
 
 import { McpResourceController } from "./mcp-resource.controller.js";
 import { McpToolController } from "./mcp-tool.controller.js";
@@ -51,6 +52,7 @@ export class McpServerAdapter {
     private readonly notificationService: NotificationServicePort = new NullNotificationAdapter(),
     private readonly db: DatabaseAdapter | null = null,
     private readonly trackTestFlakinessUseCase: TrackTestFlakinessUseCase | null = null,
+    private readonly analyzeCoverageGapUseCase: AnalyzeCoverageGapUseCase | null = null,
   ) {
     this.mcpServer = new Server(SERVER_INFO, {
       capabilities: {
@@ -77,6 +79,7 @@ export class McpServerAdapter {
       trendTracker,
       this.trackTestFlakinessUseCase as TrackTestFlakinessUseCase,
       this.db as DatabaseAdapter,
+      this.analyzeCoverageGapUseCase as AnalyzeCoverageGapUseCase,
     );
     resourceController.register();
 

@@ -24,6 +24,8 @@ import { DatabaseAdapter } from "./infrastructure/db/database.adapter.js";
 import { TrackTestFlakinessUseCase } from "./core/application/track-test-flakiness.use-case.js";
 import type { Result } from "./core/domain/result.js";
 
+import { AnalyzeCoverageGapUseCase } from "./core/application/analyze-coverage-gap.use-case.js";
+
 export const strykerPlugins = [
   declareFactoryPlugin(PluginKind.Reporter, "mcp", mcpReporterFactory),
 ];
@@ -59,6 +61,7 @@ export function createMcpServerAdapter(
   const getMutantContextUseCase = new GetMutantContextUseCase(reportStream);
   
   const trackTestFlakinessUseCase = new TrackTestFlakinessUseCase(db);
+  const analyzeCoverageGapUseCase = new AnalyzeCoverageGapUseCase(reportStream);
 
   return new McpServerAdapter(
     logger,
@@ -74,6 +77,7 @@ export function createMcpServerAdapter(
     notifierService,
     db,
     trackTestFlakinessUseCase,
+    analyzeCoverageGapUseCase,
   );
 }
 
@@ -106,6 +110,7 @@ function mcpReporterFactory(logger: Logger): McpReporter {
   const getMutantContextUseCase = new GetMutantContextUseCase(reportStream);
 
   const trackTestFlakinessUseCase = new TrackTestFlakinessUseCase(db);
+  const analyzeCoverageGapUseCase = new AnalyzeCoverageGapUseCase(reportStream);
 
   const serverAdapter = new McpServerAdapter(
     logger,
@@ -121,6 +126,7 @@ function mcpReporterFactory(logger: Logger): McpReporter {
     notifierService,
     db,
     trackTestFlakinessUseCase,
+    analyzeCoverageGapUseCase,
   );
 
   return new McpReporter(logger, publishUseCase, serverAdapter, db);

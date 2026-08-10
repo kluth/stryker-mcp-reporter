@@ -13,6 +13,7 @@ import type { GetKilledMutantsUseCase } from "../../core/application/get-killed-
 import type { MutationTrendTracker } from "../../core/domain/mutation-trend-tracker.js";
 import type { TrackTestFlakinessUseCase } from "../../core/application/track-test-flakiness.use-case.js";
 import type { DatabaseAdapter } from "../../infrastructure/db/database.adapter.js";
+import type { AnalyzeCoverageGapUseCase } from "../../core/application/analyze-coverage-gap.use-case.js";
 
 export class McpResourceController {
   constructor(
@@ -26,6 +27,7 @@ export class McpResourceController {
     private readonly trendTracker: MutationTrendTracker,
     private readonly trackTestFlakinessUseCase: TrackTestFlakinessUseCase,
     private readonly db: DatabaseAdapter,
+    private readonly analyzeCoverageGapUseCase: AnalyzeCoverageGapUseCase,
   ) {}
 
   public register(): void {
@@ -70,6 +72,12 @@ export class McpResourceController {
           name: "Flaky Mutants",
           mimeType: "application/json",
           description: "List of flaky mutants that flip between Killed and Survived.",
+        },
+        {
+          uri: "stryker://analytics/coverage-fake-hotspots",
+          name: "Coverage Gap Analysis",
+          mimeType: "application/json",
+          description: "Analysis of files with high coverage but high mutation survival rate.",
         },
         {
           uri: "stryker://status",
@@ -201,6 +209,23 @@ export class McpResourceController {
                 uri,
                 mimeType: "application/json",
                 text: JSON.stringify(flaky, null, 2),
+              },
+            ],
+          };
+        }
+
+        if (uri === "stryker://analytics/coverage-fake-hotspots") {
+          const result = this.analyzeCoverageGapUseCase.execute();
+          const text = result.isOk
+            ? JSON.stringify(result.value, null, 2)
+            : JSON.stringify({ error: result.error.message });
+
+          return {
+            contents: [
+              {
+                uri,
+                mimeType: "application/json",
+                text,
               },
             ],
           };
