@@ -56,7 +56,7 @@ export class McpPromptController {
         ) {
           const survivedResult = this.getSurvivedUseCase.execute();
           const survived = survivedResult.isOk ? survivedResult.value : [];
-          const advice = this.suggestFixesUseCase.execute(survived);
+          const advice = await this.suggestFixesUseCase.execute(survived);
 
           if (survived.length === 0) {
             return {

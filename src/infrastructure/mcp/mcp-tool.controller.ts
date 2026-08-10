@@ -122,6 +122,12 @@ export class McpToolController {
                 description:
                   "Optionaler Dateipfad-Filter (z.B. 'src/calculator.ts').",
               },
+              profile: {
+                type: "string",
+                enum: ["local", "cloud", "regex"],
+                description:
+                  "Das Remediation-Profil. 'local' für lokales LLM, 'cloud' für Cloud LLM, 'regex' für klassischen AST-Fallback.",
+              }
             },
           },
         },
@@ -345,9 +351,10 @@ export class McpToolController {
 
       if (name === "suggest_mutant_fixes") {
         const filterPath = parseFilePath(args);
+        const profile = (args as any)?.profile as "local" | "cloud" | "regex" | undefined;
         const survivedResult = this.getSurvivedUseCase.execute(filterPath);
         const survivedMutants = survivedResult.isOk ? survivedResult.value : [];
-        const advice = this.suggestFixesUseCase.execute(survivedMutants);
+        const advice = await this.suggestFixesUseCase.execute(survivedMutants, profile);
 
         return {
           content: [

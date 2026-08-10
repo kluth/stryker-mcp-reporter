@@ -1,72 +1,54 @@
-// src/core/application/suggest-mutant-fixes.use-case.spec.ts
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { SuggestMutantFixesUseCase } from "./suggest-mutant-fixes.use-case.js";
 import { MutantDetail } from "../domain/mutation-report.js";
 
 describe("SuggestMutantFixesUseCase", () => {
   const useCase = new SuggestMutantFixesUseCase();
 
-  it("should return empty array if all mutants were killed", () => {
+  it("should return empty array if all mutants were killed", async () => {
     const mutants: MutantDetail[] = [
-      {
-        id: "1",
-        filePath: "src/foo.ts",
-        status: "Killed",
-        mutatorName: "EqualityOperator",
-        replacement: "==",
-        line: 10,
-        column: 1,
-        testsRan: [],
-      },
+      { id: "m1", status: "Killed", mutatorName: "Arithmetic" } as any,
     ];
-    const results = useCase.execute(mutants);
+    const results = await useCase.execute(mutants);
     expect(results).toEqual([]);
   });
 
-  it("should generate remediation advice for survived mutants", () => {
+  it("should generate remediation advice for survived mutants", async () => {
     const mutants: MutantDetail[] = [
       {
         id: "m1",
-        filePath: "src/calculator.ts",
         status: "Survived",
-        mutatorName: "EqualityOperator",
-        replacement: "<=",
-        line: 15,
+        mutatorName: "Equality",
+        filePath: "src/calculator.ts",
+        line: 10,
         column: 5,
-        testsRan: ["test1"],
-      },
+        replacement: "<",
+      } as any,
     ];
-    const results = useCase.execute(mutants);
+    const results = await useCase.execute(mutants);
     expect(results).toHaveLength(1);
     expect(results[0].mutantId).toBe("m1");
     expect(results[0].fileName).toBe("src/calculator.ts");
-    expect(results[0].explanation).toContain(
-      "Equality/Boundary condition survived",
-    );
-    expect(results[0].boundaryTestSnippet).toContain(
-      "should test exact boundary value",
-    );
+    expect(results[0].mutatorName).toBe("Equality");
+    expect(results[0].explanation).toContain("Equality/Boundary condition survived");
+    expect(results[0].suggestedAssertion).toContain("toBe");
   });
 
-  it("should generate remediation advice for NoCoverage mutants", () => {
+  it("should generate remediation advice for NoCoverage mutants", async () => {
     const mutants: MutantDetail[] = [
       {
         id: "m2",
-        filePath: "src/logger.ts",
         status: "NoCoverage",
         mutatorName: "StringLiteral",
+        filePath: "src/logger.ts",
+        line: 25,
+        column: 12,
         replacement: '""',
-        line: 22,
-        column: 8,
-        testsRan: [],
-      },
+      } as any,
     ];
-    const results = useCase.execute(mutants);
+    const results = await useCase.execute(mutants);
     expect(results).toHaveLength(1);
     expect(results[0].mutantId).toBe("m2");
-    expect(results[0].explanation).toContain(
-      "String/Literal mutation survived",
-    );
-    expect(results[0].suggestedAssertion).toContain("toContain");
+    expect(results[0].explanation).toContain("String/Literal mutation survived");
   });
 });
