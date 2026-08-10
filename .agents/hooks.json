@@ -37,5 +37,20 @@
         ]
       }
     ]
+  },
+  "agentic-review": {
+    "enabled": true,
+    "PostToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/agentic-review.js",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
   }
 }
