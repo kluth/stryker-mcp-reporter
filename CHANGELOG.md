@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.13.0...v1.14.0) (2026-08-10)
+
+
+### Features
+
+* add hooks for ADR creation and evaluation ([8b225dd](https://github.com/kluth/stryker-mcp-reporter/commit/8b225dd01a92c17b9e96eb4f33dea632e59be138))
+
 # [1.13.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.12.0...v1.13.0) (2026-08-09)
 
 
