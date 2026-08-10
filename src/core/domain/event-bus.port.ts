@@ -11,13 +11,13 @@ export interface EventBusPort {
 
   /**
    * Abonniert Events eines bestimmten Typs.
-   * @param eventType Der Typ des Events (z.B. "MutantSurvived")
+   * @param eventClass Die Klasse des Events (z.B. MutantSurvivedEvent)
    * @param handler Die Callback-Funktion
    */
-  subscribe<T extends DomainEvent>(eventType: string, handler: EventHandler<T>): void;
+  subscribe<T extends DomainEvent>(eventClass: { new (...args: any[]): T }, handler: EventHandler<T>): void;
 
   /**
    * Entfernt ein Abonnement.
    */
-  unsubscribe<T extends DomainEvent>(eventType: string, handler: EventHandler<T>): void;
+  unsubscribe<T extends DomainEvent>(eventClass: { new (...args: any[]): T }, handler: EventHandler<T>): void;
 }

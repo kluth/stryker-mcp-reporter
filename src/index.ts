@@ -25,6 +25,7 @@ import { TrackTestFlakinessUseCase } from "./core/application/track-test-flakine
 import type { Result } from "./core/domain/result.js";
 
 import { AnalyzeCoverageGapUseCase } from "./core/application/analyze-coverage-gap.use-case.js";
+import { InMemoryEventBusAdapter } from "./infrastructure/event/in-memory-event-bus.adapter.js";
 
 export const strykerPlugins = [
   declareFactoryPlugin(PluginKind.Reporter, "mcp", mcpReporterFactory),
@@ -40,6 +41,7 @@ export function createMcpServerAdapter(
   const reportStream = new ReportStream();
   const statusStream = new ExecutionStatusStream();
   const db = new DatabaseAdapter();
+  const eventBus = new InMemoryEventBusAdapter();
 
   const strykerRunner = new StrykerCliRunnerAdapter(logger);
   const gitService = new GitCliAdapter(logger);
@@ -78,6 +80,7 @@ export function createMcpServerAdapter(
     db,
     trackTestFlakinessUseCase,
     analyzeCoverageGapUseCase,
+    eventBus
   );
 }
 
@@ -111,6 +114,7 @@ function mcpReporterFactory(logger: Logger): McpReporter {
 
   const trackTestFlakinessUseCase = new TrackTestFlakinessUseCase(db);
   const analyzeCoverageGapUseCase = new AnalyzeCoverageGapUseCase(reportStream);
+  const eventBus = new InMemoryEventBusAdapter();
 
   const serverAdapter = new McpServerAdapter(
     logger,
@@ -127,6 +131,7 @@ function mcpReporterFactory(logger: Logger): McpReporter {
     db,
     trackTestFlakinessUseCase,
     analyzeCoverageGapUseCase,
+    eventBus
   );
 
   return new McpReporter(logger, publishUseCase, serverAdapter, db);

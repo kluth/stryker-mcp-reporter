@@ -7,7 +7,7 @@ describe("InMemoryEventBusAdapter", () => {
     const bus = new InMemoryEventBusAdapter();
     const handler = vi.fn();
 
-    bus.subscribe("MutantSurvived", handler);
+    bus.subscribe(MutantSurvivedEvent, handler);
     bus.publish(new MutantSurvivedEvent({ mutantId: "123", filePath: "foo.ts" }));
 
     // Warten auf setImmediate
@@ -21,8 +21,8 @@ describe("InMemoryEventBusAdapter", () => {
     const bus = new InMemoryEventBusAdapter();
     const handler = vi.fn();
 
-    bus.subscribe("MutantSurvived", handler);
-    bus.unsubscribe("MutantSurvived", handler);
+    bus.subscribe(MutantSurvivedEvent, handler);
+    bus.unsubscribe(MutantSurvivedEvent, handler);
     bus.publish(new MutantSurvivedEvent({ mutantId: "123", filePath: "foo.ts" }));
 
     await new Promise((resolve) => setImmediate(resolve));

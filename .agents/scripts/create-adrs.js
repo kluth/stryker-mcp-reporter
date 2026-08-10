@@ -22,7 +22,7 @@ rl.on('close', () => {
     
     // Only trigger if a git commit was made
     if (cmd.includes("git commit")) {
-      const adrDir = path.join(process.cwd(), 'docs', 'adrs');
+      const adrDir = path.join(process.cwd(), '..', 'docs', 'adrs');
       if (!fs.existsSync(adrDir)) {
         fs.mkdirSync(adrDir, { recursive: true });
       }

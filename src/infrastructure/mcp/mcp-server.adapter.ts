@@ -27,7 +27,6 @@ import { type Result, ok, err } from "../../core/domain/result.js";
 import type { TrackTestFlakinessUseCase } from "../../core/application/track-test-flakiness.use-case.js";
 import type { AnalyzeCoverageGapUseCase } from "../../core/application/analyze-coverage-gap.use-case.js";
 import type { EventBusPort } from "../../core/domain/event-bus.port.js";
-import { InMemoryEventBusAdapter } from "../event/in-memory-event-bus.adapter.js";
 
 import { McpResourceController } from "./mcp-resource.controller.js";
 import { McpToolController } from "./mcp-tool.controller.js";
@@ -56,9 +55,9 @@ export class McpServerAdapter {
     private readonly db: DatabaseAdapter | null = null,
     private readonly trackTestFlakinessUseCase: TrackTestFlakinessUseCase | null = null,
     private readonly analyzeCoverageGapUseCase: AnalyzeCoverageGapUseCase | null = null,
-    eventBus?: EventBusPort,
+    eventBus: EventBusPort,
   ) {
-    this.eventBus = eventBus ?? new InMemoryEventBusAdapter();
+    this.eventBus = eventBus;
     this.mcpServer = new Server(SERVER_INFO, {
       capabilities: {
         resources: {},
