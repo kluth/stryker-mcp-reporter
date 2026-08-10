@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/kluth/stryker-mcp-reporter/compare/v1.16.0...v1.16.1) (2026-08-10)
+
+
+### Bug Fixes
+
+* address P0 vulnerabilities (auth, opt-in AI, real mutation score) ([b57ca69](https://github.com/kluth/stryker-mcp-reporter/commit/b57ca6993107d66cef305f196805ebfdd3d059aa))
+
 # [1.16.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.15.0...v1.16.0) (2026-08-10)
 
 
