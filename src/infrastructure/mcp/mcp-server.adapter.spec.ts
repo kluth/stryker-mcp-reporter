@@ -35,7 +35,21 @@ vi.mock("express", () => {
 
 vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => {
   return {
-    StdioServerTransport: vi.fn().mockImplementation(() => ({})),
+    StdioServerTransport: vi.fn().mockImplementation(function () {
+      return {};
+    }),
+  };
+});
+
+vi.mock("@modelcontextprotocol/sdk/server/sse.js", () => {
+  return {
+    SSEServerTransport: vi.fn().mockImplementation(function () {
+      return {
+        sessionId: "mock-session-id",
+        handlePostMessage: vi.fn(),
+        onclose: undefined,
+      };
+    }),
   };
 });
 
@@ -87,6 +101,11 @@ describe("McpServerAdapter", () => {
   afterEach(async () => {
     await adapter.stop();
     vi.restoreAllMocks();
+    vi.clearAllMocks();
+    mockApp.get.mockClear();
+    mockApp.post.mockClear();
+    mockApp.use.mockClear();
+    mockApp.listen.mockClear();
   });
 
   it("sollte die korrekten Server-Metadaten bereitstellen", () => {
@@ -110,13 +129,18 @@ describe("McpServerAdapter", () => {
 
   it("sollte Fehler beim HTTP-Server Start abfangen", async () => {
     mockApp.listen.mockImplementationOnce((port, cb) => {
-      const server = { address: () => ({ port: 3000 }), on: vi.fn(), close: vi.fn().mockImplementation((cb) => { if (cb) cb(); }) };
-      return server;
+      const server = { 
+        address: () => ({ port: 3000 }), 
+        on: (event: string, handler: any) => {
+          if (event === "error") {
+            setTimeout(() => handler(new Error("listen error")), 0);
+          }
+        }, 
+        close: vi.fn().mockImplementation((cb) => { if (cb) cb(); }) 
+      };
+      return server as any;
     });
-    const promise = adapter.start();
-    const onCall = mockApp.listen.mock.results[0].value.on.mock.calls.find((c: any) => c[0] === "error");
-    onCall[1](new Error("listen error"));
-    const result = await promise;
+    const result = await adapter.start();
     expect(result.isOk).toBe(false);
     expect(result.error?.message).toBe("listen error");
   });
@@ -168,7 +192,7 @@ describe("McpServerAdapter", () => {
       // Test onclose
       const transport = adapter["sseTransports"].values().next().value;
       expect(adapter["sseTransports"].size).toBe(1);
-      transport.onclose();
+      if (transport.onclose) transport.onclose();
       expect(adapter["sseTransports"].size).toBe(0);
     });
 

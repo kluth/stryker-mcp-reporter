@@ -8,9 +8,11 @@ import type { PartialStrykerOptions } from "@stryker-mutator/api/core";
 
 vi.mock("@stryker-mutator/core", () => {
   return {
-    Stryker: vi.fn().mockImplementation(() => ({
-      runMutationTest: vi.fn().mockResolvedValue([]),
-    })),
+    Stryker: vi.fn().mockImplementation(function () {
+      return {
+        runMutationTest: vi.fn().mockResolvedValue([]),
+      };
+    }),
   };
 });
 
