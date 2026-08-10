@@ -7,6 +7,7 @@ Welcome to the **Stryker MCP Reporter** documentation! This project allows AI mo
 - [Installation & Getting Started](installation.md)
 - [Usage & MCP Tools](usage.md)
 - [Architecture & Design](architecture.md)
+- [Framework Support & Recipes](framework-recipes.md)
 
 ## Core Features
 
