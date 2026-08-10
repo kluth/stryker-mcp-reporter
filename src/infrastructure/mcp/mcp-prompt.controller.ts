@@ -54,7 +54,7 @@ export class McpPromptController {
           name === "explain_survived_mutants" ||
           name === "remediate_mutants"
         ) {
-          const survivedResult = this.getSurvivedUseCase.execute();
+          const survivedResult = await this.getSurvivedUseCase.execute();
           const survived = survivedResult.isOk ? survivedResult.value : [];
           const advice = await this.suggestFixesUseCase.execute(survived);
 
@@ -107,7 +107,7 @@ export class McpPromptController {
               mutantDetails = `Fehler beim Abrufen des Mutanten ${mutantId}: ${contextResult.error.message}`;
             }
           } else {
-            const survivedResult = this.getSurvivedUseCase.execute();
+            const survivedResult = await this.getSurvivedUseCase.execute();
             const survived = survivedResult.isOk ? survivedResult.value : [];
             if (survived.length === 0) {
               return {

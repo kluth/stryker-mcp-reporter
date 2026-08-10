@@ -153,5 +153,40 @@ export class GitCliAdapter implements GitServicePort {
     
     return results;
   }
+
+  public async getBlameForLine(filePath: string, line: number): Promise<{
+    author: string;
+    authorEmail: string;
+    commitHash: string;
+    timestamp: Date;
+  } | undefined> {
+    try {
+      const output = await this.execFn("git", [
+        "blame",
+        "-L",
+        `${line},${line}`,
+        "--porcelain",
+        filePath
+      ]);
+      
+      const lines = output.split('\n');
+      if (lines.length === 0) return undefined;
+      
+      const commitHash = lines[0].split(' ')[0];
+      let author = "Unknown";
+      let authorEmail = "unknown@example.com";
+      let timestamp = new Date();
+      
+      for (const l of lines) {
+        if (l.startsWith("author ")) author = l.substring(7);
+        if (l.startsWith("author-mail ")) authorEmail = l.substring(12).replace(/[<>]/g, "");
+        if (l.startsWith("author-time ")) timestamp = new Date(parseInt(l.substring(12)) * 1000);
+      }
+      
+      return { author, authorEmail, commitHash, timestamp };
+    } catch (e) {
+      return undefined;
+    }
+  }
 }
 

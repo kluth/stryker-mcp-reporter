@@ -24,4 +24,14 @@ export interface GitServicePort {
    * Rückgabeformat z.B. ["src/foo.ts:10-15", "src/bar.ts:2-5"]
    */
   getChangedLineRanges(revisionOrBranch?: string): Promise<string[]>;
+
+  /**
+   * Holt die Git Blame Informationen für eine bestimmte Zeile in einer Datei.
+   */
+  getBlameForLine?(filePath: string, line: number): Promise<{
+    author: string;
+    authorEmail: string;
+    commitHash: string;
+    timestamp: Date;
+  } | undefined>;
 }

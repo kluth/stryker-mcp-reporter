@@ -79,6 +79,12 @@ export interface MutantDetail {
   coveredBy?: string[];
   killedBy?: string[];
   testsRan: string[];
+  gitBlame?: {
+    author: string;
+    authorEmail: string;
+    commitHash: string;
+    timestamp: Date;
+  };
 }
 
 /**

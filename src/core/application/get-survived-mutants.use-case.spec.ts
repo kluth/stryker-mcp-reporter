@@ -38,8 +38,8 @@ describe("GetSurvivedMutantsUseCase", () => {
     useCase = new GetSurvivedMutantsUseCase(reportStream);
   });
 
-  it("gibt ein err-Result zurück, wenn kein Report im Stream liegt", () => {
-    const result = useCase.execute();
+  it("gibt ein err-Result zurück, wenn kein Report im Stream liegt", async () => {
+    const result = await useCase.execute();
 
     expect(result.isOk).toBe(false);
     expect(result.error?.message).toBe(
@@ -47,25 +47,26 @@ describe("GetSurvivedMutantsUseCase", () => {
     );
   });
 
-  it("extrahiert alle überlebenden Mutanten aus dem aktuellen Report", () => {
+  it("extrahiert alle überlebenden Mutanten aus dem aktuellen Report", async () => {
     reportStream.publish(sampleReport);
 
-    const result = useCase.execute();
+    const result = await useCase.execute();
 
     expect(result.isOk).toBe(true);
     expect(result.value).toHaveLength(1);
     expect(result.value![0].id).toBe("1");
     expect(result.value![0].filePath).toBe("src/foo.ts");
+    expect(result.value![0].mutatorName).toBe("Arithmetic");
   });
 
-  it("unterstützt das Filtern nach Dateipfad", () => {
+  it("unterstützt das Filtern nach Dateipfad", async () => {
     reportStream.publish(sampleReport);
 
-    const resultMatch = useCase.execute("src/foo.ts");
+    const resultMatch = await useCase.execute("src/foo.ts");
     expect(resultMatch.isOk).toBe(true);
     expect(resultMatch.value).toHaveLength(1);
 
-    const resultNoMatch = useCase.execute("src/bar.ts");
+    const resultNoMatch = await useCase.execute("src/bar.ts");
     expect(resultNoMatch.isOk).toBe(true);
     expect(resultNoMatch.value).toHaveLength(0);
   });

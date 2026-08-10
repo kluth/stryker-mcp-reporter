@@ -352,7 +352,7 @@ export class McpToolController {
       if (name === "suggest_mutant_fixes") {
         const filterPath = parseFilePath(args);
         const profile = (args as any)?.profile as "local" | "cloud" | "regex" | undefined;
-        const survivedResult = this.getSurvivedUseCase.execute(filterPath);
+        const survivedResult = await this.getSurvivedUseCase.execute(filterPath);
         const survivedMutants = survivedResult.isOk ? survivedResult.value : [];
         const advice = await this.suggestFixesUseCase.execute(survivedMutants, profile);
 
@@ -383,7 +383,7 @@ export class McpToolController {
 
       if (name === "generate_testing_cheat_sheet") {
         const filterPath = parseFilePath(args);
-        const survivedResult = this.getSurvivedUseCase.execute(filterPath);
+        const survivedResult = await this.getSurvivedUseCase.execute(filterPath);
         const survivedMutants = survivedResult.isOk ? survivedResult.value : [];
         const cheatSheet = this.generateCheatSheetUseCase.execute(survivedMutants);
 
@@ -399,7 +399,7 @@ export class McpToolController {
 
       if (name === "detect_equivalent_mutants") {
         const filterPath = parseFilePath(args);
-        const survivedResult = this.getSurvivedUseCase.execute(filterPath);
+        const survivedResult = await this.getSurvivedUseCase.execute(filterPath);
         const survivedMutants = survivedResult.isOk ? survivedResult.value : [];
         const detected = this.detectEquivalentUseCase.execute(survivedMutants);
         
@@ -434,7 +434,7 @@ export class McpToolController {
 
       if (name === "get_survived_mutants") {
         const filterPath = parseFilePath(args);
-        const survivedResult = this.getSurvivedUseCase.execute(filterPath);
+        const survivedResult = await this.getSurvivedUseCase.execute(filterPath);
         if (!survivedResult.isOk) {
           return {
             isError: true,
