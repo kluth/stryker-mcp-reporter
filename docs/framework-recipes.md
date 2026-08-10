@@ -36,6 +36,7 @@ In these cases, you must explicitly list the plugins in your `stryker.config.mjs
 // stryker.config.mjs
 export default {
   // ... your other config
+  reporters: ["mcp", "clear-text"], // <--- Add "mcp" here
   plugins: [
     "@stryker-mutator/*",
     "stryker-mcp-reporter"
