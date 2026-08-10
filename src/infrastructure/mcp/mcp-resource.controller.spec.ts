@@ -14,6 +14,8 @@ import type { GetSurvivedMutantsUseCase } from "../../core/application/get-survi
 import type { GetKilledMutantsUseCase } from "../../core/application/get-killed-mutants.use-case.js";
 import { MutationTrendTracker } from "../../core/domain/mutation-trend-tracker.js";
 import { ok, err } from "../../core/domain/result.js";
+import type { TrackTestFlakinessUseCase } from "../../core/application/track-test-flakiness.use-case.js";
+import type { DatabaseAdapter } from "../../infrastructure/db/database.adapter.js";
 
 describe("McpResourceController", () => {
   let mcpServer: Server;
@@ -24,6 +26,8 @@ describe("McpResourceController", () => {
   let getSurvivedUseCase: GetSurvivedMutantsUseCase;
   let getKilledUseCase: GetKilledMutantsUseCase;
   let trendTracker: MutationTrendTracker;
+  let trackTestFlakinessUseCase: TrackTestFlakinessUseCase;
+  let db: DatabaseAdapter;
   let controller: McpResourceController;
 
   beforeEach(() => {
@@ -46,6 +50,15 @@ describe("McpResourceController", () => {
       execute: vi.fn(),
     } as unknown as GetKilledMutantsUseCase;
     trendTracker = new MutationTrendTracker();
+    trackTestFlakinessUseCase = {
+      execute: vi.fn().mockReturnValue([]),
+    } as unknown as TrackTestFlakinessUseCase;
+    db = {
+      getRuns: vi.fn(),
+      getMutantsForRun: vi.fn(),
+      saveFlakyMutant: vi.fn(),
+      getFlakyMutants: vi.fn(),
+    } as unknown as DatabaseAdapter;
 
     controller = new McpResourceController(
       mcpServer,
@@ -56,6 +69,8 @@ describe("McpResourceController", () => {
       getSurvivedUseCase,
       getKilledUseCase,
       trendTracker,
+      trackTestFlakinessUseCase,
+      db,
     );
   });
 
@@ -80,13 +95,14 @@ describe("McpResourceController", () => {
       const handler = listCall![1] as Function;
 
       const result = await handler({}, {});
-      expect(result.resources).toHaveLength(6);
+      expect(result.resources).toHaveLength(7);
       expect(result.resources.map((r: any) => r.uri)).toEqual([
         "stryker://report/latest",
         "stryker://report/summary",
         "stryker://report/survived",
         "stryker://report/killed",
         "stryker://analytics/trends",
+        "stryker://analytics/flaky-mutants",
         "stryker://status",
       ]);
     });

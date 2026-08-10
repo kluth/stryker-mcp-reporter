@@ -24,6 +24,7 @@ import type { NotificationServicePort } from "../../core/domain/notification-ser
 import { NullNotificationAdapter } from "../notification/null-notification.adapter.js";
 import type { DatabaseAdapter } from "../db/database.adapter.js";
 import { type Result, ok, err } from "../../core/domain/result.js";
+import type { TrackTestFlakinessUseCase } from "../../core/application/track-test-flakiness.use-case.js";
 
 import { McpResourceController } from "./mcp-resource.controller.js";
 import { McpToolController } from "./mcp-tool.controller.js";
@@ -49,6 +50,7 @@ export class McpServerAdapter {
     private readonly port: number = 3000,
     private readonly notificationService: NotificationServicePort = new NullNotificationAdapter(),
     private readonly db: DatabaseAdapter | null = null,
+    private readonly trackTestFlakinessUseCase: TrackTestFlakinessUseCase | null = null,
   ) {
     this.mcpServer = new Server(SERVER_INFO, {
       capabilities: {
@@ -73,6 +75,8 @@ export class McpServerAdapter {
       this.getSurvivedUseCase,
       this.getKilledUseCase,
       trendTracker,
+      this.trackTestFlakinessUseCase as TrackTestFlakinessUseCase,
+      this.db as DatabaseAdapter,
     );
     resourceController.register();
 

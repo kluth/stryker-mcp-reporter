@@ -11,6 +11,8 @@ import type { GetMutationSummaryUseCase } from "../../core/application/get-mutat
 import type { GetSurvivedMutantsUseCase } from "../../core/application/get-survived-mutants.use-case.js";
 import type { GetKilledMutantsUseCase } from "../../core/application/get-killed-mutants.use-case.js";
 import type { MutationTrendTracker } from "../../core/domain/mutation-trend-tracker.js";
+import type { TrackTestFlakinessUseCase } from "../../core/application/track-test-flakiness.use-case.js";
+import type { DatabaseAdapter } from "../../infrastructure/db/database.adapter.js";
 
 export class McpResourceController {
   constructor(
@@ -22,6 +24,8 @@ export class McpResourceController {
     private readonly getSurvivedUseCase: GetSurvivedMutantsUseCase,
     private readonly getKilledUseCase: GetKilledMutantsUseCase,
     private readonly trendTracker: MutationTrendTracker,
+    private readonly trackTestFlakinessUseCase: TrackTestFlakinessUseCase,
+    private readonly db: DatabaseAdapter,
   ) {}
 
   public register(): void {
@@ -60,6 +64,12 @@ export class McpResourceController {
           mimeType: "application/json",
           description:
             "Historische Trendanalyse der Mutationsscore-Entwicklung.",
+        },
+        {
+          uri: "stryker://analytics/flaky-mutants",
+          name: "Flaky Mutants",
+          mimeType: "application/json",
+          description: "List of flaky mutants that flip between Killed and Survived.",
         },
         {
           uri: "stryker://status",
@@ -162,6 +172,35 @@ export class McpResourceController {
                   null,
                   2,
                 ),
+              },
+            ],
+          };
+        }
+
+        if (uri === "stryker://analytics/flaky-mutants") {
+          const report = this.reportStream.current();
+          
+          let mutants: any[] = [];
+          if (report && report.files) {
+            for (const [filePath, file] of Object.entries(report.files)) {
+              if (file.mutants) {
+                mutants = mutants.concat(file.mutants.map(m => ({
+                  id: m.id,
+                  filePath,
+                  status: m.status
+                })));
+              }
+            }
+          }
+          
+          const flaky = this.trackTestFlakinessUseCase.execute(mutants);
+          
+          return {
+            contents: [
+              {
+                uri,
+                mimeType: "application/json",
+                text: JSON.stringify(flaky, null, 2),
               },
             ],
           };

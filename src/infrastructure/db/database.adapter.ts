@@ -66,6 +66,13 @@ export class DatabaseAdapter {
         key TEXT PRIMARY KEY,
         value TEXT
       );
+
+      CREATE TABLE IF NOT EXISTS flaky_mutants (
+        mutant_id TEXT,
+        file_path TEXT,
+        status TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
     `);
   }
 
@@ -151,6 +158,17 @@ export class DatabaseAdapter {
 
   public getMutantsForRun(runId: string): any[] {
     return this.db.prepare(`SELECT * FROM mutants WHERE run_id = ?`).all(runId);
+  }
+
+  public saveFlakyMutant(mutantId: string, filePath: string, status: string): void {
+    this.db.prepare(`
+      INSERT INTO flaky_mutants (mutant_id, file_path, status)
+      VALUES (?, ?, ?)
+    `).run(mutantId, filePath, status);
+  }
+
+  public getFlakyMutants(): any[] {
+    return this.db.prepare(`SELECT * FROM flaky_mutants ORDER BY timestamp DESC`).all();
   }
 
   public saveInsight(mutantId: string, filePath: string, insightText: string, embedding?: number[]): void {

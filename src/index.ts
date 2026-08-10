@@ -21,6 +21,7 @@ import { DesktopNotifierAdapter } from "./infrastructure/notification/desktop-no
 import { ReportStream } from "./core/domain/report-stream.js";
 import { ExecutionStatusStream } from "./core/domain/execution-status.js";
 import { DatabaseAdapter } from "./infrastructure/db/database.adapter.js";
+import { TrackTestFlakinessUseCase } from "./core/application/track-test-flakiness.use-case.js";
 import type { Result } from "./core/domain/result.js";
 
 export const strykerPlugins = [
@@ -56,6 +57,8 @@ export function createMcpServerAdapter(
   const getSummaryUseCase = new GetMutationSummaryUseCase(reportStream);
   const getKilledUseCase = new GetKilledMutantsUseCase(reportStream);
   const getMutantContextUseCase = new GetMutantContextUseCase(reportStream);
+  
+  const trackTestFlakinessUseCase = new TrackTestFlakinessUseCase(db);
 
   return new McpServerAdapter(
     logger,
@@ -70,6 +73,7 @@ export function createMcpServerAdapter(
     port,
     notifierService,
     db,
+    trackTestFlakinessUseCase,
   );
 }
 
@@ -101,6 +105,8 @@ function mcpReporterFactory(logger: Logger): McpReporter {
   const getKilledUseCase = new GetKilledMutantsUseCase(reportStream);
   const getMutantContextUseCase = new GetMutantContextUseCase(reportStream);
 
+  const trackTestFlakinessUseCase = new TrackTestFlakinessUseCase(db);
+
   const serverAdapter = new McpServerAdapter(
     logger,
     reportStream,
@@ -114,6 +120,7 @@ function mcpReporterFactory(logger: Logger): McpReporter {
     3000,
     notifierService,
     db,
+    trackTestFlakinessUseCase,
   );
 
   return new McpReporter(logger, publishUseCase, serverAdapter, db);
