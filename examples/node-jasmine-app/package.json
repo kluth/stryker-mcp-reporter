@@ -1,0 +1,19 @@
+{
+  "name": "jasmine-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/jasmine-runner": "^9.6.1",
+    "jasmine": "^6.3.0",
+    "stryker-mcp-reporter": "^1.16.0"
+  }
+}
