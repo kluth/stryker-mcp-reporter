@@ -9,7 +9,9 @@ export class DatabaseAdapter {
 
   constructor() {
     const dbDir = path.resolve(process.cwd(), "reports", "mutation");
-    if (!fs.existsSync(dbDir)) {
+    try {
+      fs.statSync(dbDir);
+    } catch (err) {
       fs.mkdirSync(dbDir, { recursive: true });
     }
     const dbPath = path.join(dbDir, "stryker.db");

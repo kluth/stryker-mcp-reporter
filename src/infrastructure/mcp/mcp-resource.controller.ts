@@ -126,7 +126,7 @@ export class McpResourceController {
         }
 
         if (uri === "stryker://report/survived") {
-          const survivedResult = this.getSurvivedUseCase.execute();
+          const survivedResult = await this.getSurvivedUseCase.execute();
           const text = survivedResult.isOk
             ? JSON.stringify(survivedResult.value, null, 2)
             : JSON.stringify({ error: survivedResult.error.message });

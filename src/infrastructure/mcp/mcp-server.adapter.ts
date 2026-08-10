@@ -38,7 +38,6 @@ export class McpServerAdapter {
   private httpServer: HttpServer | null = null;
   private readonly mcpServer: Server;
   private readonly sseTransports = new Map<string, SSEServerTransport>();
-  private readonly eventBus: EventBusPort;
 
   constructor(
     private readonly logger: Logger,
@@ -55,9 +54,8 @@ export class McpServerAdapter {
     private readonly db: DatabaseAdapter | null = null,
     private readonly trackTestFlakinessUseCase: TrackTestFlakinessUseCase | null = null,
     private readonly analyzeCoverageGapUseCase: AnalyzeCoverageGapUseCase | null = null,
-    eventBus: EventBusPort,
+    _eventBus: EventBusPort,
   ) {
-    this.eventBus = eventBus;
     this.mcpServer = new Server(SERVER_INFO, {
       capabilities: {
         resources: {},
@@ -194,8 +192,8 @@ export class McpServerAdapter {
       }
     });
 
-    app.get("/api/survived", (_req, res) => {
-      const survivedResult = this.getSurvivedUseCase.execute();
+    app.get("/api/survived", async (_req, res) => {
+      const survivedResult = await this.getSurvivedUseCase.execute();
       if (survivedResult.isOk) {
         res.json(survivedResult.value);
       } else {
