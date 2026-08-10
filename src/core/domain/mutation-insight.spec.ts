@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, complexity, no-useless-assignment */
 // src/core/domain/mutation-insight.spec.ts
 import { describe, it, expect } from "vitest";
 import {

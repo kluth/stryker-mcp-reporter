@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, complexity, no-useless-assignment */
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   ListPromptsRequestSchema,

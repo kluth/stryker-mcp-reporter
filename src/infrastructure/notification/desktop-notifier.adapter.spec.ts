@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, complexity, no-useless-assignment */
 // src/infrastructure/notification/desktop-notifier.adapter.spec.ts
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {

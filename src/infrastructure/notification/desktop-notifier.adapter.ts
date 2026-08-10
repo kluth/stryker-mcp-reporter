@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, complexity, no-useless-assignment */
 // src/infrastructure/notification/desktop-notifier.adapter.ts
 import path from "path";
 import { execFile } from "child_process";

@@ -17,9 +17,15 @@ export interface MutantRemediationAdvice {
 }
 
 import { GetMutantContextUseCase } from "./get-mutant-context.use-case.js";
+import type { LlmPort } from "../domain/llm.port.js";
 
 export class SuggestMutantFixesUseCase {
-  constructor(private readonly getMutantContextUseCase?: GetMutantContextUseCase) {}
+  constructor(
+    private readonly regexAdapter: LlmPort,
+    private readonly localAdapter: LlmPort,
+    private readonly cloudAdapter: LlmPort,
+    private readonly getMutantContextUseCase?: GetMutantContextUseCase,
+  ) {}
 
   public async execute(
     mutants: MutantDetail[],
@@ -51,95 +57,30 @@ export class SuggestMutantFixesUseCase {
     let suggestedAssertion = `expect(result).toBeDefined();`;
     let boundaryTestSnippet = `it('should handle boundary condition for ${mutator} at line ${startLine}', () => {\n  // Add boundary test assertion\n});`;
 
-    // Try Local LLM (Ollama) if profile is local or undefined (fallback chain)
+    let fixResult;
+    const prompt = `You are an expert TS developer. Fix this surviving mutant. Mutator: ${mutator}. Original Code: ${original}. Code mutated to: ${replacement}. Suggest an assertion. Reply in short exact JSON format { "explanation": "...", "suggestedAssertion": "...", "boundaryTestSnippet": "..." } only.`;
+
+    // Try Local LLM (Ollama) if profile is local
     if (profile === "local") {
       try {
-        const ollamaRes = await fetch("http://localhost:11434/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "qwen2.5-coder", // Defaulting to a good local coder model
-            prompt: `You are an expert TS developer. Fix this surviving mutant. Mutator: ${mutator}. Original Code: ${original}. Code mutated to: ${replacement}. Suggest an assertion. Reply in short exact JSON format { "explanation": "...", "suggestedAssertion": "...", "boundaryTestSnippet": "..." } only.`,
-            stream: false,
-            format: "json"
-          }),
-        });
-        if (ollamaRes.ok) {
-          const data = await ollamaRes.json();
-          const parsed = JSON.parse(data.response);
-          return {
-            mutantId: mutant.id,
-            fileName: mutant.filePath,
-            mutatorName: mutator,
-            originalCode: original,
-            mutatedCode: replacement,
-            location: {
-              start: { line: startLine, column: startColumn },
-              end: { line: startLine, column: startColumn },
-            },
-            explanation: parsed.explanation || explanation,
-            suggestedAssertion: parsed.suggestedAssertion || suggestedAssertion,
-            boundaryTestSnippet: parsed.boundaryTestSnippet || boundaryTestSnippet,
-          };
-        }
+        fixResult = await this.localAdapter.generateFix(prompt, { model: "qwen2.5-coder" });
       } catch (e) {
-        // Fallthrough if Ollama is not running or fails
+        // Fallthrough
       }
     }
 
     // Cloud LLM fallback if profile is cloud
     if (profile === "cloud") {
-      if (process.env.OPENAI_API_KEY) {
-        try {
-          const cloudRes = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-            },
-            body: JSON.stringify({
-              model: "gpt-4o-mini",
-              messages: [{ role: "user", content: `You are an expert TS developer. Fix this surviving mutant. Mutator: ${mutator}. Original Code: ${original}. Code mutated to: ${replacement}. Suggest an assertion. Reply in short exact JSON format { "explanation": "...", "suggestedAssertion": "...", "boundaryTestSnippet": "..." } only.` }],
-              response_format: { type: "json_object" }
-            }),
-          });
-          if (cloudRes.ok) {
-            const data = await cloudRes.json();
-            const parsed = JSON.parse(data.choices[0].message.content);
-            return {
-              mutantId: mutant.id,
-              fileName: mutant.filePath,
-              mutatorName: mutator,
-              originalCode: original,
-              mutatedCode: replacement,
-              location: {
-                start: { line: startLine, column: startColumn },
-                end: { line: startLine, column: startColumn },
-              },
-              explanation: parsed.explanation || explanation,
-              suggestedAssertion: parsed.suggestedAssertion || suggestedAssertion,
-              boundaryTestSnippet: parsed.boundaryTestSnippet || boundaryTestSnippet,
-            };
-          }
-        } catch (e) {
-          // Fallthrough
-        }
+      try {
+        fixResult = await this.cloudAdapter.generateFix(prompt, { model: "gpt-4o-mini" });
+      } catch (e) {
+        // Fallthrough
       }
     }
 
     // Regex Fallback
-    if (mutator.includes("Equality") || mutator.includes("Conditional")) {
-      explanation = `Equality/Boundary condition survived at line ${startLine}. Code changed from '${original}' to '${replacement}'.`;
-      suggestedAssertion = `expect(result).toBe(exactExpectedBoundaryValue);`;
-      boundaryTestSnippet = `it('should test exact boundary value at line ${startLine}', () => {\n  const result = testSubject(boundaryInput);\n  expect(result).toEqual(expectedBoundaryValue);\n});`;
-    } else if (mutator.includes("String") || mutator.includes("Literal")) {
-      explanation = `String/Literal mutation survived at line ${startLine}. Code mutated to '${replacement}'.`;
-      suggestedAssertion = `expect(outputString).toContain(expectedSubstring);`;
-      boundaryTestSnippet = `it('should assert literal output formatting at line ${startLine}', () => {\n  expect(output).toBe(expectedLiteral);\n});`;
-    } else if (mutator.includes("Boolean") || mutator.includes("Logical")) {
-      explanation = `Logical operator condition survived at line ${startLine}. Branch condition was not exercised in both true/false states.`;
-      suggestedAssertion = `expect(conditionResult).toBe(false); // test false branch explicitly`;
-      boundaryTestSnippet = `it('should test false branch condition at line ${startLine}', () => {\n  expect(testSubject(falseInput)).toBe(false);\n});`;
+    if (!fixResult) {
+      fixResult = await this.regexAdapter.generateFix(prompt);
     }
 
     return {
@@ -152,9 +93,9 @@ export class SuggestMutantFixesUseCase {
         start: { line: startLine, column: startColumn },
         end: { line: startLine, column: startColumn },
       },
-      explanation,
-      suggestedAssertion,
-      boundaryTestSnippet,
+      explanation: fixResult.explanation || explanation,
+      suggestedAssertion: fixResult.suggestedAssertion || suggestedAssertion,
+      boundaryTestSnippet: fixResult.boundaryTestSnippet || boundaryTestSnippet,
     };
   }
 }

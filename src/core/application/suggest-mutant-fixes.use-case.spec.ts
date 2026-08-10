@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { SuggestMutantFixesUseCase } from "./suggest-mutant-fixes.use-case.js";
 import { MutantDetail } from "../domain/mutation-report.js";
+import { RegexLlmAdapter } from "../../infrastructure/llm/regex.adapter.js";
 
 describe("SuggestMutantFixesUseCase", () => {
-  const useCase = new SuggestMutantFixesUseCase();
+  const useCase = new SuggestMutantFixesUseCase(
+    new RegexLlmAdapter(),
+    { generateFix: async () => { throw new Error(); } },
+    { generateFix: async () => { throw new Error(); } }
+  );
 
   it("should return empty array if all mutants were killed", async () => {
     const mutants: MutantDetail[] = [

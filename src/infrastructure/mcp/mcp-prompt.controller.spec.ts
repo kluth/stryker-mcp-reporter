@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, complexity, no-useless-assignment */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {

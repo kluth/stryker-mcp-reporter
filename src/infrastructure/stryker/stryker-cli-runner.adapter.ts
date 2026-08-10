@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, complexity, no-useless-assignment */
 // src/infrastructure/stryker/stryker-cli-runner.adapter.ts
 import type { Logger } from "@stryker-mutator/api/logging";
 import type { PartialStrykerOptions } from "@stryker-mutator/api/core";

@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, complexity, no-useless-assignment */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { McpServerAdapter, SERVER_INFO } from "./mcp-server.adapter.js";
 import { ReportStream } from "../../core/domain/report-stream.js";
@@ -118,8 +117,9 @@ describe("McpServerAdapter", () => {
   });
 
   it("sollte den Server via start() erfolgreich starten und ein ok-Result zurückgeben", async () => {
-    mockApp.listen.mockImplementationOnce((port, cb) => {
-      if (cb) cb();
+    mockApp.listen.mockImplementationOnce((port, host, cb) => {
+      if (typeof host === 'function') host();
+      else if (cb) cb();
       return { address: () => ({ port: 3000 }), on: vi.fn(), close: vi.fn().mockImplementation((cb) => { if (cb) cb(); }) };
     });
     const result = await adapter.start();
@@ -128,7 +128,7 @@ describe("McpServerAdapter", () => {
   });
 
   it("sollte Fehler beim HTTP-Server Start abfangen", async () => {
-    mockApp.listen.mockImplementationOnce((port, cb) => {
+    mockApp.listen.mockImplementationOnce((port, host, cb) => {
       const server = { 
         address: () => ({ port: 3000 }), 
         on: (event: string, handler: any) => {
@@ -146,8 +146,9 @@ describe("McpServerAdapter", () => {
   });
 
   it("schließt den aktiven HTTP-Server während des Shutdowns", async () => {
-    mockApp.listen.mockImplementationOnce((port, cb) => {
-      if (cb) cb();
+    mockApp.listen.mockImplementationOnce((port, host, cb) => {
+      if (typeof host === 'function') host();
+      else if (cb) cb();
       return { address: () => ({ port: 3000 }), on: vi.fn(), close: vi.fn((cb: any) => cb()) };
     });
     await adapter.start();
@@ -157,8 +158,9 @@ describe("McpServerAdapter", () => {
   });
 
   it("sollte Fehler beim Schließen des HTTP-Servers abfangen", async () => {
-    mockApp.listen.mockImplementationOnce((port, cb) => {
-      if (cb) cb();
+    mockApp.listen.mockImplementationOnce((port, host, cb) => {
+      if (typeof host === 'function') host();
+      else if (cb) cb();
       return { address: () => ({ port: 3000 }), on: vi.fn(), close: vi.fn((cb: any) => cb(new Error("close err"))) };
     });
     await adapter.start();
@@ -172,8 +174,9 @@ describe("McpServerAdapter", () => {
     let appPost: Function;
 
     beforeEach(async () => {
-      mockApp.listen.mockImplementationOnce((port, cb) => {
-        if (cb) cb();
+      mockApp.listen.mockImplementationOnce((port, host, cb) => {
+        if (typeof host === 'function') host();
+        else if (cb) cb();
         return { address: () => ({ port: 3000 }), on: vi.fn(), close: vi.fn().mockImplementation((cb) => { if (cb) cb(); }) };
       });
       await adapter.start();

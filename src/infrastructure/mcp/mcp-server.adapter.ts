@@ -1,4 +1,3 @@
-/* eslint-disable max-lines, complexity, no-useless-assignment */
 import express from "express";
 import type { Server as HttpServer } from "http";
 import type { AddressInfo } from "net";
@@ -27,6 +26,9 @@ import { type Result, ok, err } from "../../core/domain/result.js";
 import type { TrackTestFlakinessUseCase } from "../../core/application/track-test-flakiness.use-case.js";
 import type { AnalyzeCoverageGapUseCase } from "../../core/application/analyze-coverage-gap.use-case.js";
 import type { EventBusPort } from "../../core/domain/event-bus.port.js";
+import { RegexLlmAdapter } from "../llm/regex.adapter.js";
+import { OllamaLlmAdapter } from "../llm/ollama.adapter.js";
+import { OpenAiLlmAdapter } from "../llm/openai.adapter.js";
 
 import { McpResourceController } from "./mcp-resource.controller.js";
 import { McpToolController } from "./mcp-tool.controller.js";
@@ -64,7 +66,12 @@ export class McpServerAdapter {
       },
     });
 
-    const suggestFixesUseCase = new SuggestMutantFixesUseCase(this.getMutantContextUseCase);
+    const suggestFixesUseCase = new SuggestMutantFixesUseCase(
+      new RegexLlmAdapter(),
+      new OllamaLlmAdapter(),
+      new OpenAiLlmAdapter(),
+      this.getMutantContextUseCase
+    );
     const predictImpactUseCase = new PredictMutationImpactUseCase();
     const generateCheatSheetUseCase = new GenerateTestingCheatSheetUseCase();
     const detectEquivalentUseCase = new DetectEquivalentMutantsUseCase();
