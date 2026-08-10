@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.14.0...v1.15.0) (2026-08-10)
+
+
+### Features
+
+* implement Hybrid Auto-Remediation Profiling pipeline ([4c8825e](https://github.com/kluth/stryker-mcp-reporter/commit/4c8825e6fbf70315fc5538d80c0d048f07f34450))
+
 # [1.14.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.13.0...v1.14.0) (2026-08-10)
 
 
