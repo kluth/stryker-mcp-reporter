@@ -1,3 +1,22 @@
+# [1.16.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.15.0...v1.16.0) (2026-08-10)
+
+
+### Bug Fixes
+
+* **deps:** correct stryker peerDependencies and downgrade typescript to 5.6 ([9d36f3b](https://github.com/kluth/stryker-mcp-reporter/commit/9d36f3b614c4babf68f96bbca636816036ecb6dd))
+* resolve architecture and security flaws in Event Bus ([d5c030f](https://github.com/kluth/stryker-mcp-reporter/commit/d5c030f8c12b8f2c85e3ad72e7a0f7d7bae7b610))
+* **security:** resolve npm vulnerabilities, remove unused variables, and fix unawaited promise in mcp-server.adapter.ts ([ecfb8c2](https://github.com/kluth/stryker-mcp-reporter/commit/ecfb8c23294653291b08dcf01a475667cd23d0e1))
+
+
+### Features
+
+* AST-based Incremental Mutant Cache ([4e89804](https://github.com/kluth/stryker-mcp-reporter/commit/4e89804ae1ab223c07f837b69ff66a30c5a14e0d))
+* Coverage Gap Analysis ([0853df4](https://github.com/kluth/stryker-mcp-reporter/commit/0853df4d7ae38f39edad1123ebd3aa59f3b5e54a))
+* implement Event Bus system ([0dbb2d9](https://github.com/kluth/stryker-mcp-reporter/commit/0dbb2d921139878b2dfd41515598742d9eb2be48))
+* implement git blame attribution for surviving mutants ([8a95bdb](https://github.com/kluth/stryker-mcp-reporter/commit/8a95bdbd5f2be1e7b131c54944ba5c21e08044a6))
+* implement massive agentic network and pipeline optimization ([4cc0459](https://github.com/kluth/stryker-mcp-reporter/commit/4cc0459d3a6100b16b432951c5f26d48f14ed867))
+* Mutant Flakiness Tracker ([207025b](https://github.com/kluth/stryker-mcp-reporter/commit/207025bb8045685b31cbeaa8d4bccb4b68f1543f))
+
 # [1.15.0](https://github.com/kluth/stryker-mcp-reporter/compare/v1.14.0...v1.15.0) (2026-08-10)
 
 
