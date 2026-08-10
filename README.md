@@ -33,6 +33,9 @@ Stryker mutiert deinen Quellcode (z. B. verwandelt es `>` in `>=`, löscht Rück
 
 ## 📸 In Aktion (Reale Screenshots)
 
+### 🚀 0. Terminal Stryker Run
+![Stryker Run](docs/assets/terminal-run.png)
+
 ### 📊 1. Echter Stryker HTML Mutation Testing Report
 ![Stryker HTML Report](assets/images/real_stryker_html_report.png)
 

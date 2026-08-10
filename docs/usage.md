@@ -5,6 +5,8 @@ The Stryker MCP Reporter provides specific tools and prompts to seamlessly bridg
 ## Tools
 
 ### 1. `run_mutation_tests`
+![Stryker Run](assets/terminal-run.png)
+
 Executes Stryker in the specified project path.
 - **Parameters:**
   - `mutate` (optional): Array of file patterns to mutate (e.g., `["src/core/**/*.ts"]`).
