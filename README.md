@@ -5,7 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/stryker-mcp-reporter?style=for-the-badge&color=CB3837&logo=npm)](https://www.npmjs.com/package/stryker-mcp-reporter)
 [![Node version](https://img.shields.io/badge/node-%3E%3D22.0.0-339933?style=for-the-badge&logo=nodedotjs)](https://nodejs.org/)
 [![Mutation Score](https://img.shields.io/badge/Mutation%20Score-56.08%25-yellow?style=for-the-badge&logo=stryker)](https://stryker-mutator.io/)
-[![Architecture](https://img.shields.io/badge/Architecture-Hexagonal%20%2F%20DDD-blueviolet?style=for-the-badge)](#-software-engineering--architektur-highlights)
+[![Architecture](https://img.shields.io/badge/Architecture-Hexagonal%20%2F%20DDD-blueviolet?style=for-the-badge)](#software-engineering--architektur-highlights)
 [![GitHub Discussions](https://img.shields.io/badge/GitHub-Discussions-007EC6?style=for-the-badge&logo=github)](https://github.com/kluth/stryker-mcp-reporter/discussions)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 
@@ -13,7 +13,7 @@
 
 Ein hochmodernes **Stryker Mutator Plugin & Standalone Control Server**, das Mutation Testing Ergebnisse sowie **interaktive Steuerung per Model Context Protocol (MCP)** über SSE und stdio für KI-Agenten (*Antigravity, Cursor, Cline, Roo Code, Claude Desktop*) bereitstellt.
 
-[🚀 Quickstart](#-installation--schnellstart) • [🤖 KI-Agenten Setup](#-interaktives-ki-agenten-setup) • [🏗️ Architektur](#-software-engineering--architektur-highlights) • [🤝 Contributing](#-contributor-onboarding--community)
+[🚀 Quickstart](#installation--schnellstart) • [🤖 KI-Agenten Setup](#interaktives-ki-agenten-setup) • [🏗️ Architektur](#software-engineering--architektur-highlights) • [🤝 Contributing](#contributor-onboarding--community)
 
 </div>
 
@@ -53,8 +53,6 @@ Stryker mutiert deinen Quellcode (z. B. verwandelt es `>` in `>=`, löscht Rück
 ### 📈 6. Historische Score Trend Analytics (`stryker://analytics/trends`)
 ![Mutation Score Trend Analytics](assets/images/real_step3_trend_analytics.png)
 *Verfolgt den historischen Verlauf von Mutation-Scores über mehrere Testläufe hinweg, berechnet Score-Deltas (+5.7% Steigerung) und visualisiert die Trend-Richtung.*
-
-
 
 ---
 
