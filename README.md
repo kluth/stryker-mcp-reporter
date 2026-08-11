@@ -33,6 +33,9 @@ Stryker mutiert deinen Quellcode (z. B. verwandelt es `>` in `>=`, löscht Rück
 
 ## 📸 In Aktion (Reale Screenshots)
 
+> [!NOTE]  
+> **Hinweis zur Darstellung:** Die folgenden Bilder der "Live AI"-Features sind konzeptionelle Visualisierungen der internen MCP-Datenströme, um die gelieferten JSON-Daten greifbar zu machen. Da dies ein Hintergrund-Server ist, werden Sie diese Daten in der Realität direkt in der Chat-Oberfläche Ihres KI-Clients (z.B. Claude Desktop oder Cursor) sehen.
+
 ### 🚀 0. Terminal Stryker Run
 ![Stryker Run](docs/assets/terminal-run.png)
 
